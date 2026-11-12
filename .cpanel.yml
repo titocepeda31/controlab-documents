@@ -1,4 +1,0 @@
----
-deployment:
-  tasks:
-    - /bin/bash /home/maderas7/repositories/controlab-documents/scripts/cpanel_demo_deploy.sh --deploy
