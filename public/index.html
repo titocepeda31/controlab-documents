@@ -74,24 +74,122 @@
 .delivery-card{max-width:660px;margin:5px auto;border:1px solid var(--line);background:#f8fbf9;border-radius:16px;padding:21px}.delivery-card h3{margin:0 0 10px}.delivery-card p{line-height:1.6;color:#49666b}.delivery-card .btn{width:100%;min-height:48px;margin:7px 0;white-space:normal}.delivery-card .chip{font-size:12px}
 @media(max-width:740px){.workflow-extra-grid{grid-template-columns:1fr}.tabs{padding:8px 8px 0;overflow-x:auto}.tab{flex:0 0 auto}.mobilebar{gap:4px}.mobilebar .btn{padding:8px 1px;font-size:9px}.primary-workflow{padding:14px}.delivery-card{padding:15px}}
 @media print{#previewTestPicker{display:none!important}}
+
+/* Controlabs demo: módulos separados, navegación por cajón lateral */
+body{background:#f5f7f6}
+.topbar{z-index:100;position:sticky;top:0;background:rgba(255,255,255,.98);box-shadow:0 2px 14px #0b37340c}
+.topinner{max-width:1200px;min-height:68px;padding:10px 24px;justify-content:flex-start;gap:15px}
+.brandline{font-size:16px;letter-spacing:-.4px}.brand .mark{width:39px;height:39px;border-radius:11px}
+.menu-toggle{width:44px;height:44px;flex:none;display:grid;place-items:center;background:#f1f6f4;border:1px solid #dbe6df;border-radius:12px;color:#17584e;font-size:20px;cursor:pointer}
+.menu-toggle:hover{background:#e4f2eb}
+.header-status{display:flex;align-items:flex-end;flex-direction:column;margin-left:auto;min-width:0;gap:5px}
+.current-view{font-weight:800;color:#244f49;font-size:12px}
+.header-status .save-state{font-size:10px}
+.shell{display:block;max-width:1160px;padding:32px 22px 75px;margin:auto}
+.workspace{border:0;box-shadow:none;background:transparent;overflow:visible}
+.intro,.tabs,.mobilebar{display:none!important}
+.panel{max-width:1050px;min-height:65vh;margin:0 auto;padding:30px 33px 35px;background:#fff;border:1px solid #e5ece8;border-radius:20px;box-shadow:0 8px 32px #12382f0a}
+.sectionhead{margin-bottom:23px;padding-bottom:18px;border-bottom:1px solid #e9efeb}
+.sectionhead h2{font-size:clamp(22px,3vw,28px);letter-spacing:-.8px;margin:5px 0 7px}
+.sectionhead p{font-size:13px;line-height:1.55;max-width:650px}
+.module-eyebrow,.menu-kicker{display:block;color:#2a7767;font-size:10px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase}
+.subtle-callout{border-left:3px solid #9bc6b7;background:#f7faf9;padding:11px 14px;border-radius:0 8px 8px 0;font-size:11px;color:#57726b;margin:0 0 22px}
+.menu-backdrop{position:fixed;inset:0;background:rgba(15,37,36,.42);z-index:105;cursor:pointer}
+.menu-backdrop[hidden]{display:none!important}
+.sidebar{position:fixed;top:0;left:0;width:min(350px,90vw);height:100dvh;z-index:110;display:flex;flex-direction:column;gap:0;background:#fff;box-shadow:12px 0 35px #183a3030;transform:translateX(-104%);transition:transform .22s ease;pointer-events:none;overflow:auto;padding:0 0 24px}
+body.menu-open{overflow:hidden}body.menu-open .sidebar{transform:translateX(0);pointer-events:auto}
+.drawer-heading{display:flex;align-items:center;justify-content:space-between;padding:24px 20px 17px;border-bottom:1px solid #e7eeea}
+.drawer-heading strong{display:block;font-size:18px;color:#143a33;margin-top:5px}
+.drawer-close{border:0;background:#f3f7f5;border-radius:9px;width:34px;height:34px;color:#476660;cursor:pointer;font-size:16px}
+.role-menu{padding:13px 12px;display:grid;gap:5px}
+.menu-link{display:flex;align-items:center;gap:12px;text-align:left;width:100%;border:1px solid transparent;background:transparent;border-radius:13px;padding:12px;color:#2a4540;cursor:pointer}
+.menu-link:hover{background:#f2f7f4}
+.menu-link.selected{background:#e8f4ee;border-color:#cce3d7}
+.menu-link strong,.menu-link small{display:block}
+.menu-link strong{font-size:13px;line-height:1.3}.menu-link small{font-size:10px;color:#6d827a;margin-top:4px}
+.menu-icon{font-size:11px;font-weight:850;border:1px solid #d5e4db;background:#fff;border-radius:10px;width:36px;height:36px;display:grid;place-items:center;flex:none;color:#4b8172}
+.menu-link.selected .menu-icon{background:#176d68;border-color:#176d68;color:#fff}
+.drawer-orders{padding:17px 16px;border-top:1px solid #edf1ee}
+.drawer-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:10px}
+.drawer-orders .order-stack{display:grid;gap:4px}
+.drawer-orders .order-item{margin:0;border:1px solid #edf0ee;background:#fafbfa}
+.drawer-orders .order-item.active{background:#eaf4ef;border-color:#c5ded3}
+.drawer-utilities{display:grid;gap:2px;padding:16px;border-top:1px solid #edf1ee}
+.drawer-utilities .menu-kicker{margin-bottom:8px}
+.utility-link{border:0;border-radius:8px;background:none;text-align:left;color:#46665d;padding:10px;font-size:12px;cursor:pointer}
+.utility-link:hover{background:#f1f7f3}
+.drawer-disclaimer{color:#738b81;line-height:1.6;font-size:10px;padding:7px 26px;margin:0}
+.order-context{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#f5faf7;border:1px solid #dfece5;border-radius:12px;padding:11px 14px;margin:2px 0 18px}
+.order-context .order-context-label{font-size:11px;color:#6b8077;font-weight:700}
+.order-context select{min-width:min(330px,75vw);max-width:100%;border:1px solid #cddfd4;border-radius:10px;background:white;color:#1f473e;min-height:40px;padding:8px 10px;font-weight:700;font-size:12px}
+.order-context .order-context-work{font-size:11px;color:#71867b}
+#panel-gestion .primary-workflow{border:1px solid #dbeae1;background:#f9fcfa}
+#panel-gestion .workflow-extras{margin-top:22px}
+#panel-ensayos .test-editor>.sectionhead h2{font-size:17px;letter-spacing:0}
+#panel-ensayos [data-action="add-custom"]{display:none}
+#panel-ensayos .control-group .notice{font-size:11px}
+#panel-ensayos .testlist{border-color:#e3ebe6}
+#panel-documento .report-toolbar .btn{font-size:12px}
+#panel-documento .preview-box{border-color:#dce6df}
+#panel-validacion .validation-card{background:#fcfdfc}
+#panel-entrega .delivery-card{border:1px solid #dbeae1;box-shadow:none;background:#fcfdfd}
+@media(max-width:740px){
+ .topinner{min-height:61px;padding:8px 13px;gap:10px}
+ .menu-toggle{width:40px;height:40px}
+ .brandline{font-size:14px}.brand .mark{width:33px;height:33px;font-size:20px}
+ .brand .brandsub{font-size:9px}
+ .header-status .save-state{display:none}
+ .current-view{font-size:10px;text-align:right;max-width:110px;line-height:1.3}
+ .shell{padding:13px 10px 28px}
+ .panel{border-radius:14px;min-height:calc(100dvh - 88px);padding:19px 15px 28px}
+ .sectionhead{margin-bottom:17px;padding-bottom:14px}
+ .sectionhead h2{font-size:23px;margin-top:5px}
+ .sectionhead p{font-size:12px}
+ .order-context select{min-width:0;width:100%}
+ .order-context{display:block}
+ .order-context .order-context-work{display:block;margin-top:7px}
+ .drawer-orders .order-stack{display:grid;overflow:visible}
+ .drawer-orders .order-item{min-width:0}
+ .test-layout{display:block}
+ .testlist{display:flex;gap:7px;overflow-x:auto;margin-bottom:14px;flex-wrap:nowrap}
+ .testnav{flex:0 0 175px;max-width:none}
+}
+@media print{
+ .topbar,.menu-backdrop,.sidebar,.drawer-disclaimer,.order-context,.subtle-callout,#previewTestPicker{display:none!important}
+ body.menu-open{overflow:visible}
+ .shell,.workspace,#panel-documento{display:block!important;background:#fff!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;max-width:none!important;min-height:0!important}
+ .panel:not(#panel-documento){display:none!important}
+}
 </style>
 </head>
 <body>
 <header class="topbar"><div class="topinner">
-  <div class="brand"><div class="mark">≋</div><div><div class="brandline">Controlab Documents <span class="tag">DEMO</span></div><div class="brandsub">OT → Densidades → Revisión → Validación → Firma y PDF</div></div></div>
-  <div class="buttons"><span class="save-state" id="saveLabel">Guardado en este dispositivo</span><button class="btn" data-action="import">Importar respaldo</button><button class="btn" data-action="export">Respaldar datos</button></div>
+  <button id="menuToggle" class="menu-toggle" type="button" data-action="toggle-menu" aria-label="Abrir menú principal" aria-controls="appMenu" aria-expanded="false"><span class="menu-lines" aria-hidden="true">☰</span></button>
+  <div class="brand"><div class="mark">≋</div><div><div class="brandline">Controlabs <span class="tag">DEMO</span></div><div class="brandsub">Gestión de ensayos e informes</div></div></div>
+  <div class="header-status"><span class="current-view" id="viewLabel">Órdenes de trabajo</span><span class="save-state" id="saveLabel">Guardado en este dispositivo</span></div>
 </div></header>
+<div id="menuBackdrop" class="menu-backdrop" data-action="close-menu" hidden></div>
 <div class="shell">
-  <aside class="sidebar"><div class="sidecard"><div class="side-head"><h2>Órdenes de trabajo</h2><button class="btn mini" data-nav="gestion">+ Nueva</button></div><div id="ordersList" class="order-stack"></div><p class="tiny">Selecciona una OT o crea otra desde Preparación. La lista es local a este navegador.</p></div><div class="sidehelp"><strong>Prueba comparativa</strong><p>Usa una orden de ejemplo y cronometra cuánto tarda el ingreso por formulario versus la transcripción tradicional. La revisión y firma siguen siendo obligatorias.</p></div></aside>
-  <div class="workspace">
-    <div class="intro"><div class="topline"><span class="cap">Prototipo · Captura móvil · Sin firma oficial</span></div><h1 id="orderHeading">Flujo de informes sin transcripción doble</h1><p id="orderSubtitle">Empresa y obra una vez · Resultados desde el laboratorista · Revisión del validador</p><div class="stats"><div class="stat"><b id="totalTests">0</b><small>Informes en la orden</small></div><div class="stat"><b id="totalControls">0</b><small>Controles de densidad</small></div><div class="stat"><b id="totalPages">0</b><small>Páginas estimadas</small></div></div></div>
-    <nav class="tabs" aria-label="Recorrido de la demostración"><button class="tab active" data-nav="gestion">1 · Crear OT</button><button class="tab" data-nav="ensayos">2 · Densidades</button><button class="tab" data-nav="documento">3 · Revisar documento</button><button class="tab" data-nav="validacion">4 · Validar</button><button class="tab" data-nav="entrega">5 · Firmar y PDF</button></nav>
-    <section class="panel" id="panel-gestion"><div class="sectionhead"><div><h2>1. Crear orden de trabajo</h2><p>Selecciona una obra y crea la OT. Usa opciones adicionales solo si necesitas registrar una empresa u obra nueva.</p></div><span class="chip">Administración · DEMO</span></div><div class="notice"><strong>Demostración local:</strong> todas las etapas se simulan en este mismo navegador. No existe asignación real entre usuarios, sincronización, firma, ni publicación al portal. Usa solo datos ficticios.</div><div id="managementPanel"></div></section>
-<section class="panel hidden" id="panel-validacion"><div class="sectionhead"><div><h2>4. Validar informe</h2><p>Confirma OT, obra, tipo de ensayo y resultados. Aprueba o devuelve con observaciones.</p></div><span class="chip review">Validador · DEMO</span></div><div class="notice">Estos botones simulan el flujo en un solo dispositivo. <strong>No constituyen validación técnica oficial, firma ni autorización de publicación.</strong></div><div id="validationPanel"></div></section>
-<section class="panel hidden" id="panel-orden"><div class="sectionhead"><div><h2>Datos detallados de la OT</h2><p>Puedes ajustar los antecedentes de la orden sin volver a escribir sus mediciones. Los cambios de la OT obligan a revisar de nuevo el borrador.</p></div><div class="buttons"><button class="btn mini" data-action="duplicate-order">Duplicar OT</button><button class="btn mini warn" data-action="delete-order">Eliminar OT</button></div></div><div id="orderForm"></div><div class="notice">La empresa y la obra pueden seleccionarse desde <strong>Preparar OT</strong>. Aquí también puedes consultar y ajustar los antecedentes de la orden.</div><button class="btn main" data-nav="ensayos">Siguiente: registrar ensayos →</button></section>
-    <section class="panel" id="panel-ensayos"><div class="sectionhead"><div><h2>2. Llenar formulario de densidades</h2><p>Ingresa los controles una sola vez. La D.C.S. y la compactación se calculan automáticamente.</p></div><div class="buttons"><button class="btn mini" data-action="add-density">+ Densidad in situ</button><button class="btn mini" data-action="add-custom">+ Otro ensayo</button></div></div><div id="testEditor"></div><div class="notice"><strong>Importante:</strong> solamente el formato de densidad está basado en tu documento de referencia. «Otro ensayo» es un esquema demostrativo que debe reemplazarse por el formato real antes de usarse en la empresa.</div><button class="btn main" data-nav="documento">3. Revisar documento →</button></section>
-    <section class="panel hidden" id="panel-documento"><div class="sectionhead"><div><h2>3. Revisar el documento</h2><p>Vista previa del informe seleccionado, antes de validar. Aún no está firmado ni listo para descarga.</p></div><div class="report-toolbar"><button class="btn" data-nav="ensayos">← Corregir</button><button class="btn main" data-action="wf-submit-review">Enviar a validar →</button></div></div><div class="notice">Revisa que los antecedentes y las mediciones coincidan. Todo el contenido es ficticio y lleva marca <strong>DEMO · NO VÁLIDO</strong>.</div><div id="previewTestPicker"></div><div class="preview-box" id="previewBox"><div class="paper-stack" id="paperStack"></div></div><p class="footcap" id="pageNote"></p></section>
-    <section class="panel hidden" id="panel-entrega"><div class="sectionhead"><div><h2>5. Firmar y descargar PDF</h2><p>La firma que aparece aquí es exclusivamente visual y no tiene validez legal ni criptográfica.</p></div><span class="chip">Entrega · DEMO</span></div><div id="deliveryPanel"></div></section>
+  <aside class="sidebar" id="appMenu" aria-label="Menú principal">
+    <div class="drawer-heading"><div><span class="menu-kicker">DEMOSTRACIÓN</span><strong>Explorar módulos</strong></div><button class="drawer-close" type="button" data-action="close-menu" aria-label="Cerrar menú">✕</button></div>
+    <nav class="role-menu" aria-label="Secciones">
+      <button class="menu-link selected" type="button" data-nav="gestion"><span class="menu-icon">01</span><span><strong>Órdenes de trabajo</strong><small>Administración · Crear OT</small></span></button>
+      <button class="menu-link" type="button" data-nav="ensayos"><span class="menu-icon">02</span><span><strong>Registro de densidad</strong><small>Laboratorista · Medición</small></span></button>
+      <button class="menu-link" type="button" data-nav="documento"><span class="menu-icon">03</span><span><strong>Vista del informe</strong><small>Previsualización del documento</small></span></button>
+      <button class="menu-link" type="button" data-nav="validacion"><span class="menu-icon">04</span><span><strong>Validación</strong><small>Revisión y observaciones</small></span></button>
+      <button class="menu-link" type="button" data-nav="entrega"><span class="menu-icon">05</span><span><strong>Emisión y PDF</strong><small>Firma visual y descarga</small></span></button>
+    </nav>
+    <div class="drawer-orders"><div class="drawer-section-head"><strong>Órdenes disponibles</strong><button class="btn mini" data-nav="gestion">+ Crear</button></div><div id="ordersList" class="order-stack"></div></div>
+    <div class="drawer-utilities"><span class="menu-kicker">HERRAMIENTAS</span><button class="utility-link" data-action="export" type="button">↓ Exportar respaldo JSON</button><button class="utility-link" data-action="import" type="button">↑ Importar respaldo JSON</button><button class="utility-link" data-nav="orden" type="button">✎ Editar datos de la OT actual</button></div>
+    <p class="drawer-disclaimer">Prototipo local, sin usuarios reales ni sincronización. Usar únicamente datos ficticios.</p>
+  </aside>
+  <div class="workspace">    <div class="intro">    <div class="intro"><div class="topline"><span class="cap">Prototipo · Captura móvil · Sin firma oficial</span></div><h1 id="orderHeading">Flujo de informes sin transcripción doble</h1><p id="orderSubtitle">Empresa y obra una vez · Resultados desde el laboratorista · Revisión del validador</p><div class="stats"><div class="stat"><b id="totalTests">0</b><small>Informes en la orden</small></div><div class="stat"><b id="totalControls">0</b><small>Controles de densidad</small></div><div class="stat"><b id="totalPages">0</b><small>Páginas estimadas</small></div></div></div>
+        <section class="panel" id="panel-gestion"><div class="sectionhead"><div><span class="module-eyebrow">ADMINISTRACIÓN</span><h2>Órdenes de trabajo</h2><p>Crea una orden y vincúlala a la empresa y a la obra. Los antecedentes quedan listos para el informe.</p></div></div><div class="subtle-callout">Esta es una demo de navegación para una sola persona, con información ficticia y guardado local en el navegador.</div><div id="managementPanel"></div></section>
+<section class="panel hidden" id="panel-validacion"><div class="sectionhead"><div><span class="module-eyebrow">CONTROL DOCUMENTAL</span><h2>Validación de informes</h2><p>Revisa los borradores pendientes, comprueba los antecedentes y aprueba o devuelve.</p></div><span class="chip review">Validador · DEMO</span></div><div class="notice">Estos botones simulan el flujo en un solo dispositivo. <strong>No constituyen validación técnica oficial, firma ni autorización de publicación.</strong></div><div id="validationPanel"></div></section>
+<section class="panel hidden" id="panel-orden"><div class="sectionhead"><div><span class="module-eyebrow">ADMINISTRACIÓN · DETALLE</span><h2>Editar antecedentes de la OT</h2><p>La modificación de la OT exige revisar de nuevo los informes correspondientes.</p></div><div class="buttons"><button class="btn mini" data-action="duplicate-order">Duplicar OT</button><button class="btn mini warn" data-action="delete-order">Eliminar OT</button></div></div><div id="orderForm"></div><div class="notice">La empresa y la obra pueden seleccionarse desde <strong>Preparar OT</strong>. Aquí también puedes consultar y ajustar los antecedentes de la orden.</div><button class="btn main" data-nav="ensayos">Siguiente: registrar ensayos →</button></section>
+    <section class="panel" id="panel-ensayos"><div class="sectionhead"><div><span class="module-eyebrow">LABORATORIO</span><h2>Registro de densidad</h2><p>Selecciona la OT, ingresa las mediciones y comprueba los cálculos preliminares.</p></div><div class="buttons"><button class="btn mini" data-action="add-density">+ Densidad in situ</button><button class="btn mini" data-action="add-custom">+ Otro ensayo</button></div></div><div id="labOrderContext"></div><div id="testEditor"></div><div class="notice"><strong>Importante:</strong> solamente el formato de densidad está basado en tu documento de referencia. «Otro ensayo» es un esquema demostrativo que debe reemplazarse por el formato real antes de usarse en la empresa.</div><button class="btn main" data-nav="documento">3. Revisar documento →</button></section>
+    <section class="panel hidden" id="panel-documento"><div class="sectionhead"><div><span class="module-eyebrow">INFORMES</span><h2>Vista del informe</h2><p>Revisa el documento generado con los antecedentes de la OT y los controles registrados.</p></div><div class="report-toolbar"><button class="btn" data-nav="ensayos">← Corregir</button><button class="btn main" data-action="wf-submit-review">Enviar a validar →</button></div></div><div class="notice">Revisa que los antecedentes y las mediciones coincidan. Todo el contenido es ficticio y lleva marca <strong>DEMO · NO VÁLIDO</strong>.</div><div id="reportOrderContext"></div><div id="previewTestPicker"></div><div class="preview-box" id="previewBox"><div class="paper-stack" id="paperStack"></div></div><p class="footcap" id="pageNote"></p></section>
+    <section class="panel hidden" id="panel-entrega"><div class="sectionhead"><div><span class="module-eyebrow">EMISIÓN</span><h2>Firmar y descargar</h2><p>Los informes aprobados pueden recibir una firma visual de demostración y guardarse como PDF.</p></div><span class="chip">Entrega · DEMO</span></div><div id="deliveryOrderContext"></div><div id="deliveryPanel"></div></section>
     <section class="panel hidden" id="panel-servidor">
       <div class="sectionhead"><div><h2>Guardar órdenes en el hosting</h2><p>Usa una API privada PHP + MySQL, sin afectar la demo local ni el portal actual.</p></div></div>
       <div class="notice"><strong>Uso seguro:</strong> hasta configurar el hosting, los datos permanecen guardados solamente en este navegador. Para guardar en servidor necesitas HTTPS, base de datos y un usuario con contraseña. La sincronización es manual para evitar cambios accidentales.</div>
@@ -99,7 +197,7 @@
     </section>
   </div>
 </div>
-<div class="mobilebar"><button class="btn main" data-nav="gestion">1 · OT</button><button class="btn" data-nav="ensayos">2 · Medir</button><button class="btn" data-nav="documento">3 · Revisar</button><button class="btn" data-nav="validacion">4 · Validar</button><button class="btn" data-nav="entrega">5 · PDF</button></div>
+
 <input id="importInput" type="file" accept=".json,application/json" hidden>
 <div role="status" class="toast" id="toast"></div>
 <script>
@@ -321,7 +419,41 @@ function renderPreview(onlyId=selectedTestId){
  const pages=buildPages(t?.id||'');$('paperStack').innerHTML=pages.length?pages.join(''):'<div class="empty">Agrega un ensayo para comenzar.</div>';
  $('pageNote').textContent=pages.length+' página(s) A4 · '+(t?.title||'Sin ensayos')+' · Documento de demostración';requestAnimationFrame(fitPaper);
 }
-function navigate(tab){activeTab=tab;document.querySelectorAll('[data-nav].tab').forEach(x=>x.classList.toggle('active',x.dataset.nav===tab));for(const p of ['gestion','orden','ensayos','documento','validacion','entrega','servidor'])$('panel-'+p).classList.toggle('hidden',p!==tab);if(tab==='gestion')renderManagement();if(tab==='orden')renderOrder();if(tab==='ensayos')renderTests();if(tab==='documento')renderPreview();if(tab==='validacion')renderValidation();if(tab==='entrega')renderDelivery();if(tab==='servidor'){renderServer();if(!server.checked)refreshSession()}window.scrollTo({top:0,behavior:'smooth'})}
+
+const VIEWS={gestion:'Órdenes de trabajo',ensayos:'Registro de densidad',documento:'Vista del informe',validacion:'Validación',entrega:'Emisión y PDF',orden:'Datos de la OT'};
+function toggleDrawer(open){
+ document.body.classList.toggle('menu-open',!!open);
+ $('menuBackdrop').hidden=!open;
+ $('menuToggle')?.setAttribute('aria-expanded',open?'true':'false');
+}
+function renderOrderContext(){
+ const o=activeOrder();
+ const items=db.orders.map(x=>'<option value="'+enc(x.id)+'" '+(x.id===o.id?'selected':'')+'>'+enc(x.ot||'OT sin número')+' · '+enc(x.workName||x.clientName||'Por completar')+'</option>').join('');
+ for(const id of ['labOrderContext','reportOrderContext','deliveryOrderContext']){
+  const target=$(id);if(!target)continue;
+  target.innerHTML='<div class="order-context"><div><span class="order-context-label">Orden de trabajo activa</span><select data-order-switch="1" aria-label="Seleccionar orden de trabajo">'+items+'</select></div><span class="order-context-work">'+enc(o.clientName||'Empresa pendiente')+' · '+enc(o.workName||'Obra pendiente')+'</span></div>';
+ }
+}
+
+function navigate(tab){
+ activeTab=tab;
+ toggleDrawer(false);
+ document.querySelectorAll('.role-menu [data-nav]').forEach(x=>{
+  const on=x.dataset.nav===tab;x.classList.toggle('selected',on);
+  if(on)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current');
+ });
+ $('viewLabel').textContent=VIEWS[tab]||'Controlabs Documents';
+ for(const p of ['gestion','orden','ensayos','documento','validacion','entrega','servidor'])$('panel-'+p).classList.toggle('hidden',p!==tab);
+ renderOrderContext();
+ if(tab==='gestion')renderManagement();
+ if(tab==='orden')renderOrder();
+ if(tab==='ensayos')renderTests();
+ if(tab==='documento')renderPreview();
+ if(tab==='validacion')renderValidation();
+ if(tab==='entrega')renderDelivery();
+ if(tab==='servidor'){renderServer();if(!server.checked)refreshSession()}
+ window.scrollTo({top:0,behavior:'smooth'});
+}
 function renderAll(){renderOrders();updateStats();navigate(activeTab)}
 function exportJson(){const s=JSON.stringify(db,null,2);const blob=new Blob([s],{type:'application/json;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='respaldo_ordenes_laboratorio.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);toast('Respaldo JSON descargado. Guárdalo en un lugar seguro.')}
 function printReport(single=true){const t=activeTest();if(!t||t.status!=='firmado'){toast('Primero valida y registra la firma simulada del informe.');return}printedSingle=t.id;beforePrintTab=activeTab;$('panel-documento').classList.remove('hidden');renderPreview(printedSingle);window.print()}
@@ -351,8 +483,10 @@ async function refreshRemote(){try{const r=await api('orders');server.orders=r.o
 async function saveRemote(){if(!server.authenticated){serverMessage('Inicia sesión para guardar en el hosting.');return}const o=activeOrder();if(!o.ot.trim()){serverMessage('Indica el número de OT antes de guardar en el servidor.');return}try{const r=await api('save',(server.revisions[o.id]||0)>0?'PUT':'POST',{order:o,expected_revision:server.revisions[o.id]||0},o.id);server.revisions[o.id]=r.revision;server.dirty=false;await refreshRemote();toast('Orden guardada en el hosting (revisión '+r.revision+').')}catch(e){serverMessage(e.status===409?'Conflicto: otra versión de esta orden existe en el servidor. Cárgala para revisarla antes de guardar.':e.message)}}
 async function loadRemote(id){try{const result=await api('order','GET',null,id);const remote=result.order;if(!remote||!remote.id)throw Error('Orden remota incompleta');const exists=db.orders.some(x=>x.id===remote.id);if(exists&&!confirm('Esta orden ya existe en este dispositivo. ¿Reemplazar la copia LOCAL con la versión del servidor?'))return;const ix=db.orders.findIndex(x=>x.id===remote.id);if(ix>=0)db.orders[ix]=remote;else db.orders.push(remote);if(db.orders.length>100){db.orders.shift()}db.activeId=remote.id;migrateCatalog();selectedTestId='';server.revisions[remote.id]=result.revision;server.dirty=false;activeTab='orden';renderAll();save();toast('Orden descargada al dispositivo.')}catch(e){serverMessage(e.message)}}
 document.addEventListener('input',e=>{const d=e.target.dataset;if(!d||!d.scope)return;const obj=getObject(d.scope,d.id);if(!obj)return;obj[d.key]=e.target.value;const t=activeTest();if(d.scope==='control')refreshControlCard(e.target.closest('[data-control-id]'),obj);if(d.scope==='order')activeOrder().tests.forEach(invalidate);else if(d.key!=='status')invalidate(t);changed()});
-document.addEventListener('change',e=>{const d=e.target.dataset;if(d?.deliverySelect){if(activeOrder().tests.some(t=>t.id===e.target.value)){selectedTestId=e.target.value;renderDelivery()}return}if(d?.status){const t=getTestById(d.status);if(t)t.status=e.target.value;renderTests();changed();return}if(d?.scope){const obj=getObject(d.scope,d.id);if(obj){obj[d.key]=e.target.value;if(d.scope==='control')refreshControlCard(e.target.closest('[data-control-id]'),obj);if(d.scope==='order')activeOrder().tests.forEach(invalidate);else invalidate(activeTest());changed()}}});
+document.addEventListener('change',e=>{const d=e.target.dataset;if(d?.orderSwitch){if(db.orders.some(o=>o.id===e.target.value)){db.activeId=e.target.value;selectedTestId='';renderAll();changed()}return}if(d?.deliverySelect){if(activeOrder().tests.some(t=>t.id===e.target.value)){selectedTestId=e.target.value;renderDelivery()}return}if(d?.status){const t=getTestById(d.status);if(t)t.status=e.target.value;renderTests();changed();return}if(d?.scope){const obj=getObject(d.scope,d.id);if(obj){obj[d.key]=e.target.value;if(d.scope==='control')refreshControlCard(e.target.closest('[data-control-id]'),obj);if(d.scope==='order')activeOrder().tests.forEach(invalidate);else invalidate(activeTest());changed()}}});
 document.addEventListener('click',e=>{const nav=e.target.closest('[data-nav]');if(nav){navigate(nav.dataset.nav);return}const ob=e.target.closest('[data-select-order]');if(ob){db.activeId=ob.dataset.selectOrder;selectedTestId='';renderAll();changed();return}const tb=e.target.closest('[data-select-test]');if(tb){selectedTestId=tb.dataset.selectTest;renderTests();return}const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action,o=activeOrder(),t=activeTest();
+if(a==='toggle-menu'){toggleDrawer(!document.body.classList.contains('menu-open'));return}
+if(a==='close-menu'){toggleDrawer(false);return}
 if(a.startsWith('wf-')){workflowAction(a,b);return}
 switch(a){case'new-order':{const n=newOrder();db.orders.push(n);db.activeId=n.id;selectedTestId='';activeTab='orden';renderAll();changed();toast('Nueva orden creada');break}
 case'duplicate-order':{const copy=JSON.parse(JSON.stringify(o));copy.id=uid();copy.ot=(copy.ot||'OT')+'-COPIA';copy.tests.forEach(s=>{s.id=uid();s.reportNo='';s.status='borrador';delete s.signedAt;delete s.signedBy;delete s.reviewedAt;s.controls.forEach(c=>c.id=uid());s.items.forEach(r=>r.id=uid())});db.orders.push(copy);db.activeId=copy.id;selectedTestId='';activeTab='orden';renderAll();changed();break}
@@ -377,6 +511,7 @@ case'print-single':printReport(true);break;
 }}
 );
 $('importInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>1500000){toast('Respaldo demasiado grande');e.target.value='';return}try{const d=sane(JSON.parse(await f.text()));if(!confirm('¿Importar respaldo? Reemplazará las órdenes guardadas en este dispositivo.'))return;db=d;migrateCatalog();selectedTestId='';renderAll();save();toast('Respaldo importado')}catch(err){toast('No se pudo importar: '+err.message)}finally{e.target.value=''}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('menu-open'))toggleDrawer(false)});
 window.addEventListener('resize',()=>requestAnimationFrame(fitPaper));
 // Guardar cambios pendientes al recargar, cambiar de aplicación o cerrar la pestaña.
 window.addEventListener('pagehide',flushPendingSave);
