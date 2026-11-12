@@ -75,7 +75,8 @@ function activeOrder(){return db.orders.find(o=>o.id===db.activeId)||db.orders[0
 function activeTest(){return activeOrder().tests.find(t=>t.id===selectedTestId)||activeOrder().tests[0]}
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),3200)}
 function save(){try{localStorage.setItem(STORE,JSON.stringify(db));$('saveLabel').textContent='Guardado en este dispositivo'}catch{$('saveLabel').textContent='Sin almacenamiento disponible'}}
-function changed(){server.dirty=true;clearTimeout(saveTimer);$('saveLabel').textContent='Guardando cambios…';saveTimer=setTimeout(save,180);updateStats();if(activeTab==='documento')renderPreview();if(activeTab==='servidor')renderServer()}
+function flushPendingSave(){if(saveTimer){clearTimeout(saveTimer);saveTimer=null;save()}}
+function changed(){server.dirty=true;clearTimeout(saveTimer);$('saveLabel').textContent='Guardando cambios…';saveTimer=setTimeout(()=>{saveTimer=null;save()},180);updateStats();if(activeTab==='documento')renderPreview();if(activeTab==='servidor')renderServer()}
 function field(label,key,scope,value,opts={}){const typ=opts.type||'text',wide=opts.wide?' full':'';const id=scope+'_'+key+'_'+(opts.id||'');let input;if(typ==='textarea')input=`<textarea id="${enc(id)}" rows="3" data-scope="${enc(scope)}" data-key="${enc(key)}" data-id="${enc(opts.id||'')}" placeholder="${enc(opts.placeholder||'')}">${enc(value)}</textarea>`;else input=`<input id="${enc(id)}" type="${enc(typ)}" data-scope="${enc(scope)}" data-key="${enc(key)}" data-id="${enc(opts.id||'')}" value="${enc(value)}" placeholder="${enc(opts.placeholder||'')}" ${opts.inputmode?'inputmode="'+enc(opts.inputmode)+'"':''}>`;return`<div class="field${wide}"><label for="${enc(id)}">${enc(label)}</label>${input}</div>`}
 function sectionTitle(t){return`<h3 class="subhead">${enc(t)}</h3>`}
 function renderOrders(){const a=activeOrder();$('ordersList').innerHTML=db.orders.map(o=>`<button class="order-item ${o.id===a.id?'active':''}" data-select-order="${enc(o.id)}"><strong>${enc(o.ot||'OT sin número')}</strong><span>${enc(o.workName||o.clientName||'Orden por completar')} · ${o.tests.length} ensayo(s)</span></button>`).join('')}
@@ -157,6 +158,9 @@ case'print-single':printReport(true);break;
 );
 $('importInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>1500000){toast('Respaldo demasiado grande');e.target.value='';return}try{const d=sane(JSON.parse(await f.text()));if(!confirm('¿Importar respaldo? Reemplazará las órdenes guardadas en este dispositivo.'))return;db=d;selectedTestId='';renderAll();save();toast('Respaldo importado')}catch(err){toast('No se pudo importar: '+err.message)}finally{e.target.value=''}});
 window.addEventListener('resize',()=>requestAnimationFrame(fitPaper));
+// Guardar cambios pendientes al recargar, cambiar de aplicación o cerrar la pestaña.
+window.addEventListener('pagehide',flushPendingSave);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPendingSave()});
 renderAll();save();
 </script>
 </body>
