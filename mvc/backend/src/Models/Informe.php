@@ -16,14 +16,18 @@ final class Informe {
         return $this->db->connection()->query("SELECT i.id,i.usuario_id,i.numero_informe,i.fecha_informe,i.estado,e.razon_social,COALESCE(r.estado,'borrador') AS revision_estado,r.motivo_devolucion FROM informes i JOIN empresas e ON e.id=i.empresa_id LEFT JOIN informe_revisiones r ON r.informe_id=i.id ORDER BY i.id DESC LIMIT 100")->fetchAll();
     }
     public function find(int $id): array {
-        $q=$this->db->connection()->prepare('SELECT i.id,i.usuario_id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos FROM informes i JOIN informe_datos d ON d.informe_id=i.id WHERE i.id=?');
+        $q=$this->db->connection()->prepare('SELECT i.id,i.usuario_id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos,p.rol AS autor_rol '.
+            'FROM informes i JOIN informe_datos d ON d.informe_id=i.id '.
+            'LEFT JOIN usuario_perfiles p ON p.usuario_id=i.usuario_id WHERE i.id=?');
         $q->execute([$id]);
         $row=$q->fetch();
         if (!$row) throw new RuntimeException('Informe no encontrado',404);
         $raw=$this->db->reportCrypto()->decrypt($id,(string)$row['datos']);
         $row['datos']=json_decode($raw,true) ?? [];
         $row['revision']=$this->revision->get($id,$raw);
-        $row['firma_laboratorista']=$this->firmaLaboratorista->getForUser((int)$row['usuario_id']);
+        $row['firma_laboratorista']=$row['autor_rol']==='laboratorista'
+            ? $this->firmaLaboratorista->getForUser((int)$row['usuario_id']) : null;
+        unset($row['autor_rol']);
         $row['eventos_revision']=$this->revision->events($id);
         return $row;
     }
