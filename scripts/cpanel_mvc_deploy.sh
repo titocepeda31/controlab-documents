@@ -31,6 +31,9 @@ for path in \
   mvc/backend/routes/api.php \
   mvc/backend/src/Core/Database.php \
   mvc/backend/src/Core/Http.php \
+  mvc/backend/src/Core/Access.php \
+  mvc/backend/src/Controllers/UsuarioController.php \
+  mvc/backend/src/Controllers/DestinatarioController.php \
   mvc/backend/src/Models/Empresa.php \
   mvc/backend/src/Models/Informe.php \
   mvc/backend/src/Models/Revision.php \
@@ -60,10 +63,12 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
   $cfg = require $argv[1];
   $pdo = new PDO("mysql:host=".$cfg["db_host"].";dbname=".$cfg["db_name"].";charset=utf8mb4", $cfg["db_user"], $cfg["db_pass"], [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
   $q=$pdo->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?");
-  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos"] as $table) {
+  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos","usuario_accesos","informe_destinatarios"] as $table) {
     $q->execute([$table]);
     if (!(int)$q->fetchColumn()) {fwrite(STDERR,"Falta la tabla $table. Ejecutar migraciones SQL antes de desplegar.\n");exit(2);}
   }
+  $admins=$pdo->query("SELECT COUNT(*) FROM usuario_accesos a JOIN usuarios u ON u.id=a.usuario_id WHERE a.rol='administrador' AND u.activo=1")->fetchColumn();
+  if(!(int)$admins){fwrite(STDERR,"No hay administrador autorizado. Ejecutar SQL de activación antes de desplegar.\n");exit(3);}
 ' "$PRIVATE/config.php" || { echo 'ERROR: comprobación de migración fallida; no se desplegó.' >&2; exit 1; }
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)-$$"
@@ -74,9 +79,10 @@ chmod 0700 "$BASE/controlab-mvc-backups" "$BACKUP" "$BACKUP/private" "$BACKUP/pu
 # Solo archivos gestionados: no se toca config.php ni app.php.
 BACKEND_FILES=(
   bootstrap.php routes/api.php
-  src/Core/Database.php src/Core/Http.php
+  src/Core/Database.php src/Core/Http.php src/Core/Access.php
   src/Models/Empresa.php src/Models/Informe.php src/Models/Revision.php src/Models/Usuario.php
   src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/RevisionController.php
+  src/Controllers/UsuarioController.php src/Controllers/DestinatarioController.php
   src/Middleware/Security.php
 )
 FRONTEND_FILES=(index.php .htaccess formulario.html sw.js)
