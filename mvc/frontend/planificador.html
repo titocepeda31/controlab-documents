@@ -135,7 +135,9 @@ p{margin:6px 0;color:var(--muted)}
     <div class="assignment-list" id="dayList"></div>
    </div>
    <div id="agendaView" hidden><h2>Trabajos del período</h2><p class="hint">Listado por fecha de inicio. Toca una orden para revisar su destino y participantes.</p><div class="assignment-list" id="agendaList"></div></div>
-   <div id="teamView" hidden><h2>¿Dónde está cada trabajador?</h2><p class="hint">Distribución de personal para el mes seleccionado. Los trabajos se filtran por fecha y estado.</p><div id="teamOverview"></div></div>
+   <div id="teamView" hidden><h2>¿Dónde está cada trabajador?</h2><p class="hint">Consulta quién va a cada destino en un día determinado o revisa el mes completo.</p>
+    <div class="filters" style="margin:12px 0"><label for="teamDay" style="font-weight:750">Fecha del equipo</label><input id="teamDay" type="date"><label style="display:flex;align-items:center;gap:7px"><input id="teamFullMonth" type="checkbox"> Ver mes completo</label></div>
+    <div id="teamOverview"></div></div>
    <div class="notice" id="loadNotice" role="status" aria-live="polite"></div>
   </section>
   <section class="panel" id="detailSection" hidden>
@@ -273,7 +275,8 @@ function renderAgenda(){
 }
 function renderTeam(){
  const root=$('teamOverview');root.replaceChildren();
- const found=activeJobs();
+ const day=$('teamDay').value||dateKey(new Date());
+ const found=$('teamFullMonth').checked?activeJobs():jobsForDay(day);
  for(const person of staff){
   const personJobs=found.filter(j=>j.personal.some(p=>Number(p.id)===Number(person.id)));
   if($('personFilter').value&&$('personFilter').value!==String(person.id))continue;
@@ -398,6 +401,8 @@ $('reloadBtn').addEventListener('click',()=>void load());
 $('showMonthBtn').addEventListener('click',()=>setView('agenda'));
 $('stateFilter').addEventListener('change',render);
 $('personFilter').addEventListener('change',render);
+$('teamDay').addEventListener('change',()=>{if(view==='team')renderTeam();});
+$('teamFullMonth').addEventListener('change',()=>{if(view==='team')renderTeam();});
 for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('click',()=>setView(tab.dataset.view));
 (async function init(){
  try{
@@ -410,7 +415,7 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
    const people=await request('/ot/equipo');staff=people.equipo||[];
    for(const person of staff){const opt=document.createElement('option');opt.value=String(person.id);opt.textContent=person.nombre+' · '+person.rol;$('personFilter').append(opt);}
   }
-  selected=dateKey(new Date());sessionReady=true;$('content').hidden=false;
+  selected=dateKey(new Date());$('teamDay').value=selected;sessionReady=true;$('content').hidden=false;
   await load();
  }catch(e){$('content').hidden=true;$('authError').hidden=false;$('authErrorText').textContent=e.message;}
 })();
