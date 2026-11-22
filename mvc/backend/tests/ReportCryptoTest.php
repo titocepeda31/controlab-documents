@@ -32,6 +32,13 @@ $sealedSignature=$crypto->encryptBytes(101,$signature,'firma');
 if($crypto->decryptBytes(101,$sealedSignature,'firma')!==$signature)throw new RuntimeException('La firma no se recupera');
 expectFailure(fn()=>$crypto->decryptBytes(101,$sealedSignature,'datos'),'dominio incorrecto');
 expectFailure(fn()=>$crypto->decryptBytes(102,$sealedSignature,'firma'),'firma de otro informe');
+$profileSignature=random_bytes(8192);
+$storedProfile=$crypto->encryptBytes(17,$profileSignature,'firma_laboratorista');
+if ($crypto->decryptBytes(17,$storedProfile,'firma_laboratorista')!==$profileSignature)
+    throw new RuntimeException('Firma de perfil no recuperable');
+expectFailure(fn()=>$crypto->decryptBytes(18,$storedProfile,'firma_laboratorista'),'firma de otro laboratorista');
+expectFailure(fn()=>$crypto->decryptBytes(17,$storedProfile,'firma'),'no mezclar firma de perfil con aprobación');
+
 expectFailure(fn()=>new ReportCrypto('clave-de-prueba'),'clave inválida');
 if (hash('sha256',$json)!==hash('sha256',$crypto->decrypt(101,$first))) throw new RuntimeException('La revisión perdió integridad');
 echo "OK: cifrado autenticado, JSON válido, diferentes nonces, integridad y legado\n";
