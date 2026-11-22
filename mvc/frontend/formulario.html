@@ -328,7 +328,7 @@ $('loginForm').addEventListener('submit',async e=>{
  finally{btn.disabled=false;}
 });
 $('togglePassword').addEventListener('click',()=>{const el=$('loginPassword');el.type=el.type==='password'?'text':'password';$('togglePassword').textContent=el.type==='password'?'Mostrar':'Ocultar';});
-$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){alert('No fue posible cerrar sesión: '+e.message);}});
+$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){feedback('No fue posible cerrar sesión: '+e.message,true);}});
 function getData(){const data={};$('reportForm').querySelectorAll('[name]').forEach(el=>{data[el.name]=el.value.trim();});return data;}
 function setData(data){$('reportForm').querySelectorAll('[name]').forEach(el=>{el.value=data[el.name]===undefined?'':String(data[el.name]);});updateReview();scheduleDraft();}
 function goStep(n){
@@ -367,7 +367,7 @@ for(let i=0;i<13;i++)$('retenido_'+i).addEventListener('input',computePass);
 function computeIP(){const ll=$('ll').value.trim(),lp=$('lp').value.trim();if(!ll||!lp)return;const a=parseNumber(ll),b=parseNumber(lp);if(a!==null&&b!==null)$('ip').value=String(Number((a-b).toFixed(2)));}
 $('ll').addEventListener('input',computeIP);$('lp').addEventListener('input',computeIP);
 function fillRandomData(){
- if(Object.entries(getData()).some(([k,v])=>v&&k!=='fechaRegistro')&&!confirm('Se reemplazarán los datos actuales. ¿Continuar?'))return;
+ if(Object.entries(getData()).some(([k,v])=>v&&k!=='fechaRegistro')&&!confirmInline($('demoBtn'),'Los datos actuales serán reemplazados por valores ficticios.'))return;
  const ri=(a,b)=>Math.floor(a+Math.random()*(b-a+1)),rf=(a,b,d=1)=>(a+Math.random()*(b-a)).toFixed(d);
  const lp=ri(17,25),ip=ri(4,14);const num='DEMO-'+Date.now().toString().slice(-9);
  const d={nInforme:num,muestra:'M-DEMO-'+ri(100,999),estructura:['Subbase granular','Base estabilizada','Subrasante','Terraplén'][ri(0,3)],fechaMuestreo:today(-ri(4,8)),fechaEnsayo:today(-ri(0,3)),fechaRegistro:today(),contratista:'Constructora DEMO',mandante:'Mandante DEMO',zona:'Zona Sur',predio:'Predio de Prueba '+ri(1,9),camino:'C-'+ri(10,99),sector:'Tramo '+ri(1,5),kmp:rf(.3,20,2),responsable:'Técnico DEMO',dch:rf(1.9,2.2,2),humedadProctor:rf(7,12),dcs:rf(1.7,2.1,2),metodo:['A','B','C'][ri(0,2)],cbr:rf(30,90),ll:String(lp+ip),lp:String(lp),ip:String(ip),chancado:rf(35,80),desgaste:rf(12,34),humedad:rf(6,13),aashto:'A-1-a (simulado)',usc:'GW (simulado)',observaciones:'DATOS FICTICIOS PARA PRUEBAS DEL SISTEMA. No corresponden a resultados de laboratorio ni deben utilizarse en informes técnicos reales.'};
@@ -376,7 +376,7 @@ function fillRandomData(){
  setData(d);goStep(0);showNotice($('saveResult'),'');
 }
 $('demoBtn').addEventListener('click',fillRandomData);
-$('resetBtn').addEventListener('click',()=>{if(!confirm('¿Iniciar un informe nuevo? Los pendientes de sincronización no se borrarán. El borrador actual será reemplazado.'))return;lastSavedSignature=null;lastServerId=null;editingReportId=null;$('saveBtn').textContent='Guardar informe (con o sin conexión)';setData({fechaRegistro:today()});goStep(0);showNotice($('saveResult'),'');});
+$('resetBtn').addEventListener('click',()=>{if(!confirmInline($('resetBtn'),'Se reemplazará el borrador actual. Los informes pendientes de sincronizar se conservarán.'))return;lastSavedSignature=null;lastServerId=null;editingReportId=null;$('saveBtn').textContent='Guardar informe (con o sin conexión)';setData({fechaRegistro:today()});goStep(0);showNotice($('saveResult'),'');});
 function updateReview(){const d=getData();const fields=[['N° informe','nInforme'],['Muestra','muestra'],['Contratista','contratista'],['Mandante','mandante'],['Fecha de ensayo','fechaEnsayo'],['Sector / tramo','sector'],['CBR (%)','cbr'],['Clasificación USCS','usc'],['Responsable','responsable']];$('reviewMeta').replaceChildren();fields.forEach(([label,key])=>{const node=document.createElement('div');const small=document.createElement('small');const strong=document.createElement('strong');small.textContent=label;strong.textContent=d[key]||'—';node.append(small,strong);$('reviewMeta').append(node);});$('reviewNotes').textContent=d.observaciones||'Sin observaciones.';const issues=[];if(!d.contratista)issues.push('Completa Contratista.');if(!/^\d{4}-\d{2}-\d{2}$/.test(d.fechaEnsayo||d.fechaRegistro||''))issues.push('Completa Fecha de ensayo o Fecha de registro.');$('formWarnings').hidden=!issues.length;$('formWarnings').textContent=issues.join(' ');}
 // IndexedDB mantiene borradores, historial descargado y envíos pendientes por usuario.
 const DB_NAME='demo_mecanica_suelo_offline_v1';
@@ -457,12 +457,12 @@ $('closePending').addEventListener('click',()=>showWorkspace(null));
 function renderPending(items){const list=$('pendingList');list.replaceChildren();if(!items.length){list.textContent='No hay informes pendientes. Todo lo confirmado está en MySQL.';return;}
  for(const entry of items){const row=document.createElement('div');row.className='queue-item';const meta=document.createElement('div');meta.append(node('strong',(entry.datos.nInforme||'Sin número')+' · '+(entry.datos.contratista||'Sin contratista')),node('small',new Date(entry.fecha).toLocaleString('es-CL')+' · '+(entry.lastError||'Pendiente de envío')));
  const action=document.createElement('div');action.className='queue-actions';const send=document.createElement('button');send.className='btn primary';send.textContent='Sincronizar';send.disabled=!authenticated||!navigator.onLine;send.addEventListener('click',()=>void syncPending());
- const remove=document.createElement('button');remove.className='btn danger';remove.textContent='Eliminar local';remove.addEventListener('click',async()=>{if(!confirm('¿Eliminar este informe pendiente del dispositivo? Si aún no llegó a MySQL, se perderá.'))return;await storageDel('pending',entry.key);await refreshPending();});action.append(send,remove);row.append(meta,action);list.append(row);}
+ const remove=document.createElement('button');remove.className='btn danger';remove.textContent='Eliminar local';remove.addEventListener('click',async()=>{if(!confirmInline(remove,'Eliminarás este informe local; si todavía no se sincronizó, no podrás recuperarlo.'))return;await storageDel('pending',entry.key);await refreshPending();});action.append(send,remove);row.append(meta,action);list.append(row);}
 }
 // Guardado en IndexedDB, nunca en el cache del service worker.
 async function updateLastWork(){if(!currentUid)return;try{const item=await storageGet('history',ownerKey('ultimaObra'));$('lastWorkBtn').hidden=!(item&&item.datos&&Object.keys(item.datos).length);}catch(e){$('lastWorkBtn').hidden=true;}}
 function onlyAntecedents(d){return Object.fromEntries(antecedentKeys.filter(k=>d[k]!==undefined&&d[k]!=='').map(k=>[k,d[k]]));}
-$('lastWorkBtn').addEventListener('click',async()=>{const stored=await storageGet('history',ownerKey('ultimaObra'));if(!stored)return;if(!confirm('¿Usar los antecedentes de la última obra? Se reemplazará el formulario actual. Los ensayos quedarán en blanco.'))return;lastSavedSignature=null;lastServerId=null;setData({...stored.datos,fechaRegistro:today()});goStep(0);});
+$('lastWorkBtn').addEventListener('click',async()=>{const stored=await storageGet('history',ownerKey('ultimaObra'));if(!stored)return;if(!confirmInline($('lastWorkBtn'),'Se reemplazarán los antecedentes actuales y los ensayos quedarán vacíos.'))return;lastSavedSignature=null;lastServerId=null;setData({...stored.datos,fechaRegistro:today()});goStep(0);});
 
 function appendText(el,txt){txt=txt.trim();if(!txt)return;txt=txt.replace(/\b(punto y aparte|nueva línea|salto de línea)\b/gi,'\n');el.value+=(!el.value||/\s$/.test(el.value)?'':' ')+txt;el.dispatchEvent(new Event('input',{bubbles:true}));}
 const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -476,7 +476,7 @@ else{
 }
 function stopVoice(){if(recording&&recognition)recognition.stop();}
 $('micBtn').addEventListener('click',()=>{if(!recognition)return;if(recording){stopVoice();return;}if(!window.isSecureContext){$('voiceInfo').textContent='Usa HTTPS para activar el micrófono.';return;}try{recognition.start();}catch(e){$('voiceInfo').textContent='No se pudo activar el micrófono.';}});
-$('clearNotes').addEventListener('click',()=>{if($('observaciones').value&&confirm('¿Borrar las observaciones?')){$('observaciones').value='';scheduleDraft();}});
+$('clearNotes').addEventListener('click',()=>{if($('observaciones').value&&confirmInline($('clearNotes'),'Las observaciones actuales serán eliminadas.')){$('observaciones').value='';scheduleDraft();}});
 window.addEventListener('pagehide',stopVoice);
 // Historial sencillo: buscar, copiar antecedentes o resultados; permite cache local por usuario.
 function closeHistory(){showWorkspace(null);}
@@ -533,11 +533,11 @@ async function reuseReport(id,mode,button){button.disabled=true;try{
  const key=ownerKey('informe:'+id);let cached=await storageGet('reports',key);let data=cached?.datos;
  if(authenticated&&navigator.onLine){try{const old=await apiRequest('/informes/'+id);data=old.datos||{};await storagePut('reports',{key,datos:data,fecha:new Date().toISOString()});}catch(e){if(!data)throw e;}}
  if(!data)throw new Error('Ese informe no se descargó previamente. Conéctate a internet para utilizarlo.');
- if(!confirm('¿'+(mode==='antecedentes'?'Reutilizar solo los datos de la obra':'Copiar datos generales y resultados')+'? Se reemplazará el formulario actual (no se modificará el informe anterior).'))return;
+ if(!confirmInline(button,mode==='antecedentes'?'Se reemplazarán los antecedentes; los ensayos quedarán en blanco.':'Se copiarán los antecedentes y resultados, sin el número ni las fechas del informe anterior.'))return;
  let d=mode==='antecedentes'?onlyAntecedents(data):{...data};
  for(const field of ['nInforme','muestra','fechaMuestreo','fechaEnsayo'])delete d[field];
  d.fechaRegistro=today();lastSavedSignature=null;lastServerId=null;setData(d);closeHistory();goStep(0);
- }catch(e){alert('No fue posible reutilizar el informe: '+e.message);}finally{button.disabled=false;}}
+ }catch(e){feedback('No fue posible reutilizar el informe: '+e.message,true);}finally{button.disabled=false;}}
 // La revisión siempre se hace contra el registro guardado en MySQL, nunca con el borrador local.
 function reviewLabel(state){return ({borrador:'Borrador',pendiente:'Pendiente de revisión',devuelto:'Devuelto para correcciones',aprobado:'Aprobado con firma'})[state]||'Sin revisión';}
 function stampUTC(utc){if(!utc)return '—';const d=new Date(String(utc).replace(' ','T')+'Z');return Number.isNaN(d.getTime())?String(utc):d.toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'});}
@@ -547,13 +547,13 @@ async function postReview(id,action,body={}){
  return apiRequest('/informes/'+id+'/'+action,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({...body,csrf:s.csrf})});
 }
 async function requestReview(id,button){
- if(!confirm('¿Enviar este registro guardado en MySQL a revisión? Los cambios que no hayas guardado no se incluirán.'))return;
+ if(!confirmInline(button,'Solo se enviarán los datos guardados en MySQL; los cambios sin guardar no se incluirán.'))return;
  button.disabled=true;
  try{await postReview(id,'solicitar-revision');await openHistory(reviewOnlyPending);}
- catch(e){alert('No se pudo solicitar la revisión: '+e.message);}finally{button.disabled=false;}
+ catch(e){feedback('No se pudo solicitar la revisión: '+e.message,true);}finally{button.disabled=false;}
 }
 async function editReturnedReport(id,button){
- if(!confirm('¿Cargar este informe devuelto para corregirlo? Se reemplazarán los datos del formulario actual; el informe conservará su ID en MySQL.'))return;
+ if(!confirmInline(button,'Se reemplazará el formulario actual por los datos del informe devuelto. Se conserva su ID en MySQL.'))return;
  button.disabled=true;
  try{
   const r=await apiRequest('/informes/'+id);
@@ -561,8 +561,8 @@ async function editReturnedReport(id,button){
   if(Number(r.usuario_id)!==currentUid)throw new Error('Solo el autor puede corregir el informe.');
   dataReady=false;editingReportId=id;lastSavedSignature=null;lastServerId=null;
   setData(r.datos||{});dataReady=true;$('saveBtn').textContent='Guardar correcciones del informe #'+id;
-  await persistDraft();closeHistory();goStep(0);alert('Informe #'+id+' cargado. Corrige los datos y pulsa Guardar correcciones en la etapa 4.');
- }catch(e){dataReady=true;alert('No fue posible editar: '+e.message);}finally{button.disabled=false;}
+  await persistDraft();closeHistory();goStep(0);feedback('Informe #'+id+' cargado. Corrige los datos y pulsa Guardar correcciones en la etapa 4.');
+ }catch(e){dataReady=true;feedback('No fue posible editar: '+e.message,true);}finally{button.disabled=false;}
 }
 async function saveCorrections(data){
  if(!authenticated||!navigator.onLine){showNotice($('saveResult'),'Las correcciones requieren conexión al servidor y sesión activa. Tu borrador permanece en este equipo.',true);return;}
@@ -605,19 +605,19 @@ async function openReview(id,button){
    node('p','Revisa el registro completo utilizando «Ver / imprimir» antes de aprobar.')
   );
   showWorkspace('reviewModal');
- }catch(e){alert('No fue posible abrir la revisión: '+e.message);}finally{button.disabled=false;}
+ }catch(e){feedback('No fue posible abrir la revisión: '+e.message,true);}finally{button.disabled=false;}
 }
 $('approveReport').addEventListener('click',async()=>{
  if(!reviewReportId||!signatureDrawn){showNotice($('reviewResult'),'Dibuja tu firma dentro del recuadro antes de aprobar.',true);return;}
- if(!confirm('¿Confirmas que revisaste el registro y deseas aprobarlo con tu firma visual? Esta acción no se puede deshacer.'))return;
+ if(!confirmInline($('approveReport'),'Al aprobar se bloquearán las modificaciones y se guardará tu firma visual. La acción no se puede deshacer.'))return;
  const id=reviewReportId,button=$('approveReport');button.disabled=true;
- try{await postReview(id,'aprobar',{firma:signCanvas.toDataURL('image/png')});closeReview();await openHistory(reviewOnlyPending);alert('Informe #'+id+' aprobado. Abre Historial para imprimir su copia de prueba firmada.');}
+ try{await postReview(id,'aprobar',{firma:signCanvas.toDataURL('image/png')});closeReview();await openHistory(reviewOnlyPending);feedback('Informe #'+id+' aprobado. Abre Historial para imprimir su copia de prueba firmada.');}
  catch(e){showNotice($('reviewResult'),'Error al aprobar: '+e.message,true);}finally{button.disabled=false;}
 });
 $('returnReport').addEventListener('click',async()=>{
  if(!reviewReportId)return;const motivo=$('returnReason').value.trim();
  if(motivo.length<8){showNotice($('reviewResult'),'Escribe un motivo de devolución de al menos 8 caracteres.',true);return;}
- if(!confirm('¿Devolver este informe para correcciones?'))return;
+ if(!confirmInline($('returnReport'),'El informe regresará al autor con el motivo indicado.'))return;
  const id=reviewReportId,button=$('returnReport');button.disabled=true;
  try{await postReview(id,'devolver',{motivo});closeReview();await openHistory(reviewOnlyPending);}
  catch(e){showNotice($('reviewResult'),'No fue posible devolver: '+e.message,true);}finally{button.disabled=false;}
@@ -630,7 +630,7 @@ async function printStoredReport(id,button){
   const signatureImage=$('printRevision').querySelector('img');
   if(signatureImage&&signatureImage.decode){try{await signatureImage.decode();}catch(e){throw new Error('No se pudo cargar la firma visual.');}}
   window.print();
- }catch(e){printOverride=null;alert('No fue posible imprimir el registro: '+e.message);}finally{button.disabled=false;}
+ }catch(e){printOverride=null;feedback('No fue posible imprimir el registro: '+e.message,true);}finally{button.disabled=false;}
 }
 function renderPrintReview(revision){
  const root=$('printRevision');root.replaceChildren();
