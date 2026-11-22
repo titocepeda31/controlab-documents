@@ -93,7 +93,7 @@ p{margin:6px 0;color:var(--muted)}
 </style>
 </head>
 <body>
-<header class="top"><a id="usersLink" href="./usuarios.html" hidden>Usuarios</a><div class="brand">CONTROL DE CALIDAD<small>Planificador de órdenes de trabajo</small></div>
+<header class="top"><span hidden aria-hidden="true"><a id="usersLink" href="./usuarios.html">Usuarios</a><a id="catalogLink" href="./empresas.html">Empresas</a><a id="worksLink" href="./obras.html">Obras</a><a id="servicesLink" href="./servicios.html">Servicios</a><a id="staffLink" href="./personal.html">Personal</a></span><div class="brand">CONTROL DE CALIDAD<small>Planificador de órdenes de trabajo</small></div>
  
 </header>
 <main>
@@ -628,6 +628,6 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
 })();
 </script>
 
-<script src="./tabler-shell.js?v=2" defer></script>
+<script src="./tabler-shell.js?v=3" defer></script>
 </body>
 </html>
