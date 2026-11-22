@@ -14,6 +14,7 @@ $app->post('/api/login',[$auth,'login']);
 $app->post('/api/logout',[$auth,'logout']);
 $app->get('/api/catalogo/empresas',[$catalogoOperativoController,'empresas']);
 $app->post('/api/catalogo/empresas',[$catalogoOperativoController,'crearEmpresa']);
+$app->put('/api/catalogo/empresas/{id:[0-9]+}',[$catalogoOperativoController,'editarEmpresa']);
 $app->get('/api/catalogo/obras',[$catalogoOperativoController,'obras']);
 $app->get('/api/catalogo/buscar-direccion',[$catalogoOperativoController,'buscarDireccion']);
 $app->put('/api/catalogo/obras/{id:[0-9]+}/ubicacion',[$catalogoOperativoController,'guardarUbicacion']);
