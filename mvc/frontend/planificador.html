@@ -64,6 +64,10 @@ p{margin:6px 0;color:var(--muted)}
 .field label{font-weight:750;font-size:12px;color:#3b586a}
 .field input,.field textarea,.field select{width:100%;border:1px solid #c4d3dc;background:white;border-radius:9px;padding:10px 11px;min-height:44px;min-width:0;color:var(--text)}
 .field textarea{min-height:91px;resize:vertical}
+.search-results{max-height:210px;overflow-y:auto;border:1px solid #b7cbd3;border-radius:9px;background:white;box-shadow:0 5px 14px #1a40501a;z-index:3}
+.search-results[hidden]{display:none}
+.search-results button{display:block;width:100%;text-align:left;background:white;border:0;border-bottom:1px solid #e4edef;padding:11px;cursor:pointer;color:var(--text)}
+.search-results button:hover,.search-results button:focus{background:#eaf5f3}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
 .full{grid-column:1/-1}
 .form-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
@@ -150,12 +154,12 @@ p{margin:6px 0;color:var(--muted)}
     <div class="form-grid">
      <div class="field"><label for="numero_ot">Número de OT (opcional)</label><input id="numero_ot" name="numero_ot" maxlength="40" placeholder="Automático si queda vacío"></div>
      <div class="field"><label for="empresaSearch">Buscar empresa constructora</label>
- <input id="empresaSearch" list="empresaMatches" type="search" autocomplete="off" placeholder="Escribe el nombre de la constructora">
- <datalist id="empresaMatches"></datalist>
+ <input id="empresaSearch" type="search" autocomplete="off" placeholder="Nombre, razón social o RUT" aria-controls="empresaMatches" aria-expanded="false">
+ <div id="empresaMatches" class="search-results" role="listbox" hidden></div>
  <select id="empresaCatalogo" hidden aria-label="Empresa seleccionada"><option value="">Seleccionar empresa</option></select></div>
      <div class="field"><label for="obraSearch">Buscar obra de esa empresa</label>
- <input id="obraSearch" list="obraMatches" type="search" autocomplete="off" placeholder="Escribe el nombre de la obra">
- <datalist id="obraMatches"></datalist>
+ <input id="obraSearch" type="search" autocomplete="off" placeholder="Escribe parte del nombre de la obra" aria-controls="obraMatches" aria-expanded="false">
+ <div id="obraMatches" class="search-results" role="listbox" hidden></div>
  <select id="obraCatalogo" hidden aria-label="Obra seleccionada"><option value="">Seleccionar obra</option></select></div>
      <div class="field full"><span class="hint">Selecciona una obra para completar cliente, dirección y comuna. <a href="./catalogos.html">Gestionar empresas y obras</a></span></div>
      <div class="field"><label for="cliente">Cliente / contratista *</label><input id="cliente" name="cliente" maxlength="160" required placeholder="Nombre de empresa"></div>
@@ -381,25 +385,34 @@ async function openDetail(id){
   $('detailSection').scrollIntoView({behavior:'smooth',block:'start'});
  }catch(e){notice('loadNotice',e.message,true);}
 }
+function normalizeSearch(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-CL').replace(/[^a-z0-9]+/g,' ').trim();}
+function rutSearch(value){return String(value||'').toLowerCase().replace(/[^0-9k]/g,'');}
+function matchesCompany(c,query){
+ const terms=normalizeSearch(query).split(/\s+/).filter(Boolean);
+ const name=normalizeSearch([c.razon_social,c.nombre_comercial].join(' '));
+ return (terms.length>0&&terms.every(t=>name.includes(t)))||(rutSearch(query).length>=3&&rutSearch(c.rut).includes(rutSearch(query)));
+}
+function chooseCompany(c){
+ $('empresaCatalogo').value=String(c.id);$('empresaSearch').value=c.razon_social;
+ $('empresaMatches').hidden=true;$('empresaSearch').setAttribute('aria-expanded','false');
+ $('obraSearch').value='';fillWorks(String(c.id));
+ $('cliente').value=c.razon_social;$('obra').value='';$('destino').value='';$('comuna').value='';
+}
 function fillCompanies(){
  const select=$('empresaCatalogo');select.replaceChildren();
- const matches=$('empresaMatches');matches.replaceChildren();
  const first=el('option','','Seleccionar empresa');first.value='';select.append(first);
- for(const company of companies){
+ for(const company of companies.filter(c=>Number(c.activo)===1)){
   const option=el('option','',company.razon_social);option.value=String(company.id);select.append(option);
-  const match=document.createElement('option');match.value=company.razon_social;matches.append(match);
  }
 }
 function fillWorks(companyId='',chosenId=''){
  const select=$('obraCatalogo');select.replaceChildren();
- const matches=$('obraMatches');matches.replaceChildren();
  const first=el('option','','Seleccionar obra');first.value='';select.append(first);
  for(const work of works.filter(w=>Number(w.activo)===1&&String(w.empresa_id)===String(companyId))){
-  const label=work.nombre+' · '+work.comuna;
-  const option=el('option','',label);option.value=String(work.id);select.append(option);
-  const match=document.createElement('option');match.value=label;matches.append(match);
+  const option=el('option','',work.nombre+' · '+work.comuna);option.value=String(work.id);select.append(option);
  }
  select.value=chosenId;
+ $('obraMatches').hidden=true;
 }
 function applyWork(){
  const work=works.find(w=>String(w.id)===$('obraCatalogo').value);
@@ -407,15 +420,31 @@ function applyWork(){
  $('cliente').value=work.empresa;$('obra').value=work.nombre;
  $('destino').value=work.direccion;$('comuna').value=work.comuna;
 }
+function renderMatches(inputId,rootId,items,label,choose){
+ const root=$(rootId);root.replaceChildren();
+ for(const item of items.slice(0,20)){
+  const btn=el('button','',label(item));btn.type='button';btn.setAttribute('role','option');
+  btn.addEventListener('mousedown',e=>e.preventDefault());
+  btn.addEventListener('click',()=>choose(item));root.append(btn);
+ }
+ root.hidden=items.length===0;$(inputId).setAttribute('aria-expanded',String(!root.hidden));
+}
 $('empresaSearch').addEventListener('input',()=>{
-  const chosen=companies.find(c=>c.razon_social.toLocaleLowerCase('es-CL')===$('empresaSearch').value.trim().toLocaleLowerCase('es-CL'));
-  $('empresaCatalogo').value=chosen?String(chosen.id):'';
-  $('obraSearch').value='';fillWorks($('empresaCatalogo').value);
+ const q=$('empresaSearch').value.trim();$('empresaCatalogo').value='';
+ $('obraSearch').value='';fillWorks('');$('cliente').value='';$('obra').value='';$('destino').value='';$('comuna').value='';
+ renderMatches('empresaSearch','empresaMatches',q?companies.filter(c=>Number(c.activo)===1&&matchesCompany(c,q)):[],c=>c.razon_social+(c.nombre_comercial?' · '+c.nombre_comercial:'')+(c.rut?' · '+c.rut:''),chooseCompany);
 });
 $('obraSearch').addEventListener('input',()=>{
-  const option=Array.from($('obraCatalogo').options).find(o=>o.textContent.toLocaleLowerCase('es-CL')===$('obraSearch').value.trim().toLocaleLowerCase('es-CL'));
-  $('obraCatalogo').value=option?option.value:'';
-  if(option)applyWork();
+ const q=normalizeSearch($('obraSearch').value);$('obraCatalogo').value='';
+ const available=works.filter(w=>Number(w.activo)===1&&String(w.empresa_id)===$('empresaCatalogo').value&&q.split(/\s+/).every(t=>normalizeSearch(w.nombre+' '+w.comuna).includes(t)));
+ renderMatches('obraSearch','obraMatches',q?available:[],w=>w.nombre+' · '+w.comuna,w=>{
+  $('obraCatalogo').value=String(w.id);$('obraSearch').value=w.nombre+' · '+w.comuna;
+  $('obraMatches').hidden=true;$('obraSearch').setAttribute('aria-expanded','false');applyWork();
+ });
+});
+document.addEventListener('click',e=>{
+ if(!e.target.closest('#empresaSearch,#empresaMatches'))$('empresaMatches').hidden=true;
+ if(!e.target.closest('#obraSearch,#obraMatches'))$('obraMatches').hidden=true;
 });
 function fillFieldCheckboxes(selectedIds=[]){
  const root=$('fieldChoices');root.replaceChildren();const selectedSet=new Set(selectedIds.map(Number));
