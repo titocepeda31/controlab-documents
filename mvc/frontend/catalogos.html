@@ -163,8 +163,11 @@ if(Object.hasOwn(moduleNames,activeModule)){
  tab(activeModule);
 }
 async function refresh(){
- const [c,w,p,s]=await Promise.all([request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/personal'),request('/catalogo/servicios')]);
+ const results=await Promise.allSettled([request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/personal'),request('/catalogo/servicios')]);
+ const [c,w,p,s]=results.map(x=>x.status==='fulfilled'?x.value:{});
  companies=c.empresas||[];works=w.obras||[];people=p.personal||[];services=s.servicios||[];
+ const failed=results.map((x,i)=>x.status==='rejected'?['empresas','obras','personal','servicios'][i]+': '+x.reason.message:null).filter(Boolean);
+ if(failed.length){$('accessError').hidden=false;$('accessText').textContent='Algunos catálogos no pudieron cargarse: '+failed.join(' · ');}else $('accessError').hidden=true;
  renderCompanies();renderWorks();renderPeople();renderServices();renderOptions();
 }
 function renderOptions(){
@@ -406,5 +409,5 @@ $('personalForm').addEventListener('submit',async e=>{
   if(activeModule&&Object.hasOwn(moduleNames,activeModule))tab(activeModule);
  }catch(e){$('app').hidden=true;$('accessError').hidden=false;$('accessText').textContent=e.message;}
 })();
-</script><script src="./navigation.js?v=4" defer></script>
+</script><script src="./navigation.js?v=5" defer></script>
 </body></html>
