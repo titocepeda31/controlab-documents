@@ -42,6 +42,8 @@ jobs:
       - name: Comprobar barreras de despliegue
         run: |
           set -euo pipefail
+          grep -Fq 'chmod 0644 "$PUBLIC/$rel"' scripts/cpanel_mvc_deploy.sh
+          grep -Fq 'umask 077' scripts/cpanel_mvc_deploy.sh
           grep -Fq 'data_encryption_key' scripts/cpanel_mvc_deploy.sh
           grep -Fq 'plaintextSignatures' scripts/cpanel_mvc_deploy.sh
           grep -Fq 'reportCrypto()->encrypt' mvc/backend/src/Models/Informe.php
