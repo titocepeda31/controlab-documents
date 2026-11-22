@@ -210,7 +210,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 <!-- CAPTURA MODERNA: NAVEGACION POR PANTALLAS -->
 <div class="app-view" id="appView" hidden>
- <div class="topbar"><div class="logo"><div class="logo-icon">RC</div><span>CONTROL DE CALIDAD<br><small style="color:#a8c9d1;font-weight:500">Mecánica de suelo</small></span></div><button class="menu-toggle" id="menuToggle" aria-label="Abrir menú principal" aria-controls="topActions" aria-expanded="false" type="button">☰</button><nav class="top-actions" id="topActions" aria-label="Menú principal"><span class="session-tag">● Sesión activa</span><button class="btn light" id="historyBtn" type="button">Historial</button><button class="btn light" id="reviewsBtn" type="button" hidden>Revisiones</button><button class="btn light" id="usuariosBtn" type="button" hidden>Usuarios</button><button class="btn light" id="profileFirmaBtn" type="button" hidden>Mi firma</button><button class="btn light" id="logoutBtn" type="button">Salir</button></nav></div>
+ <div class="topbar"><div class="logo"><div class="logo-icon">RC</div><span>CONTROL DE CALIDAD<br><small style="color:#a8c9d1;font-weight:500">Mecánica de suelo</small></span></div><button class="menu-toggle" id="menuToggle" aria-label="Abrir menú principal" aria-controls="topActions" aria-expanded="false" type="button">☰</button><nav class="top-actions" id="topActions" aria-label="Menú principal"><span class="session-tag">● Sesión activa</span><button class="btn light" id="historyBtn" type="button">Historial</button><button class="btn light" id="reviewsBtn" type="button" hidden>Revisiones</button><button class="btn light" id="planificadorBtn" type="button" hidden>Planificador OT</button><button class="btn light" id="usuariosBtn" type="button" hidden>Usuarios</button><button class="btn light" id="profileFirmaBtn" type="button" hidden>Mi firma</button><button class="btn light" id="logoutBtn" type="button">Salir</button></nav></div>
  <div class="connect-strip" id="editorConnection"><span class="status-dot" id="connectionDot"></span><strong id="connectionStatus">Comprobando conexión…</strong><span class="sync-pill" id="pendingCount">0 pendientes</span><button class="btn light" type="button" id="syncBtn">↻ Sincronizar</button><button class="btn light" type="button" id="pendingBtn">Ver pendientes</button><span class="sync-message" id="draftState" role="status" aria-live="polite">Borrador local preparado</span></div>
  <div class="layout" id="editorLayout">
   <aside class="side"><div class="side-head"><small>Espacio de trabajo</small><h3>Nuevo informe</h3></div>
@@ -376,7 +376,7 @@ function confirmInline(button,message){
  button.insertAdjacentElement('afterend',hint);
  return false;
 }
-function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hidden=canEdit;$('appView').hidden=!canEdit;$('reviewsBtn').hidden=!authenticated||!canReview;$('usuariosBtn').hidden=!authenticated||!canAdminUsers;$('profileFirmaBtn').hidden=!authenticated||!canUseProfileSignature;if(!canEdit){showWorkspace(null);stopVoice();}updateConnectivity();}
+function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hidden=canEdit;$('appView').hidden=!canEdit;$('reviewsBtn').hidden=!authenticated||!canReview;$('usuariosBtn').hidden=!authenticated||!canAdminUsers;$('planificadorBtn').hidden=!authenticated;$('profileFirmaBtn').hidden=!authenticated||!canUseProfileSignature;if(!canEdit){showWorkspace(null);stopVoice();}updateConnectivity();}
 function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');if(currentUid!==uid)currentSignatureData=null;currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
 async function syncAuth(){
  const r=await session();authenticated=!!r.autenticado;offlineMode=false;canReview=authenticated&&!!r.puede_revisar;canAdminUsers=authenticated&&!!r.puede_administrar_usuarios;canUseProfileSignature=authenticated&&!!r.puede_firmar_perfil;
@@ -626,6 +626,7 @@ window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('pendingModal').hi
 $('historyBtn').addEventListener('click',()=>openHistory(false));
 $('reviewsBtn').addEventListener('click',()=>openHistory(true));
 $('usuariosBtn').addEventListener('click',()=>{if(authenticated&&canAdminUsers)location.href='./usuarios.html';});
+$('planificadorBtn').addEventListener('click',()=>{if(authenticated)location.href='./planificador.html';});
 $('reuseQuickBtn').addEventListener('click',()=>openHistory(false));
 $('historySearch').addEventListener('input',renderHistory);
 async function openHistory(onlyPending=false){
