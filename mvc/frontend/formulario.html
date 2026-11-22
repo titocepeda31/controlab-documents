@@ -522,6 +522,7 @@ async function storagePut(store,value){
 async function storageUnwrap(store,item){
  if(!item)return null;
  if(item.secureVersion!==1){
+  if(item.secureVersion!=null)throw new Error('Versión de cifrado local no reconocida. No se modificó el registro.');
   // Migración: jamás devolver a la aplicación un registro legado sin re-cifrarlo.
   await storagePut(store,item);
   return item;
@@ -537,13 +538,13 @@ async function storageUnwrap(store,item){
  }catch(e){throw new Error('No se pudo verificar el cifrado local; no se borraron los datos.');}
 }
 async function storageGet(store,key){return storageUnwrap(store,await rawStorageGet(store,key));}
-async function storageAll(store){const rows=await rawStorageAll(store);return Promise.all(rows.map(item=>storageUnwrap(store,item)));}
+async function storageAll(store){const rows=await rawStorageAll(store);return Promise.all(rows.filter(item=>currentUid&&Number(item.uid??String(item.key||'').split(':')[0])===currentUid).map(item=>storageUnwrap(store,item)));}
 async function storageDel(store,key){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
 async function encryptLegacyLocalData(){
  // Cifrar también registros anteriores que todavía no haya abierto un usuario.
  for(const store of ['drafts','pending','history','reports']){
   for(const entry of await rawStorageAll(store)){
-   if(entry.secureVersion!==1)await storagePut(store,entry);
+   if(entry.secureVersion==null)await storagePut(store,entry);
   }
  }
 }
