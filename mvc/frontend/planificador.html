@@ -169,9 +169,8 @@ p{margin:6px 0;color:var(--muted)}
      <div class="field full"><span class="hint">Selecciona una obra para completar cliente, dirección y comuna. <a href="./catalogos.html?modulo=obras">Gestionar empresas y obras</a></span></div>
      <div class="field"><label for="cliente">Cliente / contratista *</label><input id="cliente" name="cliente" maxlength="160" required placeholder="Nombre de empresa"></div>
      <div class="field"><label for="obra">Obra o proyecto *</label><input id="obra" name="obra" maxlength="180" required placeholder="Ej.: Camino forestal, sector 3"></div>
-     <div class="field"><label for="actividad">Trabajo a realizar *</label><input id="actividad" name="actividad" maxlength="200" required placeholder="Ej.: Ensayo de densidad in situ"></div>
      <div class="field full">
-      <label>Servicios solicitados y cantidades</label>
+      <label>Servicios a realizar *</label>
       <div class="hint">Selecciona los servicios registrados en el catálogo. Los precios y cobros se agregarán después. <a href="./catalogos.html?modulo=servicios">Administrar servicios</a>.</div>
       <div id="otServicios" class="service-lines"></div>
       <button type="button" class="btn" id="addOtServicio" style="margin-top:8px">+ Agregar servicio</button>
@@ -539,7 +538,7 @@ function openForm(record=null){
  $('empresaSearch').value=linked?linked.empresa:'';
  fillWorks($('empresaCatalogo').value,linked?String(linked.id):'');
  $('obraSearch').value=linked?linked.nombre+' · '+linked.comuna:'';
- for(const key of ['numero_ot','cliente','obra','actividad','destino','comuna','estado','prioridad','observaciones']){
+ for(const key of ['numero_ot','cliente','obra','destino','comuna','estado','prioridad','observaciones']){
   if(record&&record[key]!==undefined)$(key).value=record[key]||'';
  }
  if(record){$('inicio').value=record.inicio.slice(0,16).replace(' ','T');$('fin').value=record.fin.slice(0,16).replace(' ','T');}
@@ -555,11 +554,19 @@ function openForm(record=null){
 }
 function formPayload(){
  const data={};
- for(const name of ['numero_ot','cliente','obra','actividad','destino','comuna','inicio','fin','estado','prioridad','observaciones'])data[name]=$(name).value.trim();
+ for(const name of ['numero_ot','cliente','obra','destino','comuna','inicio','fin','estado','prioridad','observaciones'])data[name]=$(name).value.trim();
  data.personal=Array.from($('teamChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
  data.personal_terreno_ids=Array.from($('fieldChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
  data.obra_id=$('obraCatalogo').value?Number($('obraCatalogo').value):null;
  data.servicios=getOtServicios();
+ if(!data.servicios.length)throw new Error('Agrega al menos un servicio a realizar.');
+ const names=data.servicios.map(item=>{
+  const service=services.find(s=>Number(s.id)===item.servicio_id);
+  if(!service)throw new Error('El servicio seleccionado no existe en el catálogo.');
+  return service.nombre;
+ });
+ // Mantener compatibilidad con el campo actividad requerido por la API.
+ data.actividad=names.join(', ').slice(0,200);
  if(editingId!==null)data.version=editingVersion;
  return data;
 }
