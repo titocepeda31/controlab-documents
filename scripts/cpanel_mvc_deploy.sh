@@ -44,7 +44,9 @@ for path in \
   mvc/frontend/index.php \
   mvc/frontend/.htaccess \
   mvc/frontend/formulario.html \
-  mvc/frontend/sw.js
+  mvc/frontend/sw.js \
+  mvc/frontend/manifest.json \
+  mvc/frontend/icon.svg
   do
     [[ -f "$REPO/$path" && ! -L "$REPO/$path" ]] || {
       echo "ERROR: falta o es enlace: $path" >&2; exit 1;
@@ -91,7 +93,7 @@ BACKEND_FILES=(
   src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/RevisionController.php
   src/Middleware/Security.php
 )
-FRONTEND_FILES=(index.php .htaccess formulario.html sw.js)
+FRONTEND_FILES=(index.php .htaccess formulario.html sw.js manifest.json icon.svg)
 
 for rel in "${BACKEND_FILES[@]}"; do
   [[ -f "$PRIVATE/$rel" ]] && { mkdir -p "$BACKUP/private/$(dirname "$rel")"; cp -p "$PRIVATE/$rel" "$BACKUP/private/$rel"; }
