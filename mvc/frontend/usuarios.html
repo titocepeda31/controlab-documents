@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#10283d">
+<title>Usuarios | Controlab</title>
+<style>
+:root{--navy:#10283d;--accent:#087d70;--bg:#f3f6f8;--border:#d7e2e9;--muted:#5e7485;--red:#b1273c}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:#173246;font:15px/1.5 system-ui,-apple-system,Arial,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:wait}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #7cd4c7;outline-offset:2px}
+.header{background:var(--navy);color:#fff;padding:18px max(20px,calc((100vw - 1100px)/2));display:flex;justify-content:space-between;gap:16px;align-items:center}
+.brand{font-weight:800;letter-spacing:.5px}.brand small{display:block;font-weight:500;letter-spacing:0;color:#b7cddc}
+main{max-width:1100px;margin:auto;padding:26px 17px 65px}
+h1{margin:0 0 7px;font-size:clamp(25px,5vw,35px)}h2{font-size:20px;margin:0 0 13px}p{margin:5px 0 14px;color:var(--muted)}
+.panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;margin:18px 0;box-shadow:0 5px 24px #1931490c}
+.btn{border:1px solid var(--border);border-radius:10px;padding:10px 15px;background:#fff;color:#19384b;font-weight:700;min-height:41px}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.danger{color:var(--red);border-color:#f1b9c2;background:#fff8f8}
+.btn:focus-visible{outline:3px solid #8cd5d0}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:13px;font-weight:700;color:#365469}
+.field input,.field select{border-radius:10px;border:1px solid #bdccd6;background:#fff;padding:12px;min-height:46px;width:100%;color:#173246}
+.helper{font-size:12px;color:var(--muted);margin:4px 0 12px}
+.notice{font-size:14px;border-radius:9px;margin:13px 0;padding:12px;border:1px solid #b8dacf;color:#116658;background:#e8f7f1;white-space:pre-wrap}
+.notice.error{border-color:#efadb9;background:#fff0f2;color:#a81c30}.notice:empty{display:none}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.toolbar input{width:min(100%,320px);min-height:41px;padding:10px;border:1px solid #c2d1dc;border-radius:10px}
+.user-list{display:grid;gap:12px;margin-top:14px}
+.user-card{padding:15px;border:1px solid #d7e2e9;border-radius:11px;display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.user-card strong{display:block;font-size:16px}.user-card small{display:block;color:#5e7485;margin-top:3px}
+.user-actions{display:flex;gap:7px;flex-wrap:wrap}.pill{font-size:12px;display:inline-flex;align-items:center;border-radius:22px;background:#e5f4f1;color:#17665e;font-weight:750;padding:4px 9px}
+.pill.off{background:#f2eef0;color:#725968}
+.actions{margin-top:18px}
+.info{border-left:3px solid var(--accent);padding:9px 12px;background:#eef8f5;color:#43635e;font-size:13px;border-radius:4px}
+.bad{border-color:#edb5bd}
+@media(max-width:650px){.header{padding:15px}.brand{font-size:14px}.panel{padding:16px}.grid{grid-template-columns:1fr}.user-actions{width:100%}.user-actions .btn{flex:1}.toolbar input{width:100%}}
+</style>
+</head>
+<body>
+<header class="header"><div class="brand">CONTROL DE CALIDAD<small>Administración de usuarios · Forestal 3M</small></div><a href="./formulario.html" class="btn" style="text-decoration:none">← Formulario</a></header>
+<main>
+ <span style="color:var(--accent);font-size:12px;font-weight:800;letter-spacing:1px">CONTROLAB · ACCESO RESTRINGIDO</span>
+ <h1>Administrar usuarios</h1>
+ <p>Crea cuentas individuales y controla quién puede trabajar en la plataforma. Esta página requiere conexión y permisos de administrador.</p>
+ <div class="panel" id="denied" hidden><h2>Acceso restringido</h2><p id="deniedText"></p><a href="./formulario.html" class="btn">Volver al formulario</a></div>
+ <div id="adminContent" hidden>
+  <div class="panel">
+   <h2>Crear usuario</h2>
+   <div class="info">Administrador: administra usuarios y consulta informes. Laboratorista: registra ensayos y utiliza su firma visual. Digitador: ingresa datos e informes, sin acceso a usuarios ni firmas de laboratorista.</div>
+   <form id="createForm" autocomplete="off">
+    <div class="grid" style="margin-top:16px">
+     <div class="field"><label for="createName">Nombre completo</label><input id="createName" required maxlength="160" placeholder="Nombre y apellido"></div>
+     <div class="field"><label for="createEmail">Correo electrónico</label><input id="createEmail" type="email" required maxlength="180" autocapitalize="none" autocomplete="off" placeholder="usuario@empresa.cl"></div>
+     <div class="field"><label for="createRole">Perfil</label><select id="createRole"><option value="laboratorista">Laboratorista</option><option value="digitador">Digitador</option><option value="administrador">Administrador</option></select></div>
+     <div class="field"><label for="createPassword">Contraseña inicial (mínimo 12 caracteres)</label><input id="createPassword" type="password" required minlength="12" maxlength="128" autocomplete="new-password" placeholder="Contraseña temporal"></div>
+    </div>
+    <div class="row actions"><button class="btn" id="generatePassword" type="button">Generar contraseña segura</button><button class="btn" id="showCreatePassword" type="button">Mostrar contraseña</button><button class="btn primary" id="createBtn" type="submit">Crear usuario</button></div>
+    <div class="helper">Entrega la contraseña al trabajador por un canal privado. No se envía por correo ni queda guardada en esta página.</div>
+    <div id="createNotice" role="status" aria-live="polite"></div>
+   </form>
+  </div>
+  <div class="panel">
+   <div class="toolbar"><h2>Usuarios registrados</h2><input id="search" type="search" placeholder="Buscar nombre o correo" aria-label="Buscar usuario"></div>
+   <p id="count" class="helper"></p>
+   <div id="userList" class="user-list" aria-live="polite"></div>
+   <div id="listNotice" role="status" aria-live="polite"></div>
+  </div>
+  <section class="panel" id="editSection" hidden>
+   <h2 id="editTitle">Editar usuario</h2>
+   <p>Modificar un perfil o desactivar el acceso no borra los informes existentes.</p>
+   <form id="editForm">
+    <div class="grid">
+     <div class="field"><label for="editName">Nombre</label><input id="editName" required maxlength="160"></div>
+     <div class="field"><label for="editRole">Perfil</label><select id="editRole"><option value="administrador">Administrador</option><option value="laboratorista">Laboratorista</option><option value="digitador">Digitador</option></select></div>
+    </div>
+    <div class="row" style="margin-top:15px"><label><input type="checkbox" id="editActive"> Cuenta activa</label></div>
+    <div class="row actions"><button class="btn primary" id="saveEdit" type="submit">Guardar cambios</button><button class="btn" id="cancelEdit" type="button">Cancelar</button></div>
+    <div id="editNotice" role="status" aria-live="polite"></div>
+   </form>
+  </section>
+  <section class="panel" id="passwordSection" hidden>
+   <h2 id="passwordTitle">Restablecer contraseña</h2>
+   <p>La contraseña anterior dejará de funcionar y las sesiones anteriores se cerrarán automáticamente.</p>
+   <form id="passwordForm">
+    <div class="field"><label for="resetPassword">Nueva contraseña (mínimo 12 caracteres)</label><input id="resetPassword" type="password" minlength="12" maxlength="128" required autocomplete="new-password"></div>
+    <div class="row actions"><button class="btn" id="generateResetPassword" type="button">Generar contraseña</button><button class="btn" id="showResetPassword" type="button">Mostrar</button><button class="btn primary" id="savePassword" type="submit">Restablecer contraseña</button><button class="btn" id="cancelPassword" type="button">Cancelar</button></div>
+    <div id="passwordNotice" role="status" aria-live="polite"></div>
+   </form>
+  </section>
+ </div>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const API='./api';
+let users=[],selectedId=null,resetId=null,currentAdminId=null;
+function notice(id,message,error=false){const el=$(id);el.textContent=message;el.className=message?'notice'+(error?' error':''):'';}
+async function request(path,opts={}){
+ const controller=new AbortController(),t=setTimeout(()=>controller.abort(),20000);
+ try{
+  const resp=await fetch(API+path,{...opts,signal:controller.signal,cache:'no-store',credentials:'same-origin'});
+  const body=await resp.text();
+  let parsed;
+  try{parsed=JSON.parse(body);}catch(e){throw new Error('El servidor no respondió en JSON (HTTP '+resp.status+')');}
+  if(!resp.ok)throw new Error((parsed.error||'Error HTTP '+resp.status)+(parsed.referencia?' (referencia '+parsed.referencia+')':''));
+  return parsed;
+ }catch(e){if(controller.signal.aborted)throw new Error('El servidor no respondió. Comprueba tu conexión.');throw e;}
+ finally{clearTimeout(t);}
+}
+async function session(){return request('/session',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:'{}'});}
+async function mutate(path,method,obj){const r=await session();if(!r.autenticado||!r.puede_administrar_usuarios)throw new Error('La sesión de administrador expiró. Inicia sesión nuevamente.');return request(path,{method,headers:{'Content-Type':'application/json','X-CSRF-Token':r.csrf},body:JSON.stringify({...obj,csrf:r.csrf})});}
+function securePassword(){
+ const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%+-_';
+ const bytes=new Uint8Array(22);crypto.getRandomValues(bytes);
+ return Array.from(bytes,x=>chars[x%chars.length]).join('');
+}
+function fillPassword(id){$(id).value=securePassword();$(id).type='text';}
+function togglePassword(id,button){const el=$(id);el.type=el.type==='password'?'text':'password';button.textContent=el.type==='password'?'Mostrar contraseña':'Ocultar contraseña';}
+$('generatePassword').addEventListener('click',()=>fillPassword('createPassword'));
+$('generateResetPassword').addEventListener('click',()=>fillPassword('resetPassword'));
+$('showCreatePassword').addEventListener('click',e=>togglePassword('createPassword',e.currentTarget));
+$('showResetPassword').addEventListener('click',e=>togglePassword('resetPassword',e.currentTarget));
+async function reload(){
+ const result=await request('/usuarios');users=result.usuarios||[];
+ renderList();
+}
+const roleNames={administrador:'Administrador',laboratorista:'Laboratorista',digitador:'Digitador'};
+function renderList(){
+ const q=$('search').value.trim().toLocaleLowerCase('es-CL');
+ const list=$('userList');list.replaceChildren();
+ const items=users.filter(u=>[u.nombre||'',u.email||'',roleNames[u.rol]||''].join(' ').toLocaleLowerCase('es-CL').includes(q));
+ $('count').textContent=users.length+' usuarios registrados';
+ if(!items.length){list.textContent='No se encontraron usuarios.';return;}
+ for(const user of items){
+  const item=document.createElement('article');item.className='user-card';
+  const meta=document.createElement('div');
+  const title=document.createElement('strong');title.textContent=user.nombre||'Sin perfil asignado';
+  const small=document.createElement('small');small.textContent=user.email+' · '+(roleNames[user.rol]||'Sin perfil');
+  const status=document.createElement('span');status.className='pill'+(Number(user.activo)?'':' off');status.textContent=Number(user.activo)?'Activo':'Inactivo';
+  meta.append(title,small,status);
+  const actions=document.createElement('div');actions.className='user-actions';
+  const edit=document.createElement('button');edit.className='btn';edit.textContent='Editar';edit.type='button';edit.addEventListener('click',()=>editUser(user.id));
+  const reset=document.createElement('button');reset.className='btn';reset.textContent='Cambiar clave';reset.type='button';reset.addEventListener('click',()=>resetUser(user.id));
+  actions.append(edit,reset);item.append(meta,actions);list.append(item);
+ }
+}
+function editUser(id){
+ const user=users.find(x=>Number(x.id)===Number(id));if(!user)return;
+ selectedId=Number(id);$('editTitle').textContent='Editar: '+user.email;
+ $('editName').value=user.nombre||'';$('editRole').value=user.rol||'laboratorista';
+ $('editActive').checked=Number(user.activo)===1;
+ $('editSection').hidden=false;$('passwordSection').hidden=true;notice('editNotice','');
+ $('editSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetUser(id){
+ const user=users.find(x=>Number(x.id)===Number(id));if(!user)return;
+ resetId=Number(id);$('passwordTitle').textContent='Cambiar clave: '+user.email;
+ $('resetPassword').value='';$('resetPassword').type='password';
+ $('passwordSection').hidden=false;$('editSection').hidden=true;notice('passwordNotice','');
+ $('passwordSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('cancelEdit').addEventListener('click',()=>{$('editSection').hidden=true;selectedId=null;});
+$('cancelPassword').addEventListener('click',()=>{$('passwordSection').hidden=true;resetId=null;});
+$('search').addEventListener('input',renderList);
+$('createForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('createBtn');btn.disabled=true;notice('createNotice','');
+ try{
+  await mutate('/usuarios','POST',{nombre:$('createName').value.trim(),email:$('createEmail').value.trim(),rol:$('createRole').value,clave:$('createPassword').value});
+  $('createForm').reset();$('createPassword').type='password';
+  notice('createNotice','✓ Usuario creado. Entrega la contraseña inicial de manera privada.');
+  await reload();
+ }catch(err){notice('createNotice',err.message,true);}finally{btn.disabled=false;}
+});
+$('editForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!selectedId)return;const btn=$('saveEdit');btn.disabled=true;
+ try{
+  await mutate('/usuarios/'+selectedId,'PATCH',{nombre:$('editName').value.trim(),rol:$('editRole').value,activo:$('editActive').checked});
+  notice('editNotice','✓ Perfil actualizado.');await reload();
+  if(selectedId===currentAdminId){const s=await session();if(!s.puede_administrar_usuarios){location.replace('./formulario.html');return;}}
+ }catch(err){notice('editNotice',err.message,true);}finally{btn.disabled=false;}
+});
+$('passwordForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!resetId)return;const btn=$('savePassword');btn.disabled=true;
+ try{
+  await mutate('/usuarios/'+resetId+'/restablecer-clave','POST',{clave:$('resetPassword').value});
+  $('resetPassword').value='';
+  notice('passwordNotice','✓ Contraseña restablecida. Entrega la nueva clave por un canal seguro.');
+  if(resetId===currentAdminId){location.replace('./formulario.html');return;}
+ }catch(err){notice('passwordNotice',err.message,true);}finally{btn.disabled=false;}
+});
+(async()=>{
+ try{
+  const s=await session();
+  if(!s.autenticado||!s.puede_administrar_usuarios){
+   $('deniedText').textContent=s.autenticado?'Solo un administrador puede administrar usuarios.':'Inicia sesión como administrador desde el formulario.';
+   $('denied').hidden=false;return;
+  }
+  currentAdminId=Number(s.usuario_id);
+  $('adminContent').hidden=false;
+  await reload();
+ }catch(e){$('denied').hidden=false;$('deniedText').textContent='No se pudo consultar el servidor: '+e.message;}
+})();
+</script>
+</body>
+</html>
