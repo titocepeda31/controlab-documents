@@ -17,7 +17,7 @@ const caches={
   return {
    async addAll(requests){for(const req of requests)store.set(keyOf(req),new Response('cached '+keyOf(req)));},
    async put(req,response){store.set(keyOf(req),response);},
-   async match(req){return store.get(keyOf(req));}
+   async match(req){const response=store.get(keyOf(req));return response?response.clone():undefined;}
   };
  },
  async keys(){return [...names.keys()];},
