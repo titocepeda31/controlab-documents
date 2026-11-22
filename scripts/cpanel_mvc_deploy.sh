@@ -37,10 +37,12 @@ for path in \
   mvc/backend/src/Models/LaboratoristaFirma.php \
   mvc/backend/src/Models/Revision.php \
   mvc/backend/src/Models/Usuario.php \
+  mvc/backend/src/Models/OrdenTrabajo.php \
   mvc/backend/src/Controllers/AuthController.php \
   mvc/backend/src/Controllers/EmpresaController.php \
   mvc/backend/src/Controllers/InformeController.php \
   mvc/backend/src/Controllers/UsuariosController.php \
+  mvc/backend/src/Controllers/OrdenTrabajoController.php \
   mvc/backend/src/Controllers/LaboratoristaFirmaController.php \
   mvc/backend/src/Controllers/RevisionController.php \
   mvc/backend/src/Middleware/Security.php \
@@ -48,6 +50,7 @@ for path in \
   mvc/frontend/.htaccess \
   mvc/frontend/formulario.html \
   mvc/frontend/usuarios.html \
+  mvc/frontend/planificador.html \
   mvc/frontend/sw.js \
   mvc/frontend/manifest.json \
   mvc/frontend/icon.svg
@@ -67,7 +70,7 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
   $cfg = require $argv[1];
   $pdo = new PDO("mysql:host=".$cfg["db_host"].";dbname=".$cfg["db_name"].";charset=utf8mb4", $cfg["db_user"], $cfg["db_pass"], [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
   $q=$pdo->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?");
-  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos","laboratorista_firmas","usuario_perfiles"] as $table) {
+  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos","laboratorista_firmas","usuario_perfiles","ot_ordenes","ot_asignaciones","ot_eventos"] as $table) {
     $q->execute([$table]);
     if (!(int)$q->fetchColumn()) {fwrite(STDERR,"Falta la tabla $table. Ejecutar migraciones SQL antes de desplegar.\n");exit(2);}
   }
@@ -95,11 +98,11 @@ chmod 0700 "$BASE/controlab-mvc-backups" "$BACKUP" "$BACKUP/private" "$BACKUP/pu
 BACKEND_FILES=(
   bootstrap.php routes/api.php
   src/Core/Database.php src/Core/Http.php src/Core/ReportCrypto.php
-  src/Models/Empresa.php src/Models/Informe.php src/Models/LaboratoristaFirma.php src/Models/Revision.php src/Models/Usuario.php
-  src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php
+  src/Models/Empresa.php src/Models/Informe.php src/Models/LaboratoristaFirma.php src/Models/Revision.php src/Models/Usuario.php src/Models/OrdenTrabajo.php
+  src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/OrdenTrabajoController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php
   src/Middleware/Security.php
 )
-FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html sw.js manifest.json icon.svg)
+FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html planificador.html sw.js manifest.json icon.svg)
 
 for rel in "${BACKEND_FILES[@]}"; do
   [[ -f "$PRIVATE/$rel" ]] && { mkdir -p "$BACKUP/private/$(dirname "$rel")"; cp -p "$PRIVATE/$rel" "$BACKUP/private/$rel"; }
