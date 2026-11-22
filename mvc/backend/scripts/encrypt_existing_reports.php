@@ -34,6 +34,22 @@ $column = $pdo->query("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TA
 if (!in_array(strtolower((string)$column), ['mediumtext','longtext'], true)) {
     throw new RuntimeException('La columna informe_datos.datos debe ser MEDIUMTEXT o LONGTEXT antes de cifrar para soportar la expansión de base64');
 }
+$signatureColumn = $pdo->query("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='informe_revisiones' AND COLUMN_NAME='firma_png'")->fetchColumn();
+if (!in_array(strtolower((string)$signatureColumn), ['mediumblob','longblob'], true)) {
+    throw new RuntimeException('La columna informe_revisiones.firma_png debe ser MEDIUMBLOB o LONGBLOB para cifrar firmas');
+}
+$signatureRows = $pdo->query("SELECT informe_id,firma_png FROM informe_revisiones WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0 ORDER BY informe_id")->fetchAll();
+$legacySignatures = 0;
+foreach($signatureRows as $signatureRow) {
+    $id=(int)$signatureRow['informe_id'];
+    $bytes=(string)$signatureRow['firma_png'];
+    if (Demo\\Core\\ReportCrypto::isEncrypted($bytes)) {
+        $crypto->decryptBytes($id,$bytes,'firma');
+    } else {
+        if (substr($bytes,0,8)!=="\\x89PNG\\r\\n\\x1a\\n") throw new RuntimeException("Firma previa inválida en informe $id");
+        $legacySignatures++;
+    }
+}
 $rows = $pdo->query("SELECT d.informe_id,d.datos,r.hash_datos,r.estado FROM informe_datos d LEFT JOIN informe_revisiones r ON r.informe_id=d.informe_id ORDER BY d.informe_id")->fetchAll();
 $legacy = 0;
 foreach ($rows as $row) {
@@ -79,6 +95,29 @@ foreach ($rows as $row) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     }
+}
+$signatureSelect=$pdo->prepare("SELECT firma_png FROM informe_revisiones WHERE informe_id=? FOR UPDATE");
+$signatureUpdate=$pdo->prepare("UPDATE informe_revisiones SET firma_png=? WHERE informe_id=?");
+$updatedSignatures=0;
+foreach($signatureRows as $row) {
+    $id=(int)$row['informe_id'];
+    $pdo->beginTransaction();
+    try {
+        $signatureSelect->execute([$id]);
+        $current=$signatureSelect->fetchColumn();
+        $signatureSelect->closeCursor();
+        if(!is_string($current)||$current===''){throw new RuntimeException("La firma del informe $id cambió durante la migración");}
+        if(Demo\\Core\\ReportCrypto::isEncrypted($current)) {
+            $crypto->decryptBytes($id,$current,'firma');
+        } else {
+            if(substr($current,0,8)!=="\\x89PNG\\r\\n\\x1a\\n")throw new RuntimeException("Firma previa inválida en informe $id");
+            $encrypted=$crypto->encryptBytes($id,$current,'firma');
+            if($crypto->decryptBytes($id,$encrypted,'firma')!==$current)throw new RuntimeException("Error verificando firma $id");
+            $signatureUpdate->execute([$encrypted,$id]);
+            $updatedSignatures++;
+        }
+        $pdo->commit();
+    }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
 }
 $remaining = (int)$pdo->query("SELECT COUNT(*) FROM informe_datos WHERE datos NOT LIKE 'enc:v1:%'")->fetchColumn();
 fwrite(STDOUT, "Cifrados nuevos: $updated; restantes sin cifrar: $remaining\n");
