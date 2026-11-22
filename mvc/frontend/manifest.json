@@ -1,0 +1,19 @@
+{
+  "name": "Controlab · Registro de Calidad",
+  "short_name": "Controlab",
+  "description": "Formulario de mecánica de suelo con guardado local y sincronización posterior.",
+  "id": "/demo/formulario.html",
+  "start_url": "/demo/formulario.html",
+  "scope": "/demo/",
+  "display": "standalone",
+  "background_color": "#f3f6f8",
+  "theme_color": "#10283d",
+  "icons": [
+    {
+      "src": "/demo/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
