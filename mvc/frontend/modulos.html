@@ -7,10 +7,10 @@
 <a class="tile" href="./planificador.html"><span class="icon">📅</span><strong>Órdenes de trabajo y planificación</strong><small>Crear OT, seleccionar servicios, asignar equipos y revisar el calendario.</small></a>
 <a class="tile" href="./formulario.html"><span class="icon">📄</span><strong>Informes</strong><small>Registro y gestión de informes de laboratorio.</small></a>
 <a class="tile" id="usersTile" href="./usuarios.html" hidden><span class="icon">🔐</span><strong>Usuarios</strong><small>Administrar cuentas y accesos.</small></a>
-<a class="tile admin" href="./catalogos.html?modulo=empresas"><span class="icon">🏢</span><strong>Empresas</strong><small>Constructoras, RUT y contactos.</small></a>
-<a class="tile admin" href="./catalogos.html?modulo=obras"><span class="icon">🏗️</span><strong>Obras</strong><small>Obras por empresa, direcciones, comunas y mapa.</small></a>
-<a class="tile admin" href="./catalogos.html?modulo=servicios"><span class="icon">🧪</span><strong>Servicios</strong><small>Catálogo de ensayos y unidades de medida.</small></a>
-<a class="tile admin" href="./catalogos.html?modulo=personal"><span class="icon">👷</span><strong>Personal de terreno</strong><small>Trabajadores, funciones y estado.</small></a>
+<a class="tile admin" href="./empresas.html"><span class="icon">🏢</span><strong>Empresas</strong><small>Constructoras, RUT y contactos.</small></a>
+<a class="tile admin" href="./obras.html"><span class="icon">🏗️</span><strong>Obras</strong><small>Obras por empresa, direcciones, comunas y mapa.</small></a>
+<a class="tile admin" href="./servicios.html"><span class="icon">🧪</span><strong>Servicios</strong><small>Catálogo de ensayos y unidades de medida.</small></a>
+<a class="tile admin" href="./personal.html"><span class="icon">👷</span><strong>Personal de terreno</strong><small>Trabajadores, funciones y estado.</small></a>
 </div><div class="notice" id="status">Comprobando permisos…</div></main>
 <script>
 (async()=>{try{const r=await fetch('./api/session',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:'{}'});const s=await r.json();if(!r.ok||!s.autenticado)throw Error('Inicia sesión desde Informes para acceder a los módulos.');const manager=['administrador','administrativo'].includes(s.rol);for(const a of document.querySelectorAll('.admin'))a.hidden=!manager;document.getElementById('usersTile').hidden=s.rol!=='administrador';document.getElementById('status').textContent=manager?'Acceso administrativo habilitado.':'Puedes acceder a la planificación asignada y a los informes según tu perfil.';}catch(e){for(const a of document.querySelectorAll('.admin'))a.hidden=true;document.getElementById('status').textContent=e.message;}})();
