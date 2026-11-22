@@ -716,6 +716,87 @@ async function saveCorrections(data){
  }catch(e){showNotice($('saveResult'),'No fue posible guardar correcciones: '+e.message,true);}finally{btn.disabled=false;}
 }
 
+// La firma visual es un atributo privado del perfil, separado de la aprobación de informes.
+const profileCanvas=$('profileFirmaCanvas'),profileContext=profileCanvas.getContext('2d');
+function profilePoint(e){const r=profileCanvas.getBoundingClientRect();return {x:(e.clientX-r.left)*profileCanvas.width/r.width,y:(e.clientY-r.top)*profileCanvas.height/r.height};}
+function clearProfileDrawing(){profileContext.clearRect(0,0,profileCanvas.width,profileCanvas.height);profileSignatureDrawn=false;profilePenDown=false;}
+profileCanvas.addEventListener('pointerdown',e=>{e.preventDefault();profileCanvas.setPointerCapture(e.pointerId);profilePenDown=true;const p=profilePoint(e);profileContext.beginPath();profileContext.moveTo(p.x,p.y);});
+profileCanvas.addEventListener('pointermove',e=>{if(!profilePenDown)return;e.preventDefault();const p=profilePoint(e);profileContext.strokeStyle='#172c3b';profileContext.lineWidth=3.5;profileContext.lineCap='round';profileContext.lineJoin='round';profileContext.lineTo(p.x,p.y);profileContext.stroke();profileSignatureDrawn=true;});
+profileCanvas.addEventListener('pointerup',()=>{profilePenDown=false;});
+profileCanvas.addEventListener('pointercancel',()=>{profilePenDown=false;});
+$('clearProfileFirma').addEventListener('click',()=>{clearProfileDrawing();$('profileFirmaFile').value='';});
+function renderProfileFirma(){
+ $('savedFirmaBox').hidden=!currentSignatureData;
+ $('profileFirmaEmpty').hidden=!!currentSignatureData;
+ $('deleteProfileFirma').hidden=!currentSignatureData;
+ if(currentSignatureData)$('savedFirmaImg').src=currentSignatureData;
+ else $('savedFirmaImg').removeAttribute('src');
+}
+async function loadProfileFirma(){
+ if(!currentUid)return;
+ if(authenticated&&navigator.onLine){
+  const r=await apiRequest('/mi-firma');
+  currentSignatureData=r.registrada&&typeof r.firma_imagen==='string'?r.firma_imagen:null;
+  if(currentSignatureData)await storagePut('history',{key:ownerKey('firmaPerfil'),firma_imagen:currentSignatureData});
+  else await storageDel('history',ownerKey('firmaPerfil'));
+ }else{
+  const cached=await storageGet('history',ownerKey('firmaPerfil'));
+  currentSignatureData=cached?.firma_imagen||null;
+ }
+ renderProfileFirma();
+}
+$('profileFirmaBtn').addEventListener('click',async()=>{
+ showWorkspace('profileFirmaScreen');clearProfileDrawing();$('profileFirmaFile').value='';
+ showNotice($('profileFirmaResult'),'');
+ try{await loadProfileFirma();if(!authenticated||!navigator.onLine)showNotice($('profileFirmaResult'),'Sin conexión: puedes ver la firma guardada en este teléfono, pero para actualizarla debes conectarte.');}
+ catch(e){showNotice($('profileFirmaResult'),'No se pudo cargar la firma del perfil: '+e.message,true);}
+});
+$('closeProfileFirma').addEventListener('click',()=>showWorkspace(null));
+async function fileToSignatureData(file){
+ if(!['image/png','image/jpeg'].includes(file.type))throw new Error('Elige una imagen PNG o JPG.');
+ if(file.size>2*1024*1024)throw new Error('El archivo supera 2 MB.');
+ const url=URL.createObjectURL(file);
+ try{
+  const img=new Image();
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('No se pudo leer la imagen.'));img.src=url;});
+  const canvas=document.createElement('canvas');canvas.width=760;canvas.height=240;
+  const context=canvas.getContext('2d');
+  context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);
+  const scale=Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight);
+  const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+  context.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+  return canvas.toDataURL('image/png');
+ }finally{URL.revokeObjectURL(url);}
+}
+async function mutateProfileFirma(method,firma=null){
+ if(!authenticated||!navigator.onLine)throw new Error('Conéctate e inicia sesión para cambiar la firma del perfil.');
+ const sessionInfo=await session();
+ if(!sessionInfo.autenticado)throw new Error('La sesión expiró.');
+ await apiRequest('/mi-firma',{method,headers:{'Content-Type':'application/json','X-CSRF-Token':sessionInfo.csrf},body:JSON.stringify({csrf:sessionInfo.csrf,...(firma?{firma}:{})})});
+ await loadProfileFirma();
+}
+$('saveProfileFirma').addEventListener('click',async()=>{
+ const button=$('saveProfileFirma');button.disabled=true;
+ try{
+  const file=$('profileFirmaFile').files[0];
+  if(!file&&!profileSignatureDrawn)throw new Error('Dibuja o selecciona una firma para guardarla.');
+  const firma=file?await fileToSignatureData(file):profileCanvas.toDataURL('image/png');
+  if(firma.length>350000)throw new Error('La imagen es demasiado grande. Selecciona una PNG o JPG más pequeña.');
+  await mutateProfileFirma('PUT',firma);
+  clearProfileDrawing();$('profileFirmaFile').value='';
+  showNotice($('profileFirmaResult'),'✓ Firma guardada en tu perfil. Se mostrará automáticamente en las copias de prueba, sin tener que firmar cada informe.');
+ }catch(e){showNotice($('profileFirmaResult'),'No se pudo guardar: '+e.message,true);}
+ finally{button.disabled=false;}
+});
+$('deleteProfileFirma').addEventListener('click',async()=>{
+ const button=$('deleteProfileFirma');
+ if(!confirmInline(button,'Se eliminará la firma de tu perfil y dejará de aparecer en las nuevas impresiones.'))return;
+ button.disabled=true;
+ try{await mutateProfileFirma('DELETE');clearProfileDrawing();showNotice($('profileFirmaResult'),'La firma del perfil fue eliminada.');}
+ catch(e){showNotice($('profileFirmaResult'),'No se pudo eliminar: '+e.message,true);}
+ finally{button.disabled=false;}
+});
+
 const signCanvas=$('signatureCanvas'),signContext=signCanvas.getContext('2d');
 let penDown=false,lastPoint=null;
 function signaturePoint(e){const r=signCanvas.getBoundingClientRect();return {x:(e.clientX-r.left)*signCanvas.width/r.width,y:(e.clientY-r.top)*signCanvas.height/r.height};}
