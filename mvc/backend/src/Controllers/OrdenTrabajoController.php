@@ -25,7 +25,7 @@ final class OrdenTrabajoController {
 
     public function equipo(Request $request,Response $response): Response {
         Security::requireRole('administrador','administrativo');
-        return Http::json($response,['equipo'=>$this->ot->team()]);
+        return Http::json($response,['equipo'=>$this->ot->team(),'personal_terreno'=>$this->ot->fieldTeam()]);
     }
 
     public function show(Request $request,Response $response,array $args): Response {

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es-CL">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#10283d">
+<title>Empresas, obras y personal | Controlab</title>
+<style>
+:root{--navy:#10283d;--accent:#087d70;--bg:#f3f6f8;--border:#d7e3ea;--text:#19384b;--muted:#60798c}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);font:14px/1.5 system-ui,-apple-system,Arial,sans-serif;color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.6;cursor:wait}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #85d7cf;outline-offset:2px}
+header.top{background:var(--navy);padding:16px max(16px,calc((100vw - 1100px)/2));color:#fff;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+header.top strong{font-size:16px;letter-spacing:.3px}header.top small{display:block;color:#aed0da}
+a{color:inherit}.nav{display:flex;gap:8px}.nav a{text-decoration:none;background:#21485c;border:1px solid #577587;border-radius:8px;padding:8px 11px;font-weight:750;font-size:12px}
+main{max-width:1120px;margin:auto;padding:24px 15px 60px}h1{font-size:clamp(24px,5vw,32px);line-height:1.2;margin:4px 0 7px}h2{font-size:20px;margin:0 0 10px}
+p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;margin-bottom:18px;box-shadow:0 6px 24px #182e4b0a}
+.eyebrow{font-weight:850;font-size:11px;text-transform:uppercase;color:var(--accent);letter-spacing:1.4px}
+.tabs{display:flex;gap:6px;background:#e4edf1;border-radius:10px;padding:4px;margin:16px 0}
+.tab{border:0;background:transparent;border-radius:8px;min-height:43px;padding:9px 14px;flex:1;color:#466477;font-weight:750}
+.tab.active{background:white;color:var(--accent);box-shadow:0 2px 8px #33445512}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid #c7d7df;background:#fff;color:var(--text);border-radius:9px;padding:10px 13px;min-height:42px;font-weight:750}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:white}.btn.light{background:#edf3f6}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:grid;gap:5px;min-width:0}
+.field label{font-weight:750;font-size:12px;color:#37556a}
+.field input,.field select,.field textarea{min-height:43px;width:100%;border:1px solid #bfcfd9;border-radius:9px;padding:10px;background:#fff;color:var(--text)}
+.field textarea{min-height:80px}.full{grid-column:1/-1}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.card-list{display:grid;gap:9px;margin-top:12px}.record{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid var(--border);border-radius:10px}
+.record strong{display:block}.record small{display:block;color:var(--muted);margin-top:2px}.record .btn{font-size:12px;padding:7px 11px;min-height:35px}
+.status{display:inline-block;background:#e7f4ef;color:#20765f;border-radius:20px;font-size:11px;font-weight:750;padding:3px 9px;margin-top:5px}
+.status.off{background:#f1edf0;color:#896879}.notice{border:1px solid #bee2d8;background:#eaf8f1;color:#156b55;padding:11px;border-radius:9px;margin-top:13px;white-space:pre-wrap}
+.notice.error{background:#fff0f1;color:#a3263b;border-color:#eeb8c0}.notice:empty{display:none}
+.help{font-size:12px;color:var(--muted)}.hint{background:#f0f8f5;padding:11px;border-left:3px solid var(--accent);border-radius:5px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.panel{padding:15px}.tab{padding:8px;font-size:12px}.record .btn{width:100%}}
+</style></head>
+<body>
+<header class="top"><div><strong>CONTROL DE CALIDAD</strong><small>Catálogos de operación · Forestal 3M</small></div><nav class="nav"><a href="./planificador.html">← Planificador</a><a href="./formulario.html">Informes</a></nav></header>
+<main>
+ <span class="eyebrow">Administración operativa</span><h1>Empresas, obras y personal</h1>
+ <p>Las constructoras tienen obras propias, cada una con su dirección y comuna. El personal de terreno se registra aquí sin crear contraseñas ni acceso al sistema.</p>
+ <section id="accessError" class="panel" hidden><h2>Acceso restringido</h2><p id="accessText"></p></section>
+ <div id="app" hidden>
+  <div class="tabs" role="group" aria-label="Elegir catálogo">
+   <button type="button" class="tab active" data-tab="empresas" aria-pressed="true">Empresas</button>
+   <button type="button" class="tab" data-tab="obras" aria-pressed="false">Obras</button>
+   <button type="button" class="tab" data-tab="personal" aria-pressed="false">Personal de terreno</button>
+  </div>
+  <section id="viewEmpresas" class="panel">
+   <h2>Empresas constructoras</h2><p>El catálogo conserva las empresas ya usadas para emitir informes; no se duplican.</p>
+   <form id="empresaForm"><div class="grid"><div class="field full"><label for="empresaNombre">Razón social *</label><input id="empresaNombre" maxlength="160" placeholder="Nombre de la constructora" required></div></div>
+    <div class="actions"><button class="btn primary" id="guardarEmpresa" type="submit">Agregar empresa</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form>
+   <div class="section-title" style="margin-top:25px"><h2>Empresas registradas</h2><span id="empresaCount" class="help"></span></div>
+   <div class="card-list" id="empresasList"></div>
+  </section>
+  <section id="viewObras" class="panel" hidden>
+   <h2>Obras por empresa</h2><p class="hint">La dirección y comuna se completarán automáticamente en una nueva OT al seleccionar su obra.</p>
+   <form id="obraForm">
+    <div class="grid">
+     <div class="field"><label for="obraEmpresa">Constructora *</label><select id="obraEmpresa" required><option value="">Selecciona empresa</option></select></div>
+     <div class="field"><label for="obraNombre">Nombre de la obra *</label><input id="obraNombre" maxlength="180" required placeholder="Ej.: Mejoramiento Ruta X"></div>
+     <div class="field"><label for="obraDireccion">Dirección o ubicación *</label><input id="obraDireccion" maxlength="240" required placeholder="Ruta, km, predio o dirección"></div>
+     <div class="field"><label for="obraComuna">Comuna *</label><input id="obraComuna" maxlength="120" required placeholder="Ej.: Talca"></div>
+     <div class="field" id="obraActiveWrap" hidden><label><input type="checkbox" id="obraActivo" checked> Obra activa</label></div>
+    </div>
+    <div class="actions"><button class="btn primary" id="guardarObra" type="submit">Guardar obra</button><button class="btn light" type="button" id="cancelObra" hidden>Cancelar edición</button></div>
+    <div id="obraNotice" class="notice" role="status" aria-live="polite"></div>
+   </form>
+   <div class="section-title" style="margin-top:25px"><h2>Obras registradas</h2><span id="obraCount" class="help"></span></div><div class="card-list" id="obrasList"></div>
+  </section>
+  <section id="viewPersonal" class="panel" hidden>
+   <h2>Trabajadores de terreno (sin cuenta)</h2>
+   <p class="hint">Para choferes, ayudantes, muestreadores, operadores u otros integrantes que solo necesitan aparecer en la programación. No tendrán correo, contraseña ni acceso a Controlab.</p>
+   <form id="personalForm">
+    <div class="grid">
+     <div class="field"><label for="personalNombre">Nombre y apellido *</label><input id="personalNombre" maxlength="160" required placeholder="Trabajador de terreno"></div>
+     <div class="field"><label for="personalCargo">Función *</label><input id="personalCargo" maxlength="100" required placeholder="Ej.: Conductor / Muestreador / Ayudante"></div>
+     <div class="field full"><label for="personalObservaciones">Observaciones (opcional)</label><textarea id="personalObservaciones" maxlength="500" placeholder="Especialidad o información operativa necesaria"></textarea></div>
+     <div class="field" id="personalActiveWrap" hidden><label><input type="checkbox" id="personalActivo" checked> Trabajador activo</label></div>
+    </div>
+    <div class="actions"><button class="btn primary" id="guardarPersonal" type="submit">Guardar trabajador</button><button class="btn light" type="button" id="cancelPersonal" hidden>Cancelar edición</button></div>
+    <div id="personalNotice" class="notice" role="status" aria-live="polite"></div>
+   </form>
+   <div class="section-title" style="margin-top:25px"><h2>Personal registrado</h2><span id="personalCount" class="help"></span></div><div class="card-list" id="personalList"></div>
+  </section>
+ </div>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const API='./api';
+let companies=[],works=[],people=[],editObra=null,editPerson=null;
+function elem(tag,cls='',value=''){const n=document.createElement(tag);n.className=cls;n.textContent=value;return n;}
+function notice(id,value,isError=false){const e=$(id);e.textContent=value;e.className=value?'notice'+(isError?' error':''):'notice';}
+async function request(path,options={}){
+ const ac=new AbortController(),timeout=setTimeout(()=>ac.abort(),20000);
+ try{
+  const r=await fetch(API+path,{credentials:'same-origin',cache:'no-store',...options,signal:ac.signal});
+  let body;try{body=await r.json();}catch(e){throw new Error('El servidor no respondió en JSON');}
+  if(!r.ok)throw new Error((body.error||'Error del servidor')+(body.referencia?' · ref. '+body.referencia:''));
+  return body;
+ }catch(e){if(ac.signal.aborted)throw new Error('El servidor no respondió. Revisa tu conexión.');throw e;}
+ finally{clearTimeout(timeout);}
+}
+async function session(){return request('/session',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});}
+async function write(path,method,data){
+ const current=await session();
+ if(!current.autenticado||!['administrador','administrativo'].includes(current.rol))throw new Error('Tu sesión no tiene permiso para administrar los catálogos');
+ return request(path,{method,headers:{'Content-Type':'application/json','X-CSRF-Token':current.csrf},body:JSON.stringify({...data,csrf:current.csrf})});
+}
+function tab(name){
+ for(const button of document.querySelectorAll('[data-tab]')){const active=button.dataset.tab===name;button.classList.toggle('active',active);button.setAttribute('aria-pressed',active?'true':'false');}
+ for(const name2 of ['Empresas','Obras','Personal'])$('view'+name2).hidden=name2.toLowerCase()!==name;
+}
+for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>tab(b.dataset.tab));
+async function refresh(){
+ const [c,w,p]=await Promise.all([request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/personal')]);
+ companies=c.empresas||[];works=w.obras||[];people=p.personal||[];
+ renderCompanies();renderWorks();renderPeople();renderOptions();
+}
+function renderOptions(){
+ const select=$('obraEmpresa'),keep=select.value;
+ select.replaceChildren();const placeholder=elem('option','','Selecciona una constructora');placeholder.value='';select.append(placeholder);
+ for(const company of companies){const option=elem('option','',company.razon_social);option.value=String(company.id);select.append(option);}
+ select.value=keep;
+}
+function renderCompanies(){
+ const root=$('empresasList');root.replaceChildren();$('empresaCount').textContent=companies.length+' empresas';
+ if(!companies.length){root.append(elem('p','','Todavía no hay constructoras.'));return;}
+ for(const c of companies){
+  const card=elem('article','record');const meta=elem('div');meta.append(elem('strong','',c.razon_social),elem('small','',c.rut||'Sin RUT registrado'));
+  const btn=elem('button','btn','Ver obras');btn.type='button';btn.addEventListener('click',()=>{tab('obras');$('obraEmpresa').value=String(c.id);$('viewObras').scrollIntoView({behavior:'smooth'});});
+  card.append(meta,btn);root.append(card);
+ }
+}
+function renderWorks(){
+ const root=$('obrasList');root.replaceChildren();$('obraCount').textContent=works.length+' obras';
+ if(!works.length){root.append(elem('p','','Aún no hay obras ingresadas.'));return;}
+ for(const w of works){
+  const card=elem('article','record'),meta=elem('div');
+  meta.append(elem('strong','',w.nombre),elem('small','',w.empresa),elem('small','',w.direccion+' · '+w.comuna));
+  const status=elem('span','status'+(Number(w.activo)?'':' off'),Number(w.activo)?'Activa':'Inactiva');meta.append(status);
+  const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editWork(w.id));
+  card.append(meta,btn);root.append(card);
+ }
+}
+function renderPeople(){
+ const root=$('personalList');root.replaceChildren();$('personalCount').textContent=people.length+' trabajadores';
+ if(!people.length){root.append(elem('p','','Aún no hay personal de terreno registrado.'));return;}
+ for(const p of people){
+  const card=elem('article','record'),meta=elem('div');
+  meta.append(elem('strong','',p.nombre),elem('small','',p.cargo));
+  if(p.observaciones)meta.append(elem('small','',p.observaciones));
+  meta.append(elem('span','status'+(Number(p.activo)?'':' off'),Number(p.activo)?'Activo':'Inactivo'));
+  const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editWorker(p.id));
+  card.append(meta,btn);root.append(card);
+ }
+}
+function editWork(id){
+ const w=works.find(o=>Number(o.id)===Number(id));if(!w)return;
+ tab('obras');editObra=id;
+ $('obraEmpresa').value=String(w.empresa_id);$('obraNombre').value=w.nombre;$('obraDireccion').value=w.direccion;
+ $('obraComuna').value=w.comuna;$('obraActivo').checked=Number(w.activo)===1;
+ $('obraActiveWrap').hidden=false;$('cancelObra').hidden=false;$('guardarObra').textContent='Guardar cambios';
+ notice('obraNotice','');$('viewObras').scrollIntoView({behavior:'smooth'});
+}
+function resetWork(){
+ editObra=null;$('obraForm').reset();$('obraActiveWrap').hidden=true;$('cancelObra').hidden=true;
+ $('guardarObra').textContent='Guardar obra';
+}
+function editWorker(id){
+ const p=people.find(o=>Number(o.id)===Number(id));if(!p)return;
+ tab('personal');editPerson=id;$('personalNombre').value=p.nombre;$('personalCargo').value=p.cargo;
+ $('personalObservaciones').value=p.observaciones||'';$('personalActivo').checked=Number(p.activo)===1;
+ $('personalActiveWrap').hidden=false;$('cancelPersonal').hidden=false;$('guardarPersonal').textContent='Guardar cambios';
+ notice('personalNotice','');$('viewPersonal').scrollIntoView({behavior:'smooth'});
+}
+function resetWorker(){
+ editPerson=null;$('personalForm').reset();$('personalActiveWrap').hidden=true;$('cancelPersonal').hidden=true;
+ $('guardarPersonal').textContent='Guardar trabajador';
+}
+$('cancelObra').addEventListener('click',resetWork);
+$('cancelPersonal').addEventListener('click',resetWorker);
+$('empresaForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarEmpresa');btn.disabled=true;
+ try{
+  await write('/catalogo/empresas','POST',{razon_social:$('empresaNombre').value.trim()});
+  $('empresaForm').reset();await refresh();notice('empresaNotice','✓ Empresa registrada.');
+ }catch(e){notice('empresaNotice',e.message,true);}finally{btn.disabled=false;}
+});
+$('obraForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarObra');btn.disabled=true;
+ try{
+  const data={empresa_id:Number($('obraEmpresa').value),nombre:$('obraNombre').value.trim(),
+   direccion:$('obraDireccion').value.trim(),comuna:$('obraComuna').value.trim()};
+  if(editObra!==null)data.activo=$('obraActivo').checked;
+  await write(editObra===null?'/catalogo/obras':'/catalogo/obras/'+editObra,editObra===null?'POST':'PUT',data);
+  resetWork();await refresh();notice('obraNotice','✓ Obra guardada correctamente.');
+ }catch(e){notice('obraNotice',e.message,true);}finally{btn.disabled=false;}
+});
+$('personalForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarPersonal');btn.disabled=true;
+ try{
+  const data={nombre:$('personalNombre').value.trim(),cargo:$('personalCargo').value.trim(),observaciones:$('personalObservaciones').value.trim()};
+  if(editPerson!==null)data.activo=$('personalActivo').checked;
+  await write(editPerson===null?'/catalogo/personal':'/catalogo/personal/'+editPerson,editPerson===null?'POST':'PUT',data);
+  resetWorker();await refresh();notice('personalNotice','✓ Trabajador guardado sin crear cuenta ni contraseña.');
+ }catch(e){notice('personalNotice',e.message,true);}finally{btn.disabled=false;}
+});
+(async()=>{
+ try{
+  const s=await session();if(!s.autenticado||!['administrador','administrativo'].includes(s.rol))
+   throw new Error('Solo administradores y administrativos pueden gestionar este catálogo. Inicia sesión en Controlab.');
+  $('app').hidden=false;
+  await refresh();
+ }catch(e){$('app').hidden=true;$('accessError').hidden=false;$('accessText').textContent=e.message;}
+})();
+</script></body></html>

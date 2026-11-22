@@ -2,9 +2,11 @@
 declare(strict_types=1);
 // Ejecutar DESPUÉS de UsuariosMysqlIntegrationTest.php, en base temporal CI.
 require __DIR__.'/../src/Core/Database.php';
+require __DIR__.'/../src/Models/CatalogoOperativo.php';
 require __DIR__.'/../src/Models/OrdenTrabajo.php';
 use Demo\Core\Database;
 use Demo\Models\OrdenTrabajo;
+use Demo\Models\CatalogoOperativo;
 
 function assertOt(bool $ok,string $label): void {
     if(!$ok)throw new RuntimeException('Falló: '.$label);
@@ -90,4 +92,32 @@ assertOt($events===2,'historial mínimo de creación y actualización');
 $roster=$model->team();
 assertOt(count(array_filter($roster,static fn($x)=>(int)$x['id']===$lab))===1,'laboratorista disponible en selector');
 assertOt(count(array_filter($roster,static fn($x)=>(int)$x['id']===$digit))===1,'digitador disponible en selector');
+// Nuevos catálogos: una obra hereda empresa, dirección y comuna sin confiar en texto del cliente.
+$catalog=new CatalogoOperativo($db);
+$workList=$catalog->obras();$workId=(int)$workList[0]['id'];
+$staffList=$catalog->personal();$fieldId=(int)$staffList[0]['id'];
+$linked=[...$plan,'numero_ot'=>'','cliente'=>'Nombre manipulado','obra'=>'Obra falsa',
+ 'destino'=>'Dirección inventada','comuna'=>'Comuna falsa',
+ 'obra_id'=>$workId,'personal'=>[],'personal_terreno_ids'=>[$fieldId],
+ 'inicio'=>'2026-11-25T08:00','fin'=>'2026-11-25T12:00'];
+$linkedId=$model->create($linked,$admin);
+$saved=$model->find($linkedId,$viewerAdmin);
+assertOt($saved['cliente']==='Constructora Test 3M','Cliente verificado por catálogo');
+assertOt($saved['obra']==='Obra Norte','Obra tomada del catálogo');
+assertOt($saved['destino']==='Ruta K-33 km 5','Dirección de obra del catálogo');
+assertOt($saved['comuna']==='Maule','Comuna de obra del catálogo');
+assertOt((int)$saved['obra_id']===$workId,'Vínculo de obra');
+assertOt(count($saved['personal_terreno'])===1,'Personal sin usuario asignado');
+assertOt($saved['personal_terreno'][0]['nombre']==='Chofer de Prueba','Nombre del personal de terreno');
+assertOt(count($model->all($viewerOther,'2026-11-25','2026-11-25'))===0,'Trabajador con cuenta ajeno no ve personal del terreno');
+expectOtFailure(fn()=>$model->create([...$linked,'inicio'=>'2026-11-25T10:00',
+ 'fin'=>'2026-11-25T13:00'],$admin),409,'Chofer sin usuario no puede estar en dos OT simultáneas');
+$linked2=$model->create([...$linked,'inicio'=>'2026-11-25T12:00',
+ 'fin'=>'2026-11-25T15:00'],$admin);
+assertOt($linked2>0,'Turnos contiguos del personal de terreno son permitidos');
+assertOt(count($model->all($viewerAdmin,'2026-11-25','2026-11-25'))===2,'Calendario muestra OT con personal sin cuenta');
+$model->update($linkedId,[...$linked,'version'=>$saved['version'],'estado'=>'cancelada'],$admin);
+$linked3=$model->create([...$linked,'inicio'=>'2026-11-25T09:00','fin'=>'2026-11-25T11:00'],$admin);
+assertOt($linked3>0,'La cancelación libera turno de personal sin cuenta');
+
 echo "OK: MariaDB OT, equipos, destinos, agenda, permisos, choques horarios, versiones y cancelación\n";

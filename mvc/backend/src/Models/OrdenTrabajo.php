@@ -79,7 +79,48 @@ final class OrdenTrabajo {
         if(count(array_unique($ids))!==count($ids))throw new InvalidArgumentException('No repitas trabajadores en una OT');
         sort($ids,SORT_NUMERIC);
         $data['personal']=$ids;
+        $crew=$input['personal_terreno_ids']??[];
+        if(!is_array($crew)||count($crew)>40)throw new InvalidArgumentException('Equipo de terreno inválido (máximo 40 personas)');
+        $crewIds=[];
+        foreach($crew as $value){
+            if((!is_int($value)&&!(is_string($value)&&ctype_digit($value)))||(int)$value<1)
+                throw new InvalidArgumentException('Identificador de personal de terreno inválido');
+            $crewIds[]=(int)$value;
+        }
+        if(count(array_unique($crewIds))!==count($crewIds))
+            throw new InvalidArgumentException('El mismo trabajador de terreno no puede repetirse');
+        sort($crewIds,SORT_NUMERIC);
+        $data['personal_terreno_ids']=$crewIds;
+        $obraId=$input['obra_id']??null;
+        if($obraId===null||$obraId==='')$data['obra_id']=null;
+        elseif((is_int($obraId)||is_string($obraId)&&ctype_digit($obraId))&&(int)$obraId>0)$data['obra_id']=(int)$obraId;
+        else throw new InvalidArgumentException('Obra seleccionada inválida');
         return $data;
+    }
+
+    private function applyObraCatalog(array &$data): void {
+        if($data['obra_id']===null)return;
+        $obra=(new CatalogoOperativo($this->db))->obraById($data['obra_id']);
+        if((int)$obra['activo']!==1)throw new InvalidArgumentException('La obra está inactiva. Elige otra.');
+        $data['cliente']=$obra['empresa'];
+        $data['obra']=$obra['nombre'];
+        $data['destino']=$obra['direccion'];
+        $data['comuna']=$obra['comuna'];
+    }
+
+    private function saveObraLink(PDO $pdo,int $otId,?int $obraId): void {
+        if($obraId===null){
+            $q=$pdo->prepare('DELETE FROM ot_obra_vinculos WHERE ot_id=?');
+            $q->execute([$otId]);return;
+        }
+        $q=$pdo->prepare('INSERT INTO ot_obra_vinculos (ot_id,obra_id) VALUES (?,?) ON DUPLICATE KEY UPDATE obra_id=VALUES(obra_id)');
+        $q->execute([$otId,$obraId]);
+    }
+
+    public function fieldTeam(): array {
+        return $this->db->connection()->query(
+            'SELECT id,nombre,cargo,activo FROM personal_terreno WHERE activo=1 ORDER BY nombre,id LIMIT 500'
+        )->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function team(): array {
@@ -97,8 +138,8 @@ final class OrdenTrabajo {
         if($last<$start||$last->diff($start)->days>100)throw new InvalidArgumentException('Consulta un período de hasta 100 días');
         $max=$last->modify('+1 day')->format('Y-m-d').' 00:00:00';
         $params=[$max,$from.' 00:00:00'];
-        $sql="SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.version ".
-             "FROM ot_ordenes o WHERE o.inicio < ? AND o.fin > ?";
+        $sql="SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.version,v.obra_id ".
+             "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id WHERE o.inicio < ? AND o.fin > ?";
         if(!self::manager($viewer)){
             $sql.=" AND EXISTS (SELECT 1 FROM ot_asignaciones a WHERE a.ot_id=o.id AND a.usuario_id=?)";
             $params[]=(int)$viewer['id'];
@@ -112,8 +153,8 @@ final class OrdenTrabajo {
 
     public function find(int $id,array $viewer): array {
         $q=$this->db->connection()->prepare(
-            "SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.observaciones,o.version,o.creado_por,o.actualizado_el ".
-            "FROM ot_ordenes o WHERE o.id=? LIMIT 1"
+            "SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.observaciones,o.version,o.creado_por,o.actualizado_el,v.obra_id ".
+            "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id WHERE o.id=? LIMIT 1"
         );
         $q->execute([$id]);$item=$q->fetch(PDO::FETCH_ASSOC);
         if(!$item)throw new RuntimeException('Orden de trabajo no encontrada',404);
@@ -140,8 +181,19 @@ final class OrdenTrabajo {
         foreach($q->fetchAll(PDO::FETCH_ASSOC) as $row){
             $people[(int)$row['ot_id']][]=['id'=>(int)$row['usuario_id'],'nombre'=>$row['nombre'],'rol'=>$row['rol']];
         }
+        $q=$this->db->connection()->prepare(
+            "SELECT a.ot_id,a.personal_id,p.nombre,p.cargo FROM ot_personal_terreno a ".
+            "JOIN personal_terreno p ON p.id=a.personal_id WHERE a.ot_id IN ($ph) ORDER BY p.nombre"
+        );
+        $q->execute($ids);
+        $fieldWorkers=[];
+        foreach($q->fetchAll(PDO::FETCH_ASSOC) as $row){
+            $fieldWorkers[(int)$row['ot_id']][]=['id'=>(int)$row['personal_id'],'nombre'=>$row['nombre'],'cargo'=>$row['cargo']];
+        }
         foreach($items as &$item){
             $item['personal']=$people[(int)$item['id']]??[];
+            $item['personal_terreno']=$fieldWorkers[(int)$item['id']]??[];
+            $item['obra_id']=$item['obra_id']===null?null:(int)$item['obra_id'];
             $item['version']=(int)$item['version'];
         }
         unset($item);
@@ -197,8 +249,45 @@ final class OrdenTrabajo {
         }
     }
 
+    private function saveFieldAssignments(PDO $pdo,int $id,array $people,string $start,string $end,string $state): void {
+        $q=$pdo->prepare('SELECT personal_id FROM ot_personal_terreno WHERE ot_id=?');
+        $q->execute([$id]);$old=array_map('intval',$q->fetchAll(PDO::FETCH_COLUMN));
+        $all=array_values(array_unique([...$old,...$people]));sort($all,SORT_NUMERIC);
+        if($all){
+            $marks=implode(',',array_fill(0,count($all),'?'));
+            $q=$pdo->prepare("SELECT id FROM personal_terreno WHERE id IN ($marks) ORDER BY id FOR UPDATE");
+            $q->execute($all);$q->fetchAll();
+        }
+        if($people){
+            $marks=implode(',',array_fill(0,count($people),'?'));
+            $q=$pdo->prepare("SELECT id,nombre,activo FROM personal_terreno WHERE id IN ($marks)");
+            $q->execute($people);$rows=$q->fetchAll(PDO::FETCH_ASSOC);
+            if(count($rows)!==count($people))throw new InvalidArgumentException('Alguna persona de terreno no existe');
+            foreach($rows as $person){
+                if((int)$person['activo']!==1)throw new InvalidArgumentException('No puedes asignar personal de terreno inactivo');
+            }
+            if(in_array($state,['planificada','en_curso'],true)){
+                $q=$pdo->prepare("SELECT p.nombre,o.numero_ot FROM ot_personal_terreno a ".
+                    "JOIN ot_ordenes o ON o.id=a.ot_id JOIN personal_terreno p ON p.id=a.personal_id ".
+                    "WHERE a.personal_id IN ($marks) AND a.ot_id<>? ".
+                    "AND o.estado IN ('planificada','en_curso') AND o.inicio<? AND o.fin>? LIMIT 5");
+                $q->execute([...$people,$id,$end,$start]);$conflicts=$q->fetchAll(PDO::FETCH_ASSOC);
+                if($conflicts){
+                    $names=array_map(static fn($x)=>$x['nombre'].' (OT '.$x['numero_ot'].')',$conflicts);
+                    throw new RuntimeException('Conflicto de horario del personal de terreno: '.implode(', ',$names),409);
+                }
+            }
+        }
+        $q=$pdo->prepare('DELETE FROM ot_personal_terreno WHERE ot_id=?');$q->execute([$id]);
+        if($people){
+            $q=$pdo->prepare('INSERT INTO ot_personal_terreno (ot_id,personal_id) VALUES (?,?)');
+            foreach($people as $person)$q->execute([$id,$person]);
+        }
+    }
+
     public function create(array $input,int $actor): int {
         $data=self::validate($input);
+        $this->applyObraCatalog($data);
         $pdo=$this->db->connection();
         // READ COMMITTED: la consulta de choques ve lo que confirmó otra OT
         // mientras esperábamos el bloqueo del mismo trabajador.
@@ -218,6 +307,8 @@ final class OrdenTrabajo {
                 $q->execute([$number,$id]);
             }
             $this->saveAssignments($pdo,$id,$data['personal'],$data['inicio'],$data['fin'],$data['estado']);
+            $this->saveFieldAssignments($pdo,$id,$data['personal_terreno_ids'],$data['inicio'],$data['fin'],$data['estado']);
+            $this->saveObraLink($pdo,$id,$data['obra_id']);
             $q=$pdo->prepare("INSERT INTO ot_eventos (ot_id,usuario_id,accion,resumen) VALUES (?,?,'crear',?)");
             $q->execute([$id,$actor,'OT creada con '.count($data['personal']).' persona(s)']);
             $pdo->commit();return $id;
@@ -232,6 +323,7 @@ final class OrdenTrabajo {
     public function update(int $id,array $input,int $actor): void {
         if($id<1)throw new InvalidArgumentException('ID de OT inválido');
         $data=self::validate($input);
+        $this->applyObraCatalog($data);
         $version=$input['version']??null;
         if(!is_int($version)||$version<1)throw new InvalidArgumentException('Actualiza la OT antes de guardar cambios');
         $pdo=$this->db->connection();
@@ -246,6 +338,8 @@ final class OrdenTrabajo {
             if($version!==(int)$row['version'])throw new RuntimeException('Otro usuario modificó la OT. Recarga antes de guardar',409);
             $number=$data['numero_ot']?:$row['numero_ot'];
             $this->saveAssignments($pdo,$id,$data['personal'],$data['inicio'],$data['fin'],$data['estado']);
+            $this->saveFieldAssignments($pdo,$id,$data['personal_terreno_ids'],$data['inicio'],$data['fin'],$data['estado']);
+            $this->saveObraLink($pdo,$id,$data['obra_id']);
             $q=$pdo->prepare(
                 'UPDATE ot_ordenes SET numero_ot=?,cliente=?,obra=?,destino=?,comuna=?,actividad=?,inicio=?,fin=?,estado=?,prioridad=?,observaciones=?,actualizado_por=?,version=version+1 WHERE id=?'
             );

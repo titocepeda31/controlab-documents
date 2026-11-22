@@ -41,6 +41,8 @@ jobs:
           node --check /tmp/controlab-usuarios.js
           node mvc/frontend/tests/planificador.test.cjs
           node --check /tmp/controlab-planificador.js
+          node mvc/frontend/tests/catalogos.test.cjs
+          node --check /tmp/controlab-catalogos.js
       - name: Comprobar barreras de despliegue
         run: |
           set -euo pipefail
@@ -85,4 +87,5 @@ jobs:
           TEST_DB_PASS: test_password
         run: |
           php mvc/backend/tests/UsuariosMysqlIntegrationTest.php
+          php mvc/backend/tests/CatalogosMysqlIntegrationTest.php
           php mvc/backend/tests/OrdenTrabajoMysqlIntegrationTest.php
