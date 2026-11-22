@@ -898,7 +898,7 @@ window.addEventListener('afterprint',()=>{printOverride=null;});
 window.addEventListener('beforeprint',()=>{if(!printOverride)fillPrint();});
 async function init(){
  // Preparar el acceso a la aplicación sin internet, incluso si falla IndexedDB.
- if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+ if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{if(navigator.onLine)reg.update().catch(()=>{});}).catch(()=>{});}
  try{await localDB();await encryptLegacyLocalData();}catch(e){showNotice($('loginError'),'No fue posible cifrar los borradores anteriores en este equipo: '+e.message,true);}
  if(!navigator.onLine){
   authenticated=false;renderAuth();await offerOfflineAccess();
