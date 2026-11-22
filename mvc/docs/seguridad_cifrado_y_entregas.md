@@ -1,6 +1,6 @@
 # Seguridad, cifrado y entregas — Controlab
 
-**Estado:** requisitos y propuesta técnica, **no implementado ni desplegado**. No publicar datos de producción en el repositorio. Mantener el piloto Forestal 3M operando como hasta ahora mientras se prueban cambios.
+**Estado (2026-11-22):** **cifrado implementado en la rama de desarrollo**, con pruebas automatizadas; **NO desplegado ni activo en producción**. Para activarlo es obligatorio seguir `mvc/docs/activacion_cifrado.md`, configurar clave privada y migrar los datos previos durante mantenimiento. No publicar datos ni claves en GitHub.
 
 ## Pendientes funcionales Forestal 3M
 
@@ -27,7 +27,7 @@ Cada vez que se **guarde o actualice** un registro técnico:
 - Las claves de cifrado deben permanecer **fuera del repositorio, del webroot y de la propia tabla que almacenará datos cifrados**.
 - Ninguna clave, contraseña SMTP o token debe mostrarse en logs ni respuestas de la API.
 
-## Cifrado servidor (implementación a diseñar y validar)
+## Cifrado servidor (implementado en rama, pendiente de despliegue)
 
 - Usar primitivas auditadas como **libsodium de PHP** con `crypto_aead_xchacha20poly1305_ietf_*` si el hosting las ofrece; alternativa segura y bien revisada AES-256-GCM mediante biblioteca estándar. No diseñar criptografía propia.
 - Clave aleatoria de 256 bits generada con un CSPRNG, guardada en secreto del servidor/KMS externo al repositorio y a `public_html`. Establecer permisos estrictos, recuperación segura, backup de clave separado, rotación y versión de clave.
@@ -39,10 +39,10 @@ Cada vez que se **guarde o actualice** un registro técnico:
 - **Migración sin pérdida de datos:** copia cifrada de seguridad, inventario de tablas/columnas reales y tamaño de campo, pruebas de lectura de datos históricos, proceso reversible y verificación de conteos/checksums, sin sobreescribir registros legados a ciegas.
 - Si la clave no existe, es incorrecta o el ciphertext falla autenticación, **fallar de manera segura** y no guardar silenciosamente en texto claro.
 
-## Cifrado local/offline
+## Cifrado local/offline (implementado en rama con clave no exportable del navegador)
 
 - Web Crypto `SubtleCrypto` con **AES-GCM** y un IV nuevo por guardado, con protección frente a manipulación. Los datos de `drafts`, `pending`, `history` y `reports` deben cifrarse *antes* de `storagePut`.
-- **La gestión de claves es la parte más difícil**: guardar una clave legible junto al borrador en IndexedDB no garantiza defensa frente a una persona con acceso al navegador. Definir una clave derivada de secreto de desbloqueo del usuario o un esquema recuperable adecuado, con expiración/bloqueo y manejo de contraseñas. Nunca usar la contraseña del usuario en texto claro persistido en el navegador.
+- **Limitación actual importante:** la clave Web Crypto se almacena como `CryptoKey` no exportable en el mismo perfil del navegador. Los registros ya no quedan en texto claro en IndexedDB, pero **una persona con control del navegador desbloqueado o código malicioso en el origen puede recuperar datos**. En una etapa posterior, un secreto de desbloqueo no almacenado daría mayor protección contra robo de equipos. Nunca guardar contraseñas en texto claro.
 - Mantener la capacidad offline solamente si las pruebas de cifrado, recuperación de sesión, sincronización y pérdida de conectividad son exitosas. **Alternativa temporal segura: desactivar el almacenamiento offline de datos sensibles hasta tener cifrado local fiable**, y avisar al usuario antes de hacerlo para no perder borradores existentes.
 - No borrar ni migrar borradores no cifrados sin exportación o recuperación autorizada y pruebas de integridad.
 - Limpiar copia de datos descifrados en memoria o vistas al cerrar sesión cuando sea práctico, y prevenir cache de respuestas privadas por service worker o intermediarios.
