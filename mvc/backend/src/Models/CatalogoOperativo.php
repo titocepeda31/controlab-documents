@@ -49,15 +49,15 @@ final class CatalogoOperativo {
 
     public function obras(): array {
         return $this->db->connection()->query(
-            'SELECT o.id,o.empresa_id,e.razon_social AS empresa,o.nombre,o.direccion,o.comuna,o.activo '.
-            'FROM obras o JOIN empresas e ON e.id=o.empresa_id ORDER BY e.razon_social,o.nombre LIMIT 1000'
+            'SELECT o.id,o.empresa_id,e.razon_social AS empresa,o.nombre,o.direccion,o.comuna,o.activo,g.latitud,g.longitud '.
+            'FROM obras o JOIN empresas e ON e.id=o.empresa_id LEFT JOIN obra_ubicaciones g ON g.obra_id=o.id ORDER BY e.razon_social,o.nombre LIMIT 1000'
         )->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function obraById(int $id): array {
         $q=$this->db->connection()->prepare(
-            'SELECT o.id,o.empresa_id,e.razon_social AS empresa,o.nombre,o.direccion,o.comuna,o.activo '.
-            'FROM obras o JOIN empresas e ON e.id=o.empresa_id WHERE o.id=? LIMIT 1'
+            'SELECT o.id,o.empresa_id,e.razon_social AS empresa,o.nombre,o.direccion,o.comuna,o.activo,g.latitud,g.longitud '.
+            'FROM obras o JOIN empresas e ON e.id=o.empresa_id LEFT JOIN obra_ubicaciones g ON g.obra_id=o.id WHERE o.id=? LIMIT 1'
         );
         $q->execute([$id]);$row=$q->fetch(PDO::FETCH_ASSOC);
         if(!$row)throw new RuntimeException('Obra no encontrada',404);
