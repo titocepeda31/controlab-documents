@@ -359,6 +359,7 @@ function renderAuth(){
  $('reviewsBtn').hidden=!authenticated||!canReview;
  $('usersBtn').hidden=!authenticated||!canManageUsers;
  $('historyBtn').textContent=userRole==='cliente'?'Mis informes':'Historial';
+ $('closeHistory').hidden=userRole==='cliente';
  if(!logged){showWorkspace(null);stopVoice();}
  updateConnectivity();
 }
@@ -545,20 +546,22 @@ async function openHistory(onlyPending=false){
  reviewOnlyPending=onlyPending; $('historyTitle').textContent=onlyPending?'Pendientes de revisión':'Historial reciente';
  showWorkspace('historyModal');feedback('');$('historyList').textContent='Buscando informes anteriores…';$('historySearch').value='';
  try{
-  const cached=await storageGet('history',ownerKey('listado'));
+  const cached=userRole==='cliente'?null:await storageGet('history',ownerKey('listado'));
   availableHistory=cached?.items||[];
   if(authenticated&&navigator.onLine){
    const r=await apiRequest('/informes');availableHistory=r.informes||[];
-   await storagePut('history',{key:ownerKey('listado'),items:availableHistory,fecha:new Date().toISOString()});
-   $('historySource').textContent='Informes de MySQL · los 12 más recientes se guardan también para reutilizarlos sin internet.';
-   void cacheRecentReports(availableHistory.slice(0,12));
+   if(userRole!=='cliente'){
+     await storagePut('history',{key:ownerKey('listado'),items:availableHistory,fecha:new Date().toISOString()});
+     $('historySource').textContent='Informes de MySQL · los 12 más recientes se guardan también para reutilizarlos sin internet.';
+     void cacheRecentReports(availableHistory.slice(0,12));
+    }else $('historySource').textContent='Solo informes aprobados y asignados a tu empresa. No se guardan copias offline.';
   }else{$('historySource').textContent='Sin conexión: mostrando únicamente el historial descargado en este equipo.';}
   renderHistory();
  }catch(e){if(availableHistory.length){$('historySource').textContent='Historial local (sin acceso al servidor).';renderHistory();}else $('historyList').textContent='No fue posible cargar el historial: '+e.message;}
 }
 async function cacheRecentReports(list){
  // Peticiones secuenciales y de pocos registros para no sobrecargar el hosting.
- for(const info of list){if(!authenticated||!navigator.onLine||!currentUid)break;
+ for(const info of list){if(!authenticated||!navigator.onLine||!currentUid||userRole==='cliente')break;
   try{const key=ownerKey('informe:'+info.id);const cached=await storageGet('reports',key);if(cached)continue;const full=await apiRequest('/informes/'+info.id);await storagePut('reports',{key,datos:full.datos,fecha:new Date().toISOString()});}catch(e){break;}
  }
 }
@@ -570,15 +573,16 @@ function renderHistory(){const search=$('historySearch').value.trim().toLocaleLo
   const state=info.revision_estado||'borrador';const tag=node('span',reviewLabel(state));tag.className='review-tag '+state;desc.append(tag);
   if(state==='devuelto'&&info.motivo_devolucion)desc.append(node('small','Motivo: '+info.motivo_devolucion));
   const actions=document.createElement('div');actions.className='history-buttons';
-  for(const [label,mode] of [['Usar antecedentes','antecedentes'],['Copiar ensayos también','completo']]){
+  if(userRole!=='cliente')for(const [label,mode] of [['Usar antecedentes','antecedentes'],['Copiar ensayos también','completo']]){
    const b=document.createElement('button');b.className=mode==='antecedentes'?'btn primary':'btn light';b.type='button';b.textContent=label;b.addEventListener('click',()=>reuseReport(info.id,mode,b));actions.append(b);
   }
   if(authenticated&&navigator.onLine){
    const add=(title,fn,kind='light')=>{const b=document.createElement('button');b.className='btn '+kind;b.type='button';b.textContent=title;b.addEventListener('click',()=>void fn(b));actions.append(b);};
-   if((state==='borrador'||state==='devuelto')&&(canReview||Number(info.usuario_id)===currentUid))add('Solicitar revisión',b=>requestReview(info.id,b),'dark');
-   if(state==='devuelto'&&Number(info.usuario_id)===currentUid)add('Corregir',b=>editReturnedReport(info.id,b),'primary');
-   if(state==='pendiente'&&canReview){add('Revisar / firmar',b=>openReview(info.id,b),'primary');add('Devolver',b=>openReview(info.id,b),'danger');}
+   if(userRole!=='cliente'&&(state==='borrador'||state==='devuelto')&&(canReview||Number(info.usuario_id)===currentUid))add('Solicitar revisión',b=>requestReview(info.id,b),'dark');
+   if(userRole!=='cliente'&&state==='devuelto'&&Number(info.usuario_id)===currentUid)add('Corregir',b=>editReturnedReport(info.id,b),'primary');
+   if(userRole!=='cliente'&&state==='pendiente'&&canReview){add('Revisar / firmar',b=>openReview(info.id,b),'primary');add('Devolver',b=>openReview(info.id,b),'danger');}
    add(state==='aprobado'?'PDF firmado (prueba)':'Ver / imprimir',b=>printStoredReport(info.id,b));
+    if(canManageUsers)add('Compartir con empresa',b=>showRecipientSelector(info,b),'light');
   }
   item.append(desc,actions);list.append(item);
  }
