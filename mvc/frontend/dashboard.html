@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es-CL"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Dashboard gerencial | Controlab</title>
+<style>
+:root{--navy:#10283d;--teal:#087d70;--bg:#f3f6f8;--text:#18364a;--muted:#617789;--line:#dbe4eb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:14px/1.5 system-ui,Arial,sans-serif;color:var(--text)}a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}
+header{background:var(--navy);color:white;padding:15px max(16px,calc((100vw - 1240px)/2));display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:850;font-size:17px}.brand small{display:block;color:#bbd1dc;font-size:11px;font-weight:500}.links{display:flex;gap:7px;flex-wrap:wrap}.links a{padding:8px 11px;border:1px solid #547283;border-radius:8px;font-weight:700;font-size:12px}
+main{max-width:1240px;margin:auto;padding:27px 17px 70px}.intro{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;flex-wrap:wrap}h1{font-size:clamp(25px,3.2vw,34px);margin:0}h2{font-size:18px;margin:0 0 12px}p{color:var(--muted);margin:5px 0 15px}.tag{display:inline-flex;background:#fff4d7;color:#77510c;border:1px solid #e9ce87;border-radius:100px;padding:6px 12px;font-weight:750;font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:19px 0}.card,.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:19px;box-shadow:0 5px 19px #17324a08}.card small{display:block;color:var(--muted);font-weight:700}.card strong{display:block;font-size:clamp(21px,2.5vw,29px);letter-spacing:-.5px;margin:10px 0 2px}.card span{color:#658395;font-size:12px}.card.money strong{color:#0b6d64}.layout{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}.bars{display:flex;gap:10px;align-items:end;height:210px;border-bottom:1px solid var(--line);padding:15px 4px 0}.barwrap{flex:1;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px;height:100%}.bar{width:min(100%,55px);border-radius:7px 7px 0 0;background:#0f9184;min-height:4px}.barwrap small{font-size:11px;color:var(--muted)}.legend{color:var(--muted);font-size:12px;margin-top:14px}.schedule{display:grid;gap:10px}.entry{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);padding:12px;border-radius:10px}.entry strong{display:block}.entry small{display:block;color:var(--muted)}.pill{background:#e6f6f0;color:#087d70;border-radius:30px;padding:5px 9px;white-space:nowrap;font-size:11px;font-weight:750}.modules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}.module{border:1px solid var(--line);padding:14px;border-radius:10px;font-weight:750;background:#f9fcfd}.module small{display:block;font-weight:400;color:var(--muted)}.notice{background:#fff;border:1px solid #e3c98c;border-left:4px solid #c58a21;border-radius:10px;padding:13px;margin:18px 0;color:#74551a}.blocked{background:#fff;border:1px solid #f0bdc5;border-radius:10px;padding:18px;margin:18px 0}.blocked[hidden],.content[hidden]{display:none!important}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}}@media(max-width:550px){.cards,.modules{grid-template-columns:1fr 1fr}.card{padding:14px}.card strong{font-size:22px}.modules{grid-template-columns:1fr}}
+</style></head><body>
+<header><div class="brand">CONTROLAB <small>Panel de gestión · Laboratorio de suelos</small></div><nav class="links"><a href="./modulos.html">Módulos</a><a href="./planificador.html">Planificación</a><a href="./formulario.html">Informes (ejemplo)</a></nav></header>
+<main><div class="intro"><div><h1>Dashboard gerencial</h1><p>Resumen ejecutivo de operaciones, programación y gestión comercial.</p></div><span class="tag">DEMO · Datos ficticios</span></div>
+<div class="blocked" id="blocked" hidden><strong>Debes iniciar sesión para acceder al dashboard.</strong><p>El formulario de demostración también permite iniciar sesión.</p><a href="./formulario.html">Ir al inicio de sesión</a></div>
+<div class="content" id="content" hidden>
+<div class="notice"><strong>Vista de presentación:</strong> todas las cifras, gráficos y órdenes de esta pantalla son ilustrativos. No representan ventas, cobros ni resultados reales de la empresa.</div>
+<section class="cards" aria-label="Indicadores gerenciales">
+<div class="card"><small>OT generadas este mes</small><strong>128</strong><span>Ejemplo · mes de referencia</span></div>
+<div class="card"><small>OT programadas esta semana</small><strong>24</strong><span>Ejemplo · agenda semanal</span></div>
+<div class="card money"><small>Total facturado</small><strong>$18.450.000</strong><span>CLP · cifra ficticia</span></div>
+<div class="card money"><small>Total pagado</small><strong>$12.800.000</strong><span>CLP · cifra ficticia</span></div>
+<div class="card money"><small>Pendiente de pago</small><strong>$5.650.000</strong><span>Facturado menos pagado · ficticio</span></div>
+<div class="card money"><small>Pendiente por facturar</small><strong>$4.200.000</strong><span>Trabajos por facturar · ficticio</span></div>
+<div class="card"><small>Obras activas</small><strong>36</strong><span>Ejemplo</span></div>
+<div class="card"><small>Servicios realizados</small><strong>317</strong><span>Unidades de servicio · ejemplo</span></div>
+</section>
+<div class="layout">
+<section class="panel"><h2>Órdenes de trabajo por semana</h2><p>Ejemplo de distribución mensual.</p><div class="bars" aria-label="Semana 1: 21, semana 2: 30, semana 3: 35, semana 4: 42 órdenes">
+<div class="barwrap"><div class="bar" style="height:45%"></div><small>Sem. 1</small></div><div class="barwrap"><div class="bar" style="height:65%"></div><small>Sem. 2</small></div><div class="barwrap"><div class="bar" style="height:76%"></div><small>Sem. 3</small></div><div class="barwrap"><div class="bar" style="height:91%"></div><small>Sem. 4</small></div>
+</div><div class="legend">21 · 30 · 35 · 42 OT (total: 128) · Datos ficticios</div></section>
+<section class="panel"><h2>Programación semanal</h2><p>Ejemplos de trabajos agendados.</p><div class="schedule">
+<div class="entry"><div><strong>Ensayos de densidad</strong><small>Obra Las Cruces · Lunes 09:00</small></div><span class="pill">Programada</span></div>
+<div class="entry"><div><strong>Calicatas</strong><small>Obra Ruta K-33 · Martes 10:30</small></div><span class="pill">Programada</span></div>
+<div class="entry"><div><strong>Estudio de suelo</strong><small>Obra Centro · Jueves 08:30</small></div><span class="pill">Programada</span></div>
+</div></section>
+</div>
+<section class="panel" style="margin-top:14px"><h2>Acceso a módulos</h2><div class="modules">
+<a class="module" href="./catalogos.html?modulo=empresas">Empresas<small>Constructoras y contactos</small></a>
+<a class="module" href="./catalogos.html?modulo=obras">Obras<small>Ubicaciones y comunas</small></a>
+<a class="module" href="./catalogos.html?modulo=servicios">Servicios<small>Ensayos y unidades</small></a>
+<a class="module" href="./catalogos.html?modulo=personal">Personal de terreno<small>Equipos y trabajadores</small></a>
+<a class="module" href="./planificador.html">Órdenes y planificación<small>Calendario y asignaciones</small></a>
+<a class="module" href="./formulario.html">Informes · prototipo<small>Formulario independiente de ejemplo</small></a>
+</div></section>
+</div></main>
+<script>
+(async()=>{try{const r=await fetch('./api/session',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:'{}'});const s=await r.json();if(!r.ok||!s.autenticado)throw Error('Sesión no iniciada');document.getElementById('content').hidden=false;}catch(e){document.getElementById('blocked').hidden=false;}})();
+</script></body></html>
