@@ -44,7 +44,7 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
  <p>Las constructoras tienen obras propias, cada una con su dirección y comuna. El personal de terreno se registra aquí sin crear contraseñas ni acceso al sistema.</p>
  <section id="accessError" class="panel" hidden><h2>Acceso restringido</h2><p id="accessText"></p></section>
  <div id="app" hidden>
-  <div class="tabs" role="group" aria-label="Elegir catálogo">
+  <div class="tabs" id="catalogTabs" role="group" aria-label="Elegir catálogo">
    <button type="button" class="tab active" data-tab="empresas" aria-pressed="true">Empresas</button>
    <button type="button" class="tab" data-tab="obras" aria-pressed="false">Obras</button>
    <button type="button" class="tab" data-tab="servicios" aria-pressed="false">Servicios</button>
@@ -153,6 +153,17 @@ function tab(name){
  for(const name2 of ['Empresas','Obras','Servicios','Personal'])$('view'+name2).hidden=name2.toLowerCase()!==name;
 }
 for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>tab(b.dataset.tab));
+const moduleNames={empresas:'Empresas constructoras',obras:'Obras',servicios:'Servicios',personal:'Personal de terreno'};
+const activeModule=new URLSearchParams(location.search).get('modulo');
+if(Object.hasOwn(moduleNames,activeModule)){
+ $('catalogTabs').hidden=true;
+ document.querySelector('h1').textContent=moduleNames[activeModule];
+ document.title=moduleNames[activeModule]+' | Controlab';
+ document.querySelector('main > p').textContent='Administración del módulo '+moduleNames[activeModule].toLowerCase()+'.';
+ const nav=document.querySelector('header .nav');
+ const home=document.createElement('a');home.href='./modulos.html';home.textContent='← Módulos';nav.prepend(home);
+ tab(activeModule);
+}
 async function refresh(){
  const [c,w,p,s]=await Promise.all([request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/personal'),request('/catalogo/servicios')]);
  companies=c.empresas||[];works=w.obras||[];people=p.personal||[];services=s.servicios||[];
@@ -394,6 +405,7 @@ $('personalForm').addEventListener('submit',async e=>{
    throw new Error('Solo administradores y administrativos pueden gestionar este catálogo. Inicia sesión en Controlab.');
   $('app').hidden=false;
   await refresh();
+  if(activeModule&&Object.hasOwn(moduleNames,activeModule))tab(activeModule);
  }catch(e){$('app').hidden=true;$('accessError').hidden=false;$('accessText').textContent=e.message;}
 })();
 </script></body></html>
