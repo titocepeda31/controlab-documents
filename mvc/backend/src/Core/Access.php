@@ -31,6 +31,20 @@ final class Access {
         if ($u['rol']==='cliente') throw new RuntimeException('Esta operación no está disponible para clientes',403);
         return $u;
     }
+    /** Solo laboratoristas y administradores pueden registrar o corregir datos de ensayo. */
+    public static function canEditReports(Database $db): array {
+        $u=self::current($db);
+        if (!in_array($u['rol'],['administrador','laboratorista'],true))
+            throw new RuntimeException('Este perfil no puede crear ni modificar ensayos',403);
+        return $u;
+    }
+    /** Los digitadores únicamente preparan el envío de registros aprobados. */
+    public static function canDispatch(Database $db): array {
+        $u=self::current($db);
+        if (!in_array($u['rol'],['administrador','laboratorista','digitalizador'],true))
+            throw new RuntimeException('Este perfil no puede enviar informes',403);
+        return $u;
+    }
     public static function admin(Database $db): array {
         $u=self::current($db);
         if ($u['rol']!=='administrador') throw new RuntimeException('Se requiere un administrador',403);
