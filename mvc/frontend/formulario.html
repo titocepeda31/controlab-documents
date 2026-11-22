@@ -380,6 +380,7 @@ function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hi
 function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');if(currentUid!==uid)currentSignatureData=null;currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
 async function syncAuth(){
  const r=await session();authenticated=!!r.autenticado;offlineMode=false;canReview=authenticated&&!!r.puede_revisar;canAdminUsers=authenticated&&!!r.puede_administrar_usuarios;canUseProfileSignature=authenticated&&!!r.puede_firmar_perfil;
+ if(authenticated){localStorage.setItem('demo_last_role',r.rol||'');if(!canUseProfileSignature)currentSignatureData=null;}
  if(authenticated){
   setOwner(Number(r.usuario_id));
   try{await restoreDraft();}catch(e){
@@ -393,7 +394,7 @@ async function syncAuth(){
 }
 function updateConnectivity(){const online=navigator.onLine;const active=authenticated&&online;$('connectionDot').classList.toggle('offline',!active);$('connectionStatus').textContent=active?'Con conexión · sesión activa':(online?'Sin sesión validada · guardado local':'Sin conexión · guardado local');document.querySelector('.session-tag').textContent=active?'● Sesión activa':'● Modo local (sin autenticar)';$('syncBtn').disabled=!active||syncing;}
 async function offerOfflineAccess(){const uid=Number(localStorage.getItem('demo_last_user'));$('offlineEntry').hidden=!(Number.isSafeInteger(uid)&&uid>0);}
-$('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();await loadProfileFirma().catch(()=>{});});
+$('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();if(localStorage.getItem('demo_last_role')==='laboratorista')await loadProfileFirma().catch(()=>{});else currentSignatureData=null;});
 
 $('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('loginBtn');btn.disabled=true;showNotice($('loginError'),'Verificando...');
