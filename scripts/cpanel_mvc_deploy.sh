@@ -73,6 +73,10 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
   if(!is_string($key)||strlen($key)!==32){fwrite(STDERR,"Falta data_encryption_key en configuración privada.\n");exit(4);}
   $column=$pdo->query("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=\"informe_datos\" AND COLUMN_NAME=\"datos\"")->fetchColumn();
   if(!in_array(strtolower((string)$column),["mediumtext","longtext"],true)){fwrite(STDERR,"informe_datos.datos requiere MEDIUMTEXT o LONGTEXT.\n");exit(4);}
+  $signatureColumn=$pdo->query("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=\"informe_revisiones\" AND COLUMN_NAME=\"firma_png\"")->fetchColumn();
+  if(!in_array(strtolower((string)$signatureColumn),["mediumblob","longblob"],true)){fwrite(STDERR,"informe_revisiones.firma_png requiere MEDIUMBLOB o LONGBLOB.\\n");exit(4);}
+  $plaintextSignatures=(int)$pdo->query("SELECT COUNT(*) FROM informe_revisiones WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0 AND LEFT(firma_png,7)!=\"enc:v1:\"")->fetchColumn();
+  if($plaintextSignatures>0){fwrite(STDERR,"Hay $plaintextSignatures firmas sin cifrar. Migración pendiente.\\n");exit(4);}
   $plain=(int)$pdo->query("SELECT COUNT(*) FROM informe_datos WHERE datos NOT LIKE \"enc:v1:%\"")->fetchColumn();
   if($plain>0){fwrite(STDERR,"Hay $plain informes sin cifrar. Migrar con mantenimiento y respaldo antes de desplegar.\n");exit(4);}
   $checkAdmin=$pdo->prepare("SELECT COUNT(*) FROM usuario_accesos a JOIN usuarios u ON u.id=a.usuario_id WHERE a.rol=? AND u.activo=1");
