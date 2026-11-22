@@ -53,7 +53,7 @@ final class Informe {
         $q->execute($params);
         $row=$q->fetch();
         if (!$row) throw new RuntimeException('Informe no encontrado',404);
-        $raw=(string)$row['datos'];
+        $raw=$this->db->reportCrypto()->decrypt($id,(string)$row['datos']);
         $row['datos']=json_decode($raw,true) ?? [];
         $row['revision']=$this->revision->get($id,$raw);
         // Si alguien modificó los datos después de aprobar, el cliente no debe verlo.
@@ -102,7 +102,8 @@ final class Informe {
             $q->execute([$empresaId,(int)$_SESSION['uid'],($data['nInforme'] ?? '') ?: null,'Registro Calidad Mecánica de Suelo',$date,'borrador']);
             $id=(int)$pdo->lastInsertId();
             $q=$pdo->prepare('INSERT INTO informe_datos (informe_id,datos) VALUES (?,?)');
-            $q->execute([$id,json_encode($data,JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]);
+            $plain=json_encode($data,JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            $q->execute([$id,$this->db->reportCrypto()->encrypt($id,$plain)]);
             if ($clientUuid !== null) {
                 $q=$pdo->prepare('UPDATE informe_envios SET informe_id=? WHERE usuario_id=? AND client_uuid=?');
                 $q->execute([$id,$userId,$clientUuid]);
@@ -143,7 +144,8 @@ final class Informe {
             $q=$pdo->prepare('UPDATE informes SET empresa_id=?,numero_informe=?,fecha_informe=? WHERE id=?');
             $q->execute([$empresaId,($data['nInforme'] ?? '') ?: null,$date,$id]);
             $q=$pdo->prepare('UPDATE informe_datos SET datos=? WHERE informe_id=?');
-            $q->execute([json_encode($data,JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),$id]);
+            $plain=json_encode($data,JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            $q->execute([$this->db->reportCrypto()->encrypt($id,$plain),$id]);
             if ($state==='devuelto') {
                 $q=$pdo->prepare("INSERT INTO informe_revision_eventos (informe_id,usuario_id,accion) VALUES (?,?,'corregir')");
                 $q->execute([$id,$userId]);
