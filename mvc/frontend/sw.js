@@ -1,5 +1,5 @@
 /* Guarda únicamente el HTML público; nunca API, datos, sesiones o credenciales. */
-const CACHE='demo-mecanica-suelo-v8';
+const CACHE='demo-mecanica-suelo-v9';
 const SHELL=new URL('formulario.html',self.registration.scope).pathname;
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const cache=await caches.open(CACHE);
