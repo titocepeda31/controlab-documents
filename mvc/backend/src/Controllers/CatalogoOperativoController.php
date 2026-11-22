@@ -69,4 +69,17 @@ final class CatalogoOperativoController {
         $this->mapa->guardar((int)$args['id'],Http::jsonBody($request));
         return Http::json($response,['ok'=>true]);
     }
+    public function servicios(Request $request,Response $response): Response {
+        Security::requireRole('administrador','administrativo');
+        return Http::json($response,['servicios'=>$this->catalogo->servicios()]);
+    }
+    public function crearServicio(Request $request,Response $response): Response {
+        Security::requireRole('administrador','administrativo');Security::csrf($request);
+        return Http::json($response,['id'=>$this->catalogo->saveServicio(Http::jsonBody($request))],201);
+    }
+    public function editarServicio(Request $request,Response $response,array $args): Response {
+        Security::requireRole('administrador','administrativo');Security::csrf($request);
+        return Http::json($response,['id'=>$this->catalogo->saveServicio(Http::jsonBody($request),(int)$args['id']),'ok'=>true]);
+    }
+
 }
