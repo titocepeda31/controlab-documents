@@ -29,6 +29,10 @@ jobs:
           set -euo pipefail
           grep -q "JOIN informe_destinatarios dest" mvc/backend/src/Models/Informe.php
           grep -q "rev.estado='aprobado'" mvc/backend/src/Models/Informe.php
-          grep -q "Access::internal" mvc/backend/src/Controllers/InformeController.php
+          grep -Fq "Access::canEditReports" mvc/backend/src/Controllers/InformeController.php
+          grep -Fq "'laboratorista'" mvc/backend/src/Controllers/UsuarioController.php
+          grep -Fq "'digitalizador'" mvc/backend/src/Controllers/UsuarioController.php
+          grep -Fq "r.estado='aprobado'" mvc/backend/src/Models/Informe.php
+          grep -Fq "canDispatch" mvc/backend/src/Core/Access.php
           grep -q "Access::admin" mvc/backend/src/Controllers/UsuarioController.php
           grep -q "No hay administrador autorizado" scripts/cpanel_mvc_deploy.sh
