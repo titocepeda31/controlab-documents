@@ -13,7 +13,7 @@ const css=`
 #cl-shell-sidebar a{display:flex;align-items:center;gap:10px;text-decoration:none;color:#385367;font:650 14px/1.4 system-ui;padding:12px;border-radius:9px;margin-bottom:4px}
 #cl-shell-sidebar a:hover{background:#edf5f4;color:#075f59}#cl-shell-sidebar a.active{background:#e3f4ef;color:#087d70}
 #cl-shell-sidebar a[hidden]{display:none!important}#cl-shell-sidebar .cl-foot{font:11px/1.5 system-ui;color:#78909e;margin:20px 12px}
-#cl-shell-backdrop{display:none}
+#cl-shell-backdrop{display:none}#cl-shell-top[hidden],#cl-shell-sidebar[hidden],#cl-shell-toggle[hidden]{display:none!important}
 body.cl-tabler-shell{background:#f3f6f8}body.cl-tabler-shell > main,body.cl-tabler-shell > .app-view > main,body.cl-tabler-shell #appView > main{margin-left:250px!important;max-width:none!important}
 body.cl-tabler-shell #appView > .layout,body.cl-tabler-shell .layout{margin-left:250px!important}
 body.cl-tabler-shell #appView > .layout main,body.cl-tabler-shell .layout main{margin-left:0!important}
