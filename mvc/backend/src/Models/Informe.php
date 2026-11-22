@@ -9,16 +9,20 @@ use Throwable;
 
 final class Informe {
     private Empresa $empresa;
-    public function __construct(private Database $db) { $this->empresa = new Empresa($db); }
+    private Revision $revision;
+    public function __construct(private Database $db) { $this->empresa = new Empresa($db); $this->revision = new Revision($db); }
     public function all(): array {
-        return $this->db->connection()->query('SELECT i.id,i.numero_informe,i.fecha_informe,i.estado,e.razon_social FROM informes i JOIN empresas e ON e.id=i.empresa_id ORDER BY i.id DESC LIMIT 100')->fetchAll();
+        return $this->db->connection()->query("SELECT i.id,i.usuario_id,i.numero_informe,i.fecha_informe,i.estado,e.razon_social,COALESCE(r.estado,'borrador') AS revision_estado,r.motivo_devolucion FROM informes i JOIN empresas e ON e.id=i.empresa_id LEFT JOIN informe_revisiones r ON r.informe_id=i.id ORDER BY i.id DESC LIMIT 100")->fetchAll();
     }
     public function find(int $id): array {
-        $q=$this->db->connection()->prepare('SELECT i.id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos FROM informes i JOIN informe_datos d ON d.informe_id=i.id WHERE i.id=?');
+        $q=$this->db->connection()->prepare('SELECT i.id,i.usuario_id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos FROM informes i JOIN informe_datos d ON d.informe_id=i.id WHERE i.id=?');
         $q->execute([$id]);
         $row=$q->fetch();
         if (!$row) throw new RuntimeException('Informe no encontrado',404);
-        $row['datos']=json_decode($row['datos'],true) ?? [];
+        $raw=(string)$row['datos'];
+        $row['datos']=json_decode($raw,true) ?? [];
+        $row['revision']=$this->revision->get($id,$raw);
+        $row['eventos_revision']=$this->revision->events($id);
         return $row;
     }
     public static function allowedFields(array $data): array {
@@ -78,4 +82,35 @@ final class Informe {
             throw $e;
         }
     }
+    /** Permite corregir el mismo informe antes de aprobación, conservando su ID y auditoría. */
+    public function update(int $id,int $userId,array $values): void {
+        $data=self::allowedFields($values);
+        $contractor=trim($data['contratista'] ?? '');
+        if ($contractor==='') throw new InvalidArgumentException('Contratista obligatorio');
+        $date=($data['fechaEnsayo'] ?? '') ?: ($data['fechaRegistro'] ?? '');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/',$date)) throw new InvalidArgumentException('Fecha obligatoria');
+        [$y,$m,$d]=array_map('intval',explode('-',$date));
+        if (!checkdate($m,$d,$y)) throw new InvalidArgumentException('Fecha inválida');
+        $pdo=$this->db->connection();$pdo->beginTransaction();
+        try {
+            $q=$pdo->prepare('SELECT usuario_id FROM informes WHERE id=? FOR UPDATE');$q->execute([$id]);
+            $owner=$q->fetchColumn();
+            if ($owner===false) throw new RuntimeException('Informe no encontrado',404);
+            if ((int)$owner!==$userId) throw new RuntimeException('Solo el autor puede corregir el informe',403);
+            $q=$pdo->prepare('SELECT estado FROM informe_revisiones WHERE informe_id=? FOR UPDATE');$q->execute([$id]);
+            $state=$q->fetchColumn();
+            if ($state==='aprobado'||$state==='pendiente') throw new RuntimeException('Un informe pendiente o aprobado no puede modificarse',409);
+            $empresaId=$this->empresa->findOrCreateByName($contractor);
+            $q=$pdo->prepare('UPDATE informes SET empresa_id=?,numero_informe=?,fecha_informe=? WHERE id=?');
+            $q->execute([$empresaId,($data['nInforme'] ?? '') ?: null,$date,$id]);
+            $q=$pdo->prepare('UPDATE informe_datos SET datos=? WHERE informe_id=?');
+            $q->execute([json_encode($data,JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),$id]);
+            if ($state==='devuelto') {
+                $q=$pdo->prepare("INSERT INTO informe_revision_eventos (informe_id,usuario_id,accion) VALUES (?,?,'corregir')");
+                $q->execute([$id,$userId]);
+            }
+            $pdo->commit();
+        } catch(Throwable $e) {if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+    }
+
 }

@@ -122,11 +122,22 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .history-buttons .btn{font-size:12px;min-height:36px;padding:7px 10px}
 .save-msg{margin-top:14px}
 .print-sheet{display:none}
+/* Revisión y firma del registro provisional */
+.review-tag{display:inline-flex;align-items:center;border-radius:30px;padding:4px 9px;font-size:11px;font-weight:800;background:#edf3f7;color:#3c5b70;margin-top:6px}
+.review-tag.aprobado{background:#d9f5ec;color:#086855}
+.review-tag.pendiente{background:#fff2ce;color:#825b09}
+.review-tag.devuelto{background:#ffe5e6;color:#a9293a}
+.review-details{background:#f2f7f8;border-radius:11px;padding:14px;font-size:13px;color:#405d6a;margin:16px 0}
+.signature-canvas{border:2px dashed #adc2ce;border-radius:12px;width:100%;height:auto;aspect-ratio:760 / 240;display:block;touch-action:none;background:white}
+.signature-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:13px 0}
+.review-input{width:100%;min-height:80px;padding:12px;border-radius:9px;border:1px solid #c6d5df;resize:vertical}
+.print-review{margin-top:17px;padding:10px;border-top:1px solid #888;page-break-inside:avoid}
+.print-review img{max-width:220px;max-height:75px;object-fit:contain;display:block;margin:6px 0}
 @media(max-width:1100px){.fields.three{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:205px minmax(0,1fr);gap:17px}.side{padding:16px 8px}}
 @media(max-width:790px){.login-view{grid-template-columns:1fr}.login-intro{min-height:0;padding:30px}.login-intro h1{font-size:29px;margin:20px 0 10px}.login-intro p{font-size:14px}.login-bullet,.login-intro small{display:none}.login-panel{padding:30px 16px 60px}.layout{display:block;padding:15px 12px 35px}.side{position:static;padding:12px;margin-bottom:18px}.side-head,.side-note{display:none}.step-links{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.step-nav{justify-content:center;text-align:center;flex-direction:column;gap:4px;font-size:10px;padding:8px 3px;margin:0}.num{width:27px;height:27px}.mainhead{flex-wrap:wrap}.mainhead .btn{font-size:12px}.topbar{height:auto;min-height:66px;padding:14px}.session-tag{display:none}}
 @media(max-width:540px){.fields,.fields.three,.card-grid{grid-template-columns:1fr}.panel{padding:18px}.sieve-pair{grid-template-columns:1fr 1fr}.preview-meta{grid-template-columns:1fr 1fr}.mainhead h1{font-size:24px}.login-card h2{font-size:26px}.actionbar{display:block}.actions-right{margin-top:10px;display:flex}.actions-right .btn{flex:1}.topbar .logo{font-size:12px}.topbar .logo-icon{width:30px;height:30px}}
 @page{size:A4 portrait;margin:12mm}
-@media print{body{background:#fff;font:11px Arial,sans-serif;color:#111}.app-view,.login-view,.modal-bg{display:none!important}.print-sheet{display:block!important;padding:0;margin:0;width:100%;color:#111}.print-title{text-align:center;border:1px solid #555;padding:7px}.print-title h1{font-size:16px;margin:0}.print-title p{margin:2px}.print-fields{display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;margin:12px 0}.print-fields>div{display:flex;gap:6px;border-bottom:1px dotted #bbb;padding:3px}.print-fields strong{min-width:100px}.print-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.print-sheet h2{font-size:12px;margin:13px 0 5px;padding-bottom:5px;border-bottom:1px solid #888}.print-sheet table{border-collapse:collapse;width:100%;font-size:10px}.print-sheet th,.print-sheet td{border:1px solid #999;text-align:center;padding:4px}.print-sheet th{background:#f4f4f4}.print-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px}.print-metrics div{padding:5px;border:1px solid #ddd}.print-notes{white-space:pre-wrap;border:1px solid #bbb;min-height:60px;padding:8px}.print-sheet .print-footer{display:flex;justify-content:space-between;margin-top:15px}}
+@media print{body{background:#fff;font:11px Arial,sans-serif;color:#111}.app-view,.login-view,.modal-bg{display:none!important}.print-sheet{display:block!important;padding:0;margin:0;width:100%;color:#111}.print-title{text-align:center;border:1px solid #555;padding:7px}.print-title h1{font-size:16px;margin:0}.print-title p{margin:2px}.print-fields{display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;margin:12px 0}.print-fields>div{display:flex;gap:6px;border-bottom:1px dotted #bbb;padding:3px}.print-fields strong{min-width:100px}.print-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.print-sheet h2{font-size:12px;margin:13px 0 5px;padding-bottom:5px;border-bottom:1px solid #888}.print-sheet table{border-collapse:collapse;width:100%;font-size:10px}.print-sheet th,.print-sheet td{border:1px solid #999;text-align:center;padding:4px}.print-sheet th{background:#f4f4f4}.print-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px}.print-metrics div{padding:5px;border:1px solid #ddd}.print-notes{white-space:pre-wrap;border:1px solid #bbb;min-height:60px;padding:8px}.print-sheet .print-footer{display:flex;justify-content:space-between;margin-top:15px}.print-review{display:block}}
 
 /* Sincronización / trabajo sin conexión */
 .connect-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eaf3f6;padding:10px clamp(15px,3vw,40px);border-bottom:1px solid #d6e5eb;font-size:13px;color:#345469}
@@ -171,7 +182,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 <!-- CAPTURA MODERNA: SIN TABLAS -->
 <div class="app-view" id="appView" hidden>
- <div class="topbar"><div class="logo"><div class="logo-icon">RC</div><span>CONTROL DE CALIDAD<br><small style="color:#a8c9d1;font-weight:500">Mecánica de suelo</small></span></div><div class="top-actions"><span class="session-tag">● Sesión activa</span><button class="btn light" id="historyBtn" type="button">Historial</button><button class="btn light" id="logoutBtn" type="button">Salir</button></div></div>
+ <div class="topbar"><div class="logo"><div class="logo-icon">RC</div><span>CONTROL DE CALIDAD<br><small style="color:#a8c9d1;font-weight:500">Mecánica de suelo</small></span></div><div class="top-actions"><span class="session-tag">● Sesión activa</span><button class="btn light" id="historyBtn" type="button">Historial</button><button class="btn light" id="reviewsBtn" type="button" hidden>Revisiones</button><button class="btn light" id="logoutBtn" type="button">Salir</button></div></div>
  <div class="connect-strip"><span class="status-dot" id="connectionDot"></span><strong id="connectionStatus">Comprobando conexión…</strong><span class="sync-pill" id="pendingCount">0 pendientes</span><button class="btn light" type="button" id="syncBtn">↻ Sincronizar</button><button class="btn light" type="button" id="pendingBtn">Ver pendientes</button><span class="sync-message" id="draftState" role="status" aria-live="polite">Borrador local preparado</span></div>
  <div class="layout">
   <aside class="side"><div class="side-head"><small>Espacio de trabajo</small><h3>Nuevo informe</h3></div>
@@ -218,14 +229,26 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 <div class="modal-bg" id="historyModal" hidden role="dialog" aria-modal="true" aria-labelledby="historyTitle"><div class="modal"><div class="modal-head"><div><span class="eyebrow">Informes registrados</span><h2 id="historyTitle">Historial reciente</h2></div><button class="btn light" type="button" id="closeHistory">Cerrar ✕</button></div><p style="color:#667f90;font-size:13px">Busca por número de informe o empresa. «Solo antecedentes» deja los resultados de ensayo en blanco. Copiar el informe completo conserva los resultados, pero borra el número, la muestra y las fechas de ensayo para que ingreses datos nuevos.</p><input id="historySearch" class="history-search" type="search" placeholder="Buscar empresa, informe o fecha..." aria-label="Buscar informes anteriores"><p id="historySource" class="history-subtitle"></p><div id="historyList" role="status"></div></div></div>
 
+<div class="modal-bg" id="reviewModal" hidden role="dialog" aria-modal="true" aria-labelledby="reviewTitle"><div class="modal">
+ <div class="modal-head"><div><span class="eyebrow">Control interno · documento provisional</span><h2 id="reviewTitle">Revisión y firma</h2></div><button class="btn light" type="button" id="closeReview">Cerrar ✕</button></div>
+ <div class="review-details" id="reviewDetails"></div>
+ <p class="section-sub">Revisa los resultados antes de firmar. Esta es una firma visual del piloto, no una firma electrónica avanzada ni un informe oficial.</p>
+ <label for="signatureCanvas"><strong>Firma del revisor autorizado</strong></label>
+ <canvas id="signatureCanvas" class="signature-canvas" width="760" height="240" aria-label="Dibuja tu firma aquí" role="img"></canvas>
+ <div class="signature-actions"><button class="btn light" id="clearSignature" type="button">Borrar firma</button><button class="btn primary" id="approveReport" type="button">Aprobar y firmar</button></div>
+ <label for="returnReason"><strong>O devolver para correcciones</strong></label><textarea id="returnReason" class="review-input" placeholder="Explica qué debe corregirse (mínimo 8 caracteres)"></textarea>
+ <div class="signature-actions"><button class="btn danger" id="returnReport" type="button">Devolver informe</button></div>
+ <div class="notice" id="reviewResult" role="status" aria-live="polite"></div>
+</div></div>
+
 <div class="modal-bg" id="pendingModal" hidden role="dialog" aria-modal="true" aria-labelledby="pendingTitle"><div class="modal"><div class="modal-head"><div><span class="eyebrow">Sincronización</span><h2 id="pendingTitle">Informes guardados en este equipo</h2></div><button class="btn light" type="button" id="closePending">Cerrar ✕</button></div><p class="history-subtitle">Cada informe pendiente permanece aquí hasta recibir confirmación de MySQL. Puedes reintentar sin duplicarlo.</p><div id="pendingList" role="status"></div><button class="btn primary" type="button" id="syncAllBtn" style="margin-top:14px">Sincronizar ahora</button></div></div>
 
 <!-- Diseño de impresión, separado de la interfaz de captura -->
 <section class="print-sheet" id="printSheet" aria-label="Formato de impresión">
- <div class="print-title"><h1>REGISTRO DE CALIDAD</h1><p><strong>Área Mecánica de Suelo</strong></p><p>Ensayos de muestras · Caminos Forestales Forestal Celco</p></div>
+ <div class="print-title"><h1>REGISTRO DE CALIDAD</h1><p><strong>Área Mecánica de Suelo</strong></p><p>Ensayos de muestras · Caminos Forestales Forestal Celco</p><p><strong>DOCUMENTO DE PRUEBA — NO ES INFORME TÉCNICO OFICIAL</strong></p></div>
  <div class="print-fields" id="printGeneral"></div>
  <div class="print-grid"><section><h2>1. GRANULOMETRÍA</h2><table><thead><tr><th>Tamiz</th><th>% Retenido</th><th>% Pasa</th></tr></thead><tbody id="printSieves"></tbody></table></section><section><h2>2. PROCTOR</h2><div class="print-metrics" id="printMetrics"></div></section></div>
- <h2>CLASIFICACIÓN Y OBSERVACIONES</h2><div class="print-metrics" id="printClasses"></div><p id="printObservations" class="print-notes"></p><div class="print-footer"><span id="printResponsible"></span><span id="printDate"></span></div>
+ <h2>CLASIFICACIÓN Y OBSERVACIONES</h2><div class="print-metrics" id="printClasses"></div><p id="printObservations" class="print-notes"></p><div class="print-footer"><span id="printResponsible"></span><span id="printDate"></span></div><div class="print-review" id="printRevision"></div>
 </section>
 
 <script>
@@ -235,6 +258,7 @@ const API='./api';
 const tamices=['6″','4″','3″','2 ½″','2″','1 ½″','1″','¾″','⅜″','#4','#10','#40','#200'];
 const antecedentKeys=['estructura','zona','predio','camino','sector','kmp','contratista','mandante','responsable'];
 let activeStep=0, authenticated=false, recognition=null, recording=false, offlineMode=false, currentUid=null, syncing=false, draftTimer=null, lastSavedSignature=null, lastServerId=null, availableHistory=[], dataReady=false;
+let canReview=false, reviewOnlyPending=false, editingReportId=null, reviewReportId=null, printOverride=null, signatureDrawn=false;
 const steps=[
  {title:'Antecedentes de la muestra',desc:'Comienza con los datos de identificación del informe, la obra y las fechas.'},
  {title:'Resultados de los ensayos',desc:'Ingresa la granulometría y las mediciones técnicas, ordenadas por tipo de ensayo.'},
@@ -251,9 +275,9 @@ async function apiRequest(path, opts={}){
 }
 // POST evita recuperar de cache un token de otra sesión. Endpoint incluido en nuestro MVC.
 async function session(){return apiRequest('/session',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:'{}'});}
-function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hidden=canEdit;$('appView').hidden=!canEdit;if(!canEdit)stopVoice();updateConnectivity();}
+function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hidden=canEdit;$('appView').hidden=!canEdit;$('reviewsBtn').hidden=!authenticated||!canReview;if(!canEdit)stopVoice();updateConnectivity();}
 function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
-async function syncAuth(){const r=await session();authenticated=!!r.autenticado;offlineMode=false;if(authenticated){setOwner(Number(r.usuario_id));await restoreDraft();}renderAuth();if(authenticated)void syncPending();return r;}
+async function syncAuth(){const r=await session();authenticated=!!r.autenticado;offlineMode=false;canReview=authenticated&&!!r.puede_revisar;if(authenticated){setOwner(Number(r.usuario_id));await restoreDraft();}renderAuth();if(authenticated)void syncPending();return r;}
 function updateConnectivity(){const online=navigator.onLine;const active=authenticated&&online;$('connectionDot').classList.toggle('offline',!active);$('connectionStatus').textContent=active?'Con conexión · sesión activa':(online?'Sin sesión validada · guardado local':'Sin conexión · guardado local');document.querySelector('.session-tag').textContent=active?'● Sesión activa':'● Modo local (sin autenticar)';$('syncBtn').disabled=!active||syncing;}
 async function offerOfflineAccess(){const uid=Number(localStorage.getItem('demo_last_user'));$('offlineEntry').hidden=!(Number.isSafeInteger(uid)&&uid>0);}
 $('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();});
@@ -268,7 +292,7 @@ $('loginForm').addEventListener('submit',async e=>{
  finally{btn.disabled=false;}
 });
 $('togglePassword').addEventListener('click',()=>{const el=$('loginPassword');el.type=el.type==='password'?'text':'password';$('togglePassword').textContent=el.type==='password'?'Mostrar':'Ocultar';});
-$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;renderAuth();$('loginPassword').value='';}catch(e){alert('No fue posible cerrar sesión: '+e.message);}});
+$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){alert('No fue posible cerrar sesión: '+e.message);}});
 function getData(){const data={};$('reportForm').querySelectorAll('[name]').forEach(el=>{data[el.name]=el.value.trim();});return data;}
 function setData(data){$('reportForm').querySelectorAll('[name]').forEach(el=>{el.value=data[el.name]===undefined?'':String(data[el.name]);});updateReview();scheduleDraft();}
 function goStep(n){
@@ -316,7 +340,7 @@ function fillRandomData(){
  setData(d);goStep(0);showNotice($('saveResult'),'');
 }
 $('demoBtn').addEventListener('click',fillRandomData);
-$('resetBtn').addEventListener('click',()=>{if(!confirm('¿Iniciar un informe nuevo? Los pendientes de sincronización no se borrarán. El borrador actual será reemplazado.'))return;lastSavedSignature=null;lastServerId=null;setData({fechaRegistro:today()});goStep(0);showNotice($('saveResult'),'');});
+$('resetBtn').addEventListener('click',()=>{if(!confirm('¿Iniciar un informe nuevo? Los pendientes de sincronización no se borrarán. El borrador actual será reemplazado.'))return;lastSavedSignature=null;lastServerId=null;editingReportId=null;$('saveBtn').textContent='Guardar informe (con o sin conexión)';setData({fechaRegistro:today()});goStep(0);showNotice($('saveResult'),'');});
 function updateReview(){const d=getData();const fields=[['N° informe','nInforme'],['Muestra','muestra'],['Contratista','contratista'],['Mandante','mandante'],['Fecha de ensayo','fechaEnsayo'],['Sector / tramo','sector'],['CBR (%)','cbr'],['Clasificación USCS','usc'],['Responsable','responsable']];$('reviewMeta').replaceChildren();fields.forEach(([label,key])=>{const node=document.createElement('div');const small=document.createElement('small');const strong=document.createElement('strong');small.textContent=label;strong.textContent=d[key]||'—';node.append(small,strong);$('reviewMeta').append(node);});$('reviewNotes').textContent=d.observaciones||'Sin observaciones.';const issues=[];if(!d.contratista)issues.push('Completa Contratista.');if(!/^\d{4}-\d{2}-\d{2}$/.test(d.fechaEnsayo||d.fechaRegistro||''))issues.push('Completa Fecha de ensayo o Fecha de registro.');$('formWarnings').hidden=!issues.length;$('formWarnings').textContent=issues.join(' ');}
 // IndexedDB mantiene borradores, historial descargado y envíos pendientes por usuario.
 const DB_NAME='demo_mecanica_suelo_offline_v1';
@@ -342,8 +366,8 @@ function ownerKey(suffix){if(!currentUid)throw new Error('No hay usuario local i
 function signature(data){return JSON.stringify(data);}
 function queueUUID(){if(crypto.randomUUID)return crypto.randomUUID();const a=crypto.getRandomValues(new Uint8Array(16));a[6]=(a[6]&15)|64;a[8]=(a[8]&63)|128;const h=Array.from(a,x=>x.toString(16).padStart(2,'0')).join('');return [h.slice(0,8),h.slice(8,12),h.slice(12,16),h.slice(16,20),h.slice(20)].join('-');}
 function scheduleDraft(){if(!currentUid||!dataReady)return;clearTimeout(draftTimer);$('draftState').textContent='Guardando borrador local…';draftTimer=setTimeout(()=>void persistDraft(),650);}
-async function persistDraft(){if(!currentUid||!dataReady)return;try{await storagePut('drafts',{key:ownerKey('actual'),datos:getData(),fecha:new Date().toISOString(),lastSavedSignature,lastServerId});$('draftState').textContent='✓ Borrador guardado en este equipo';}catch(e){$('draftState').textContent='⚠ No se pudo guardar localmente: '+e.message;}}
-async function restoreDraft(){if(!currentUid)return;const v=await storageGet('drafts',ownerKey('actual'));dataReady=false;if(v&&v.datos){setData(v.datos);lastSavedSignature=v.lastSavedSignature??null;lastServerId=v.lastServerId??null;$('draftState').textContent='✓ Borrador anterior recuperado de este equipo';}else{$('draftState').textContent='Borrador local listo';}dataReady=true;await refreshPending();updateLastWork();}
+async function persistDraft(){if(!currentUid||!dataReady)return;try{await storagePut('drafts',{key:ownerKey('actual'),datos:getData(),fecha:new Date().toISOString(),lastSavedSignature,lastServerId,editingReportId});$('draftState').textContent='✓ Borrador guardado en este equipo';}catch(e){$('draftState').textContent='⚠ No se pudo guardar localmente: '+e.message;}}
+async function restoreDraft(){if(!currentUid)return;const v=await storageGet('drafts',ownerKey('actual'));dataReady=false;if(v&&v.datos){setData(v.datos);lastSavedSignature=v.lastSavedSignature??null;lastServerId=v.lastServerId??null;editingReportId=v.editingReportId??null;$('saveBtn').textContent=editingReportId?'Guardar correcciones':'Guardar informe (con o sin conexión)';$('draftState').textContent='✓ Borrador anterior recuperado de este equipo';}else{$('draftState').textContent='Borrador local listo';}dataReady=true;await refreshPending();updateLastWork();}
 $('reportForm').addEventListener('input',e=>{if(e.target.matches('[name]'))scheduleDraft();});
 $('reportForm').addEventListener('change',e=>{if(e.target.matches('[name]'))scheduleDraft();});
 async function refreshPending(){if(!currentUid)return;try{const q=(await storageAll('pending')).filter(x=>x.uid===currentUid);$('pendingCount').textContent=q.length+' pendiente'+(q.length===1?'':'s');if(!$('pendingModal').hidden)renderPending(q);return q;}catch(e){$('pendingCount').textContent='Almacenamiento no disponible';return [];}}
@@ -351,6 +375,7 @@ async function saveReport(){
  const btn=$('saveBtn');const d=getData();updateReview();if(!$('formWarnings').hidden)return;
  if(!currentUid){showNotice($('saveResult'),'Inicia sesión al menos una vez en este dispositivo antes de guardar.',true);return;}
  const sig=signature(d);
+ if(editingReportId){await saveCorrections(d);return;}
  if(sig===lastSavedSignature){showNotice($('saveResult'),lastServerId?'Este informe ya está en MySQL (ID '+lastServerId+'). Para registrar otro, pulsa Nuevo informe.':'Este informe ya está pendiente de sincronizar. Puedes verlo en «Ver pendientes».');return;}
  btn.disabled=true;showNotice($('saveResult'),'Guardando primero en este equipo…');
  try{
@@ -422,10 +447,12 @@ function closeHistory(){$('historyModal').hidden=true;}
 $('closeHistory').addEventListener('click',closeHistory);
 $('historyModal').addEventListener('click',e=>{if(e.target===$('historyModal'))closeHistory();});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHistory();$('pendingModal').hidden=true;}});
-$('historyBtn').addEventListener('click',openHistory);
-$('reuseQuickBtn').addEventListener('click',openHistory);
+$('historyBtn').addEventListener('click',()=>openHistory(false));
+$('reviewsBtn').addEventListener('click',()=>openHistory(true));
+$('reuseQuickBtn').addEventListener('click',()=>openHistory(false));
 $('historySearch').addEventListener('input',renderHistory);
-async function openHistory(){
+async function openHistory(onlyPending=false){
+ reviewOnlyPending=onlyPending; $('historyTitle').textContent=onlyPending?'Pendientes de revisión':'Historial reciente';
  $('historyModal').hidden=false;$('historyList').textContent='Buscando informes anteriores…';$('historySearch').value='';
  try{
   const cached=await storageGet('history',ownerKey('listado'));
@@ -445,15 +472,25 @@ async function cacheRecentReports(list){
   try{const key=ownerKey('informe:'+info.id);const cached=await storageGet('reports',key);if(cached)continue;const full=await apiRequest('/informes/'+info.id);await storagePut('reports',{key,datos:full.datos,fecha:new Date().toISOString()});}catch(e){break;}
  }
 }
-function renderHistory(){const search=$('historySearch').value.trim().toLocaleLowerCase('es-CL');const list=$('historyList');list.replaceChildren();const matches=availableHistory.filter(i=>[i.numero_informe,i.razon_social,i.fecha_informe,String(i.id)].join(' ').toLocaleLowerCase('es-CL').includes(search));
- if(!matches.length){list.textContent=search?'No se encontraron informes con esa búsqueda.':'Todavía no hay informes anteriores.';return;}
+function renderHistory(){const search=$('historySearch').value.trim().toLocaleLowerCase('es-CL');const list=$('historyList');list.replaceChildren();const matches=availableHistory.filter(i=>(!reviewOnlyPending||i.revision_estado==='pendiente')&&[i.numero_informe,i.razon_social,i.fecha_informe,String(i.id)].join(' ').toLocaleLowerCase('es-CL').includes(search));
+ if(!matches.length){list.textContent=search?'No se encontraron informes con esa búsqueda.':(reviewOnlyPending?'No hay informes pendientes de revisión entre los 100 más recientes.':'Todavía no hay informes anteriores.');return;}
  for(const info of matches.slice(0,50)){
   const item=document.createElement('div');item.className='history-item';
   const desc=document.createElement('div');desc.append(node('strong',(info.numero_informe||'Sin número')+' · ID '+info.id),node('small',(info.razon_social||'')+' · '+(info.fecha_informe||'')));
+  const state=info.revision_estado||'borrador';const tag=node('span',reviewLabel(state));tag.className='review-tag '+state;desc.append(tag);
+  if(state==='devuelto'&&info.motivo_devolucion)desc.append(node('small','Motivo: '+info.motivo_devolucion));
   const actions=document.createElement('div');actions.className='history-buttons';
   for(const [label,mode] of [['Usar antecedentes','antecedentes'],['Copiar ensayos también','completo']]){
    const b=document.createElement('button');b.className=mode==='antecedentes'?'btn primary':'btn light';b.type='button';b.textContent=label;b.addEventListener('click',()=>reuseReport(info.id,mode,b));actions.append(b);
-  }item.append(desc,actions);list.append(item);
+  }
+  if(authenticated&&navigator.onLine){
+   const add=(title,fn,kind='light')=>{const b=document.createElement('button');b.className='btn '+kind;b.type='button';b.textContent=title;b.addEventListener('click',()=>void fn(b));actions.append(b);};
+   if((state==='borrador'||state==='devuelto')&&(canReview||Number(info.usuario_id)===currentUid))add('Solicitar revisión',b=>requestReview(info.id,b),'dark');
+   if(state==='devuelto'&&Number(info.usuario_id)===currentUid)add('Corregir',b=>editReturnedReport(info.id,b),'primary');
+   if(state==='pendiente'&&canReview){add('Revisar / firmar',b=>openReview(info.id,b),'primary');add('Devolver',b=>openReview(info.id,b),'danger');}
+   add(state==='aprobado'?'PDF firmado (prueba)':'Ver / imprimir',b=>printStoredReport(info.id,b));
+  }
+  item.append(desc,actions);list.append(item);
  }
 }
 async function reuseReport(id,mode,button){button.disabled=true;try{
@@ -465,17 +502,128 @@ async function reuseReport(id,mode,button){button.disabled=true;try{
  for(const field of ['nInforme','muestra','fechaMuestreo','fechaEnsayo'])delete d[field];
  d.fechaRegistro=today();lastSavedSignature=null;lastServerId=null;setData(d);closeHistory();goStep(0);
  }catch(e){alert('No fue posible reutilizar el informe: '+e.message);}finally{button.disabled=false;}}
+// La revisión siempre se hace contra el registro guardado en MySQL, nunca con el borrador local.
+function reviewLabel(state){return ({borrador:'Borrador',pendiente:'Pendiente de revisión',devuelto:'Devuelto para correcciones',aprobado:'Aprobado con firma'})[state]||'Sin revisión';}
+function stampUTC(utc){if(!utc)return '—';const d=new Date(String(utc).replace(' ','T')+'Z');return Number.isNaN(d.getTime())?String(utc):d.toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'});}
+async function postReview(id,action,body={}){
+ if(!authenticated||!navigator.onLine)throw new Error('Se requiere iniciar sesión y tener conexión para revisar o firmar.');
+ const s=await session();if(!s.autenticado)throw new Error('La sesión ha expirado. Inicia sesión nuevamente.');
+ return apiRequest('/informes/'+id+'/'+action,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({...body,csrf:s.csrf})});
+}
+async function requestReview(id,button){
+ if(!confirm('¿Enviar este registro guardado en MySQL a revisión? Los cambios que no hayas guardado no se incluirán.'))return;
+ button.disabled=true;
+ try{await postReview(id,'solicitar-revision');await openHistory(reviewOnlyPending);}
+ catch(e){alert('No se pudo solicitar la revisión: '+e.message);}finally{button.disabled=false;}
+}
+async function editReturnedReport(id,button){
+ if(!confirm('¿Cargar este informe devuelto para corregirlo? Se reemplazarán los datos del formulario actual; el informe conservará su ID en MySQL.'))return;
+ button.disabled=true;
+ try{
+  const r=await apiRequest('/informes/'+id);
+  if(r.revision?.estado!=='devuelto')throw new Error('El informe ya no está devuelto. Actualiza el historial.');
+  if(Number(r.usuario_id)!==currentUid)throw new Error('Solo el autor puede corregir el informe.');
+  dataReady=false;editingReportId=id;lastSavedSignature=null;lastServerId=null;
+  setData(r.datos||{});dataReady=true;$('saveBtn').textContent='Guardar correcciones del informe #'+id;
+  await persistDraft();closeHistory();goStep(0);alert('Informe #'+id+' cargado. Corrige los datos y pulsa Guardar correcciones en la etapa 4.');
+ }catch(e){dataReady=true;alert('No fue posible editar: '+e.message);}finally{button.disabled=false;}
+}
+async function saveCorrections(data){
+ if(!authenticated||!navigator.onLine){showNotice($('saveResult'),'Las correcciones requieren conexión al servidor y sesión activa. Tu borrador permanece en este equipo.',true);return;}
+ const btn=$('saveBtn');btn.disabled=true;showNotice($('saveResult'),'Guardando correcciones en MySQL…');
+ try{
+  const s=await session();if(!s.autenticado)throw new Error('Inicia sesión de nuevo.');
+  const id=editingReportId;
+  await apiRequest('/informes/'+id,{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf,datos:data})});
+  lastServerId=id;lastSavedSignature=signature(data);editingReportId=null;
+  $('saveBtn').textContent='Guardar informe (con o sin conexión)';await persistDraft();
+  showNotice($('saveResult'),'✓ Correcciones guardadas en el informe #'+id+'. Abre Historial y pulsa Solicitar revisión.');
+ }catch(e){showNotice($('saveResult'),'No fue posible guardar correcciones: '+e.message,true);}finally{btn.disabled=false;}
+}
+
+const signCanvas=$('signatureCanvas'),signContext=signCanvas.getContext('2d');
+let penDown=false,lastPoint=null;
+function signaturePoint(e){const r=signCanvas.getBoundingClientRect();return {x:(e.clientX-r.left)*signCanvas.width/r.width,y:(e.clientY-r.top)*signCanvas.height/r.height};}
+function clearSignature(){signContext.clearRect(0,0,signCanvas.width,signCanvas.height);signatureDrawn=false;penDown=false;lastPoint=null;}
+signCanvas.addEventListener('pointerdown',e=>{if(!reviewReportId)return;e.preventDefault();signCanvas.setPointerCapture(e.pointerId);penDown=true;lastPoint=signaturePoint(e);signContext.beginPath();signContext.moveTo(lastPoint.x,lastPoint.y);});
+signCanvas.addEventListener('pointermove',e=>{if(!penDown)return;e.preventDefault();const p=signaturePoint(e);signContext.lineWidth=3.3;signContext.strokeStyle='#1a3042';signContext.lineCap='round';signContext.lineJoin='round';signContext.lineTo(p.x,p.y);signContext.stroke();lastPoint=p;signatureDrawn=true;});
+function stopSignature(){penDown=false;lastPoint=null;}
+signCanvas.addEventListener('pointerup',stopSignature);signCanvas.addEventListener('pointercancel',stopSignature);
+$('clearSignature').addEventListener('click',clearSignature);
+function closeReview(){reviewReportId=null;$('reviewModal').hidden=true;clearSignature();$('returnReason').value='';showNotice($('reviewResult'),'');}
+$('closeReview').addEventListener('click',closeReview);
+$('reviewModal').addEventListener('click',e=>{if(e.target===$('reviewModal'))closeReview();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('reviewModal').hidden)closeReview();});
+async function openReview(id,button){
+ button.disabled=true;
+ try{
+  if(!canReview||!authenticated)throw new Error('Este usuario no está autorizado como revisor.');
+  const report=await apiRequest('/informes/'+id);
+  if(report.revision?.estado!=='pendiente')throw new Error('Este informe ya no está pendiente de revisión.');
+  reviewReportId=id;clearSignature();$('returnReason').value='';showNotice($('reviewResult'),'');
+  $('reviewDetails').replaceChildren(
+   node('strong','Informe #'+id+' · '+(report.numero_informe||'Sin número')),
+   node('p','Contratista: '+(report.datos?.contratista||'—')),
+   node('p','Muestra: '+(report.datos?.muestra||'—')+' · Ensayo: '+(report.datos?.fechaEnsayo||'—')),
+   node('p','Observaciones: '+(report.datos?.observaciones||'Sin observaciones')),
+   node('p','Revisa el registro completo utilizando «Ver / imprimir» antes de aprobar.')
+  );
+  $('reviewModal').hidden=false;
+ }catch(e){alert('No fue posible abrir la revisión: '+e.message);}finally{button.disabled=false;}
+}
+$('approveReport').addEventListener('click',async()=>{
+ if(!reviewReportId||!signatureDrawn){showNotice($('reviewResult'),'Dibuja tu firma dentro del recuadro antes de aprobar.',true);return;}
+ if(!confirm('¿Confirmas que revisaste el registro y deseas aprobarlo con tu firma visual? Esta acción no se puede deshacer.'))return;
+ const id=reviewReportId,button=$('approveReport');button.disabled=true;
+ try{await postReview(id,'aprobar',{firma:signCanvas.toDataURL('image/png')});closeReview();await openHistory(reviewOnlyPending);alert('Informe #'+id+' aprobado. Abre Historial para imprimir su copia de prueba firmada.');}
+ catch(e){showNotice($('reviewResult'),'Error al aprobar: '+e.message,true);}finally{button.disabled=false;}
+});
+$('returnReport').addEventListener('click',async()=>{
+ if(!reviewReportId)return;const motivo=$('returnReason').value.trim();
+ if(motivo.length<8){showNotice($('reviewResult'),'Escribe un motivo de devolución de al menos 8 caracteres.',true);return;}
+ if(!confirm('¿Devolver este informe para correcciones?'))return;
+ const id=reviewReportId,button=$('returnReport');button.disabled=true;
+ try{await postReview(id,'devolver',{motivo});closeReview();await openHistory(reviewOnlyPending);}
+ catch(e){showNotice($('reviewResult'),'No fue posible devolver: '+e.message,true);}finally{button.disabled=false;}
+});
+async function printStoredReport(id,button){
+ button.disabled=true;
+ try{
+  const r=await apiRequest('/informes/'+id);printOverride={datos:r.datos,revision:r.revision};fillPrint();
+  // Evita abrir el diálogo de impresión antes de que se dibuje la firma PNG.
+  const signatureImage=$('printRevision').querySelector('img');
+  if(signatureImage&&signatureImage.decode){try{await signatureImage.decode();}catch(e){throw new Error('No se pudo cargar la firma visual.');}}
+  window.print();
+ }catch(e){printOverride=null;alert('No fue posible imprimir el registro: '+e.message);}finally{button.disabled=false;}
+}
+function renderPrintReview(revision){
+ const root=$('printRevision');root.replaceChildren();
+ const st=revision?.estado||'borrador';
+ root.append(node('strong','CONTROL DE REVISIÓN — '+reviewLabel(st).toUpperCase()));
+ if(st==='devuelto'&&revision.motivo_devolucion)root.append(node('p','Motivo de devolución: '+revision.motivo_devolucion));
+ if(st==='aprobado'){
+  if(!revision.integridad_verificada||!revision.firma_imagen){root.append(node('p','ATENCIÓN: no se pudo verificar la integridad de la aprobación. No se muestra la firma.'));return;}
+  root.append(node('p','Aprobado por: '+(revision.revisor_email||'Revisor autorizado')));
+  root.append(node('p','Fecha de aprobación: '+stampUTC(revision.fecha_revision)));
+  const img=document.createElement('img');img.src=revision.firma_imagen;img.alt='Firma visual del revisor';root.append(img);
+  root.append(node('small','Huella SHA-256 del registro: '+revision.hash_datos));
+ }
+ root.append(node('p','Este documento es una copia de prueba; la firma visible no equivale a firma electrónica avanzada ni reemplaza el informe oficial.'));
+}
+
 // La impresión usa un layout separado. Los datos provienen de la captura dinámica.
 function node(tag,text){const el=document.createElement(tag);el.textContent=text;return el;}
-function fillPrint(){const d=getData();$('printGeneral').replaceChildren();
+function fillPrint(){const d=printOverride?.datos||getData();$('printGeneral').replaceChildren();
  const general=[['N° informe','nInforme'],['N° muestra','muestra'],['Fecha muestreo','fechaMuestreo'],['Fecha ensayo','fechaEnsayo'],['Estructura','estructura'],['Zona','zona'],['Predio','predio'],['Camino N°','camino'],['Sector / Tramo','sector'],['Kmp','kmp'],['Contratista','contratista'],['Mandante','mandante']];
  general.forEach(([title,key])=>{const el=document.createElement('div');el.append(node('strong',title+':'),node('span',d[key]||'—'));$('printGeneral').append(el);});
  $('printSieves').replaceChildren();tamices.forEach((s,i)=>{const tr=document.createElement('tr');[s,d['retenido_'+i]||'—',d['pasa_'+i]||'—'].forEach(v=>tr.append(node('td',v)));$('printSieves').append(tr);});
  $('printMetrics').replaceChildren();for(const [title,key] of [['DCH','dch'],['% W Proctor','humedadProctor'],['DCS','dcs'],['Método','metodo'],['CBR (%)','cbr'],['LL','ll'],['LP','lp'],['IP','ip'],['Chancado (%)','chancado'],['Desgaste (%)','desgaste'],['Humedad (%)','humedad']])$('printMetrics').append(node('div',title+': '+(d[key]||'—')));
  $('printClasses').replaceChildren();$('printClasses').append(node('div','AASHTO: '+(d.aashto||'—')),node('div','USCS: '+(d.usc||'—')));$('printObservations').textContent=d.observaciones||'—';$('printResponsible').textContent='Responsable: '+(d.responsable||'—');$('printDate').textContent='Fecha de registro: '+(d.fechaRegistro||'—');
+ renderPrintReview(printOverride?.revision||null);
 }
-$('printBtn').addEventListener('click',()=>{fillPrint();window.print();});
-window.addEventListener('beforeprint',fillPrint);
+$('printBtn').addEventListener('click',()=>{printOverride=null;fillPrint();window.print();});
+window.addEventListener('afterprint',()=>{printOverride=null;});
+window.addEventListener('beforeprint',()=>{if(!printOverride)fillPrint();});
 async function init(){
  try{await localDB();}catch(e){showNotice($('loginError'),'Este navegador no permite guardar datos sin conexión: '+e.message,true);}
  if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js').catch(()=>{});}

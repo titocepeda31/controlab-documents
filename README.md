@@ -41,6 +41,27 @@ No se copia ni sobrescribe `config.php`, la base de datos ni las dependencias de
 - Los datos offline permanecen en IndexedDB del navegador: usar equipos de confianza, no eliminar datos pendientes antes de sincronizar.
 - No usar imágenes de firma de personas sin su autorización. La firma visual no equivale a una firma electrónica avanzada.
 
+## Revisión y firma visual (piloto)
+
+La versión actual añade revisión del registro provisional, **sin cambiar el diseño de impresión que ya se utilizaba**:
+
+1. Ejecutar `mvc/database/crear_revision_firmas.sql` en phpMyAdmin de la base de datos real antes de actualizar cPanel. No modifica las tablas anteriores. Se agregan `informe_revisores`, `informe_revisiones` e `informe_revision_eventos`.
+2. Autorizar expresamente a uno o más usuarios revisores, por ejemplo, sustituyendo el correo real:
+
+   ```sql
+   INSERT INTO informe_revisores (usuario_id,habilitado)
+   SELECT id,1 FROM usuarios WHERE email='CORREO_DEL_REVISOR' AND activo=1
+   ON DUPLICATE KEY UPDATE habilitado=1;
+   ```
+
+   Si la selección no encuentra al usuario, no habrá revisor autorizado. Verificar el correo en la tabla `usuarios`. No autorizar a usuarios ajenos al laboratorio.
+3. En cPanel > Git Version Control > Pull or Deploy, usar **Update from Remote**, seguido de **Deploy HEAD Commit**. La migración debe existir antes de desplegar; el script comprueba las cuatro tablas necesarias y conserva el archivo privado `config.php`.
+4. Iniciar sesión: en **Historial**, seleccionar un informe guardado en MySQL y solicitar revisión. El botón **Revisiones** aparece únicamente a revisores autorizados. Pueden aprobar dibujando una firma en pantalla o devolver indicando motivo. Solo el autor puede corregir el informe devuelto, manteniendo su ID; después solicita revisión de nuevo.
+5. En **Historial**, usar **PDF firmado (prueba)** para visualizar el documento actual con firma visual, revisor, fecha y huella SHA-256 de los datos guardados. El navegador permite **Imprimir > Guardar como PDF**. No se genera todavía un PDF firmado en servidor.
+
+La firma es **visual**, no una firma electrónica avanzada ni un sello criptográfico verificable por terceros. La hash del contenido se comprueba en la API para detectar cambios en los datos después de aprobar. No usar para documentos oficiales. Las aprobaciones **solo funcionan conectado y con sesión válida**; el guardado de borradores sigue siendo local.
+
 ## Funciones pendientes
 
-Generación PDF que preserve la plantilla oficial, control de aprobaciones, archivo versionado de certificados, firma/autorización y envío masivo de informes por SMTP. Ninguno está implementado en este repositorio todavía.
+Plantilla PDF oficial del laboratorio, generación del PDF definitivo, firma electrónica avanzada si llegase a requerirse, y envío masivo por SMTP. **No están implementados**. La impresión existente permanece como **copia de prueba**.
+

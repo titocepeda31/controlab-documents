@@ -16,4 +16,8 @@ $app->get('/api/empresas',[$empresas,'index']);
 $app->get('/api/informes',[$informes,'index']);
 $app->get('/api/informes/{id:[0-9]+}',[$informes,'show']);
 $app->post('/api/informes',[$informes,'store']);
+$app->put('/api/informes/{id:[0-9]+}',[$informes,'update']);
 $app->post('/api/informes/{id:[0-9]+}/duplicar',[$informes,'duplicate']);
+$app->post('/api/informes/{id:[0-9]+}/solicitar-revision',[$revisiones,'request']);
+$app->post('/api/informes/{id:[0-9]+}/aprobar',[$revisiones,'approve']);
+$app->post('/api/informes/{id:[0-9]+}/devolver',[$revisiones,'returnForChanges']);

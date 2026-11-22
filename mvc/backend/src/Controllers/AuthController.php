@@ -6,15 +6,18 @@ use Demo\Core\Database;
 use Demo\Core\Http;
 use Demo\Middleware\Security;
 use Demo\Models\Usuario;
+use Demo\Models\Revision;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use RuntimeException;
 
 final class AuthController {
     private Usuario $users;
-    public function __construct(Database $db) { $this->users=new Usuario($db); }
+    private Revision $revision;
+    public function __construct(Database $db) { $this->users=new Usuario($db); $this->revision=new Revision($db); }
     public function session(Request $request, Response $response): Response {
-        return Http::json($response,['autenticado'=>!empty($_SESSION['uid']),'csrf'=>$_SESSION['csrf'],'usuario_id'=>!empty($_SESSION['uid'])?(int)$_SESSION['uid']:null]);
+        $uid=(int)($_SESSION['uid']??0);
+        return Http::json($response,['autenticado'=>$uid>0,'csrf'=>$_SESSION['csrf'],'usuario_id'=>$uid>0?$uid:null,'puede_revisar'=>$uid>0 && $this->revision->canReview($uid)]);
     }
     public function login(Request $request, Response $response): Response {
         Security::csrf($request);

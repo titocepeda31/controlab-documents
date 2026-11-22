@@ -31,6 +31,13 @@ final class InformeController {
         }
         return Http::json($response,['id'=>$this->informes->create($input['datos'],$uuid)],201);
     }
+    public function update(Request $request, Response $response, array $args): Response {
+        Security::auth(); Security::csrf($request);
+        $input=Http::jsonBody($request);
+        if (!isset($input['datos']) || !is_array($input['datos'])) throw new InvalidArgumentException('Datos del informe inválidos');
+        $this->informes->update((int)$args['id'],(int)$_SESSION['uid'],$input['datos']);
+        return Http::json($response,['ok'=>true,'id'=>(int)$args['id']]);
+    }
     public function duplicate(Request $request, Response $response, array $args): Response {
         Security::auth(); Security::csrf($request);
         $input=Http::jsonBody($request);
