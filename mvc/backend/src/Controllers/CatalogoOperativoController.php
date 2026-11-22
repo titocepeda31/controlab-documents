@@ -25,6 +25,11 @@ final class CatalogoOperativoController {
         Security::requireRole('administrador','administrativo');Security::csrf($request);
         return Http::json($response,['id'=>$this->catalogo->createEmpresa(Http::jsonBody($request))],201);
     }
+    public function editarEmpresa(Request $request,Response $response,array $args): Response {
+        Security::requireRole('administrador','administrativo');Security::csrf($request);
+        $id=$this->catalogo->saveEmpresa(Http::jsonBody($request),(int)$args['id']);
+        return Http::json($response,['id'=>$id,'ok'=>true]);
+    }
     public function obras(Request $request,Response $response): Response {
         Security::requireRole('administrador','administrativo');
         return Http::json($response,['obras'=>$this->catalogo->obras()]);
