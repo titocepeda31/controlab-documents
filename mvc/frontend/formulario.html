@@ -379,6 +379,13 @@ async function syncAuth(){const r=await session();authenticated=!!r.autenticado;
 if(authenticated){
  setOwner(Number(r.usuario_id));localStorage.setItem('demo_last_role',userRole||'');
  if(userRole==='cliente'){
+  // No conservar lecturas históricas offline tras un cambio de rol.
+  try{
+   for(const store of ['history','reports']){
+    const items=await storageAll(store);
+    for(const entry of items)if(String(entry.key||'').startsWith(currentUid+':'))await storageDel(store,entry.key);
+   }
+  }catch(e){/* La API igualmente impide recuperar datos de otros clientes. */}
   dataReady=false;setData({fechaRegistro:today()});dataReady=true;printOverride=null;fillPrint();
  }else await restoreDraft();
 }
