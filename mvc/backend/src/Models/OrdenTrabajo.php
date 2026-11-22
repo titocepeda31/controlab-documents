@@ -101,6 +101,10 @@ final class OrdenTrabajo {
     private function applyObraCatalog(array &$data): void {
         if($data['obra_id']===null)return;
         $obra=(new CatalogoOperativo($this->db))->obraById($data['obra_id']);
+        $status=$this->db->connection()->prepare('SELECT activo FROM empresas WHERE id=?');
+        $status->execute([$obra['empresa_id']]);
+        if(!(int)$status->fetchColumn())throw new InvalidArgumentException('La empresa está inactiva');
+        if(!(int)$obra['activo'])throw new InvalidArgumentException('La obra está inactiva');
         if((int)$obra['activo']!==1)throw new InvalidArgumentException('La obra está inactiva. Elige otra.');
         $data['cliente']=$obra['empresa'];
         $data['obra']=$obra['nombre'];
