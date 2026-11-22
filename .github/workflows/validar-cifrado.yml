@@ -48,3 +48,35 @@ jobs:
           grep -Fq "encryptBytes" mvc/backend/src/Models/Revision.php
           grep -Fq "encryptLegacyLocalData" mvc/frontend/formulario.html
           grep -Fq "secureVersion:1" mvc/frontend/formulario.html
+
+  usuarios_mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: test_password
+          MARIADB_DATABASE: controlab_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar cliente PDO MySQL
+        run: |
+          if ! php -m | grep -iq '^pdo_mysql$'; then
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y php-mysql
+          fi
+      - name: Validar perfiles y sesiones en MariaDB real
+        env:
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_NAME: controlab_test
+          TEST_DB_USER: root
+          TEST_DB_PASS: test_password
+        run: php mvc/backend/tests/UsuariosMysqlIntegrationTest.php
