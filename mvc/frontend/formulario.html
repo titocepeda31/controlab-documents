@@ -187,6 +187,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
  .connect-strip .sync-message{grid-column:1/-1;width:auto}
 }
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css">
 </head>
 <body>
 <!-- LOGIN -->
@@ -915,6 +916,7 @@ setInterval(()=>{if(authenticated&&navigator.onLine)void syncPending();},45000);
 window.addEventListener('pagehide',()=>{if(currentUid&&dataReady)void persistDraft();});
 init();goStep(0);
 </script>
-<script src="./navigation.js?v=9" defer></script>
+
+<script src="./tabler-shell.js?v=1" defer></script>
 </body>
 </html>
