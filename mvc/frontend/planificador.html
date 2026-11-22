@@ -96,7 +96,7 @@ p{margin:6px 0;color:var(--muted)}
 <header class="top"><div class="brand">CONTROL DE CALIDAD<small>Planificador de órdenes de trabajo</small></div>
  <nav class="top-links" aria-label="Navegación">
   <a href="./formulario.html">Informes</a>
-  <a href="./usuarios.html" id="usersLink" hidden>Usuarios</a><a href="./catalogos.html" id="catalogLink" hidden>Empresas · Obras · Personal</a>
+  <a href="./usuarios.html" id="usersLink" hidden>Usuarios</a><a href="./catalogos.html" id="catalogLink" hidden>Empresas · Obras · Servicios · Personal</a>
  </nav>
 </header>
 <main>
@@ -170,6 +170,12 @@ p{margin:6px 0;color:var(--muted)}
      <div class="field"><label for="cliente">Cliente / contratista *</label><input id="cliente" name="cliente" maxlength="160" required placeholder="Nombre de empresa"></div>
      <div class="field"><label for="obra">Obra o proyecto *</label><input id="obra" name="obra" maxlength="180" required placeholder="Ej.: Camino forestal, sector 3"></div>
      <div class="field"><label for="actividad">Trabajo a realizar *</label><input id="actividad" name="actividad" maxlength="200" required placeholder="Ej.: Ensayo de densidad in situ"></div>
+     <div class="field full">
+      <label>Servicios solicitados y cantidades</label>
+      <div class="hint">Selecciona los servicios registrados en el catálogo. Los precios y cobros se agregarán después. <a href="./catalogos.html">Administrar servicios</a>.</div>
+      <div id="otServicios" class="service-lines"></div>
+      <button type="button" class="btn" id="addOtServicio" style="margin-top:8px">+ Agregar servicio</button>
+     </div>
      <div class="field"><label for="destino">Destino / dirección / predio *</label><input id="destino" name="destino" maxlength="240" required placeholder="Ubicación donde debe presentarse el equipo"></div>
      <div class="field"><label for="comuna">Comuna</label><input id="comuna" name="comuna" maxlength="120" placeholder="Comuna del trabajo"></div>
      <div class="field"><label for="inicio">Inicio programado *</label><input id="inicio" name="inicio" type="datetime-local" required></div>
@@ -192,7 +198,7 @@ const $=id=>document.getElementById(id);
 const API='./api';
 const weekdays=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const statusLabels={planificada:'Planificada',en_curso:'En curso',finalizada:'Finalizada',cancelada:'Cancelada'};
-let manager=false,viewerId=null,staff=[],fieldStaff=[],companies=[],works=[],jobs=[],view='calendar',selected=null,editingId=null,editingVersion=null,month=new Date(),sessionReady=false;
+let manager=false,viewerId=null,staff=[],fieldStaff=[],companies=[],works=[],services=[],jobs=[],view='calendar',selected=null,editingId=null,editingVersion=null,month=new Date(),sessionReady=false;
 month=new Date(month.getFullYear(),month.getMonth(),1);
 function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function monthLabel(d){return d.toLocaleDateString('es-CL',{month:'long',year:'numeric'});}
@@ -360,6 +366,11 @@ async function openDetail(id){
   const body=$('detailBody');
   fieldLine(body,'Cliente',j.cliente);fieldLine(body,'Obra',j.obra);
   fieldLine(body,'Trabajo',j.actividad);
+  if((j.servicios||[]).length){
+   const list=el('div');list.append(el('strong','','Servicios solicitados:'));
+   for(const s of j.servicios)list.append(el('p','',s.nombre+' · '+s.cantidad+' '+s.unidad));
+   body.append(list);
+  }
   fieldLine(body,'Destino',fullLocation(j));
   fieldLine(body,'Horario',dateTimeLabel(j.inicio)+' a '+dateTimeLabel(j.fin));
   fieldLine(body,'Equipo',teamLabel(j));
@@ -483,6 +494,36 @@ function fillTeamCheckboxes(selectedIds=[]){
   label.append(input,txt);root.append(label);
  }
 }
+
+function serviceLine(serviceId='',quantity=1){
+ const root=$('otServicios'),line=el('div','service-line');
+ line.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:9px 0';
+ const select=document.createElement('select');select.setAttribute('aria-label','Servicio');
+ select.style.cssText='flex:2;min-width:190px;min-height:41px;padding:8px;border:1px solid #becfd9;border-radius:9px';
+ const placeholder=el('option','','Selecciona un servicio');placeholder.value='';select.append(placeholder);
+ for(const s of services.filter(s=>Number(s.activo)===1||Number(s.id)===Number(serviceId))){
+  const opt=el('option','',s.nombre+' ('+s.unidad+')');opt.value=String(s.id);select.append(opt);
+ }
+ select.value=String(serviceId||'');
+ const qty=document.createElement('input');qty.type='number';qty.min='1';qty.max='100000';qty.step='1';qty.value=String(quantity);
+ qty.setAttribute('aria-label','Cantidad solicitada');qty.style.cssText='width:110px;min-height:41px;padding:8px;border:1px solid #becfd9;border-radius:9px';
+ const remove=el('button','btn','Quitar');remove.type='button';remove.addEventListener('click',()=>line.remove());
+ line.append(select,qty,remove);root.append(line);
+}
+$('addOtServicio').addEventListener('click',()=>serviceLine());
+function getOtServicios(){
+ const lines=[];
+ for(const line of $('otServicios').children){
+  const select=line.querySelector('select'),input=line.querySelector('input');
+  if(!select.value)throw new Error('Selecciona el servicio en cada fila o quita la fila vacía.');
+  const qty=Number(input.value);
+  if(!Number.isSafeInteger(qty)||qty<1||qty>100000)throw new Error('La cantidad de cada servicio debe ser un entero positivo (máximo 100000).');
+  lines.push({servicio_id:Number(select.value),cantidad:qty});
+ }
+ if(new Set(lines.map(s=>s.servicio_id)).size!==lines.length)throw new Error('No repitas el mismo servicio en una OT; aumenta su cantidad.');
+ return lines;
+}
+
 function openForm(record=null){
  if(!manager)return;
  editingId=record?Number(record.id):null;
@@ -490,6 +531,8 @@ function openForm(record=null){
  $('formTitle').textContent=record?'Editar OT '+record.numero_ot:'Nueva orden de trabajo';
  $('saveBtn').textContent=record?'Guardar cambios':'Crear orden de trabajo';
  $('otForm').reset();
+ $('otServicios').replaceChildren();
+ for(const s of record?.servicios||[])serviceLine(s.servicio_id,s.cantidad);
  fillCompanies();
  const linked=record?.obra_id?works.find(w=>Number(w.id)===Number(record.obra_id)):null;
  $('empresaCatalogo').value=linked?String(linked.empresa_id):'';
@@ -516,6 +559,7 @@ function formPayload(){
  data.personal=Array.from($('teamChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
  data.personal_terreno_ids=Array.from($('fieldChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
  data.obra_id=$('obraCatalogo').value?Number($('obraCatalogo').value):null;
+ data.servicios=getOtServicios();
  if(editingId!==null)data.version=editingVersion;
  return data;
 }
@@ -560,11 +604,11 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
    $('catalogLink').hidden=!manager;
   $('newBtn').hidden=!manager;$('teamTab').hidden=!manager;$('personFilter').hidden=!manager;
   if(manager){
-   const [people,catalogCompanies,catalogWorks]=await Promise.all([
-      request('/ot/equipo'),request('/catalogo/empresas'),request('/catalogo/obras')
+   const [people,catalogCompanies,catalogWorks,catalogServices]=await Promise.all([
+      request('/ot/equipo'),request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/servicios')
    ]);
    staff=people.equipo||[];fieldStaff=people.personal_terreno||[];
-   companies=catalogCompanies.empresas||[];works=catalogWorks.obras||[];
+   companies=catalogCompanies.empresas||[];works=catalogWorks.obras||[];services=catalogServices.servicios||[];
    for(const person of staff){
       const opt=document.createElement('option');opt.value='u-'+person.id;
       opt.textContent=person.nombre+' · '+person.rol;$('personFilter').append(opt);
