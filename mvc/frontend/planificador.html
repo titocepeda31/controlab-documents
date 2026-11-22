@@ -368,7 +368,7 @@ async function openDetail(id){
     if(!navigator.geolocation){notice('loadNotice','El navegador no admite ubicación. Abre OpenStreetMap y elige origen.',true);return;}
     navigator.geolocation.getCurrentPosition(pos=>{
       const path=pos.coords.latitude+','+pos.coords.longitude+';'+lat+','+lon;
-      window.open('https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route='+encodeURIComponent(path),'_blank','noopener,noreferrer');
+      window.location.assign('https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route='+encodeURIComponent(path));
     },()=>notice('loadNotice','No se obtuvo tu ubicación; puedes configurar el origen en OpenStreetMap.',true),
       {enableHighAccuracy:false,timeout:12000,maximumAge:0});
    });
