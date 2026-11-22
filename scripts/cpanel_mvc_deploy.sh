@@ -55,6 +55,7 @@ for path in \
   mvc/frontend/usuarios.html \
   mvc/frontend/planificador.html \
   mvc/frontend/catalogos.html \
+  mvc/frontend/modulos.html \
   mvc/frontend/sw.js \
   mvc/frontend/manifest.json \
   mvc/frontend/icon.svg
@@ -106,7 +107,7 @@ BACKEND_FILES=(
   src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/OrdenTrabajoController.php src/Controllers/CatalogoOperativoController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php
   src/Middleware/Security.php
 )
-FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html planificador.html catalogos.html sw.js manifest.json icon.svg)
+FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html planificador.html catalogos.html modulos.html sw.js manifest.json icon.svg)
 
 for rel in "${BACKEND_FILES[@]}"; do
   [[ -f "$PRIVATE/$rel" ]] && { mkdir -p "$BACKUP/private/$(dirname "$rel")"; cp -p "$PRIVATE/$rel" "$BACKUP/private/$rel"; }
