@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#112b42">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Registro de Calidad | Mecánica de Suelo</title>
 <style>
 :root{--navy:#10283d;--navy2:#193950;--accent:#087d70;--accent2:#0f9d8d;--bg:#f3f6f8;--line:#dce4ea;--muted:#65788a;--text:#152b3f;--red:#af283c;--blue:#3265ac;--card:#fff;--radius:15px}
@@ -280,7 +283,7 @@ async function apiRequest(path, opts={}){
   const resp=await fetch(API+path,{credentials:'same-origin',cache:'no-store',...opts,signal:controller.signal});
   const raw=await resp.text(); let json;
   try{json=JSON.parse(raw);}catch(e){throw new Error('La API no devolvió JSON (HTTP '+resp.status+'). Revisa /demo/api/session');}
-  if(!resp.ok)throw new Error(json.error||'Error HTTP '+resp.status);
+  if(!resp.ok)throw new Error((json.error||'Error HTTP '+resp.status)+(json.referencia?' (referencia '+json.referencia+')':''));
   return json;
  }catch(err){
   if(controller.signal.aborted)throw new Error('El servidor no respondió en 15 segundos ('+path+'). Revisa /demo/api/session y el registro de errores de cPanel.');
@@ -744,9 +747,15 @@ $('printBtn').addEventListener('click',()=>{printOverride=null;fillPrint();windo
 window.addEventListener('afterprint',()=>{printOverride=null;});
 window.addEventListener('beforeprint',()=>{if(!printOverride)fillPrint();});
 async function init(){
- try{await localDB();await encryptLegacyLocalData();}catch(e){showNotice($('loginError'),'No fue posible cifrar los borradores anteriores en este equipo: '+e.message,true);}
+ // Preparar el acceso a la aplicación sin internet, incluso si falla IndexedDB.
  if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
- try{await syncAuth();$('offlineEntry').hidden=true;}catch(e){authenticated=false;renderAuth();await offerOfflineAccess();showNotice($('loginError'),navigator.onLine?'No fue posible consultar la sesión: '+e.message:'No hay conexión al servidor. Puedes entrar en modo local si ya usaste este equipo.',!(!navigator.onLine));}
+ try{await localDB();await encryptLegacyLocalData();}catch(e){showNotice($('loginError'),'No fue posible cifrar los borradores anteriores en este equipo: '+e.message,true);}
+ if(!navigator.onLine){
+  authenticated=false;renderAuth();await offerOfflineAccess();
+  showNotice($('loginError'),'Sin internet: abre «Continuar sin conexión» para trabajar con los informes de este teléfono.');
+  updateConnectivity();return;
+ }
+ try{await syncAuth();$('offlineEntry').hidden=true;}catch(e){authenticated=false;renderAuth();await offerOfflineAccess();showNotice($('loginError'),'No fue posible consultar la sesión: '+e.message,true);}
  updateConnectivity();
 }
 window.addEventListener('online',async()=>{updateConnectivity();if(offlineMode||!authenticated){try{await syncAuth();}catch(e){updateConnectivity();}}if(authenticated)void syncPending();});

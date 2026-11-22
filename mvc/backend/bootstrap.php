@@ -66,12 +66,17 @@ $errorMiddleware = $app->addErrorMiddleware(false, true, true);
 $errorMiddleware->setDefaultErrorHandler(
     static function (Request $request, Throwable $e, bool $display, bool $log, bool $details) use ($app) {
         $status = $e instanceof InvalidArgumentException ? 422 : (int)$e->getCode();
+        $errorId = null;
         if ($status < 400 || $status > 499) {
             $status = 500;
-            error_log((string)$e);
+            // Código público de correlación: no expone claves, SQL ni rutas privadas.
+            $errorId = bin2hex(random_bytes(5));
+            error_log('[CONTROLAB '.$errorId.'] '.$e);
         }
         $message = $status === 500 ? 'Error interno del servidor' : $e->getMessage();
-        return Http::json($app->getResponseFactory()->createResponse(), ['error' => $message], $status);
+        $payload = ['error' => $message];
+        if ($errorId !== null) $payload['referencia'] = $errorId;
+        return Http::json($app->getResponseFactory()->createResponse(), $payload, $status);
     }
 );
 $app->run();

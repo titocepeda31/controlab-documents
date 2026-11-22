@@ -2,7 +2,12 @@ name: Validar cifrado de informes
 on:
   push:
     branches:
+      - main
       - feature/cifrado-informes
+      - fix/offline-pwa-sync-diagnostics
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -27,6 +32,8 @@ jobs:
           node -e "const fs=require('fs');const t=fs.readFileSync('mvc/frontend/formulario.html','utf8');const m=t.match(/<script>([\s\S]*?)<\/script>/);if(!m)process.exit(1);fs.writeFileSync('/tmp/controlab.js',m[1]);"
           node --check /tmp/controlab.js
           node --check mvc/frontend/sw.js
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('mvc/frontend/manifest.json','utf8'));if(!m.start_url.includes('/demo/formulario.html')||!m.icons.length||!fs.existsSync('mvc/frontend/icon.svg'))process.exit(1);"
+          node mvc/frontend/tests/offline-sw.test.cjs
       - name: Comprobar barreras de despliegue
         run: |
           set -euo pipefail
