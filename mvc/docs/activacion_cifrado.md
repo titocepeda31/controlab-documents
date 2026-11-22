@@ -10,6 +10,45 @@ El sistema publicado sigue guardando datos como antes hasta que se ejecute el pr
 - **Navegador:** datos persistidos en IndexedDB en `drafts`, `pending`, `history` y `reports`, con AES-GCM/Web Crypto antes de cada guardado y migración de registros legados cuando el usuario abra la nueva versión. Cada usuario tiene una clave AES no exportable conservada por el navegador.
 - **No queda cifrado a nivel de aplicación:** índices y metadatos de búsqueda de las tablas (IDs, empresa, número/fecha/estado), motivos y eventos de revisión; estos requieren permisos restrictivos y cifrado de disco/backups. La clave local del navegador **está en el mismo perfil del navegador** y la protección no resiste a alguien con acceso al sitio y al perfil desbloqueado, ni ataques XSS. Para seguridad local más fuerte habría que exigir un secreto de desbloqueo que no se almacene.
 
+## Ruta de desarrollo SIN SSH (cPanel)
+
+Este procedimiento no requiere acceso SSH. **No eliminar registros de prueba sin consentimiento explícito**, aunque el entorno sea de desarrollo. La clave privada ya configurada debe mantenerse fuera de GitHub y no copiarse en capturas de pantalla.
+
+### Paso 1: inventario desde phpMyAdmin (solo lectura)
+
+Abrir **cPanel → phpMyAdmin → base maderas7_informes → SQL** y ejecutar:
+
+```sql
+SELECT
+  (SELECT COUNT(*) FROM informe_datos) AS total_informes,
+  (SELECT COUNT(*) FROM informe_datos WHERE datos NOT LIKE 'enc:v1:%') AS informes_sin_cifrar,
+  (SELECT COUNT(*) FROM informe_revisiones WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0) AS total_firmas,
+  (SELECT COUNT(*) FROM informe_revisiones
+   WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0 AND LEFT(firma_png,7) <> 'enc:v1:') AS firmas_sin_cifrar;
+```
+
+También revisar en **Estructura** el tipo de `informe_datos.datos` y `informe_revisiones.firma_png`. Si no son suficientemente amplios, ampliarlos tras exportar un respaldo. No subir archivos o capturas con contraseñas.
+
+### Paso 2: elegir la ruta
+
+- **Si informes_sin_cifrar = 0 y firmas_sin_cifrar = 0:** no hay registros legados pendientes; después de ampliar columnas y verificar la clave se puede desplegar la rama de cifrado sin ejecutar el migrador.
+- **Si hay registros existentes que se quieren conservar:** usar **Trabajos de cron** de cPanel para ejecutar una sola vez el migrador mediante PHP CLI; esto **no es SSH**. Se programa durante una ventana de mantenimiento y se elimina la tarea al terminar. Primero ejecutar `--dry-run` y comprobar resultados; luego `--apply --maintenance-confirmed --backup-confirmed`, con respaldos probados. Utilizar la ruta real del ejecutable PHP que soporte el hosting y el clon correcto del repositorio.
+- **Si los informes de demostración no se necesitan:** solo el responsable puede autorizar expresamente que se descarten. No sugerir `TRUNCATE`/borrado sin confirmar relaciones, integridad de tablas y respaldo.
+
+Ejemplo de **comando de Cron para revisión**, sujeto a confirmar ruta PHP y que el clon use `feature/cifrado-informes`:
+
+```sh
+/usr/local/bin/php /home/maderas7/repositories/controlab-documents/mvc/backend/scripts/encrypt_existing_reports.php /home/maderas7/demo-informes/config.php --dry-run
+```
+
+No asumir que `/usr/local/bin/php` es la ruta válida: puede variar entre proveedores y versiones de cPanel. En cron no introducir la clave; el programa la leerá del `config.php` privado. Para esta tarea desactivar las notificaciones por correo si podrían exponer información sensible, y usar un log privado de permisos restringidos para verificar la ejecución. Tras aplicar la migración, eliminar el cron.
+
+### Paso 3: desplegar y verificar
+
+La versión del cifrado está en la rama **`feature/cifrado-informes`**, separada de los cambios de usuarios y planificador. El mecanismo de Git de cPanel debe tomar expresamente esa rama; si no permite cambiarla, no asumir que actualizar desde `main` instala el cifrado.
+
+Después de migrar, desplegar con el script existente de forma controlada. La protección del script impide instalar si detecta registros sin cifrar, clave ausente o columnas pequeñas. Comprobar en phpMyAdmin que **solamente el contenido técnico** comience por `enc:v1:`, no que las claves aparezcan en la base; no copiar textos descifrados en chats ni capturas.
+
 ## Requisitos antes del despliegue
 
 1. **No trabajar sobre los datos reales sin respaldo restaurable.** Respaldar la base de datos y los archivos privados; proteger el respaldo, que contendrá texto sin cifrar. Verificar que puede restaurarse.
