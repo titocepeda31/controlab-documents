@@ -23,6 +23,9 @@ $app->put('/api/catalogo/obras/{id:[0-9]+}',[$catalogoOperativoController,'edita
 $app->get('/api/catalogo/personal',[$catalogoOperativoController,'personal']);
 $app->post('/api/catalogo/personal',[$catalogoOperativoController,'crearPersonal']);
 $app->put('/api/catalogo/personal/{id:[0-9]+}',[$catalogoOperativoController,'editarPersonal']);
+$app->get('/api/catalogo/servicios',[$catalogoOperativoController,'servicios']);
+$app->post('/api/catalogo/servicios',[$catalogoOperativoController,'crearServicio']);
+$app->put('/api/catalogo/servicios/{id:[0-9]+}',[$catalogoOperativoController,'editarServicio']);
 $app->get('/api/ot',[$ordenTrabajoController,'index']);
 $app->get('/api/ot/equipo',[$ordenTrabajoController,'equipo']);
 $app->get('/api/ot/{id:[0-9]+}',[$ordenTrabajoController,'show']);
