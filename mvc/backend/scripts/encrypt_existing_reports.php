@@ -43,10 +43,10 @@ $legacySignatures = 0;
 foreach($signatureRows as $signatureRow) {
     $id=(int)$signatureRow['informe_id'];
     $bytes=(string)$signatureRow['firma_png'];
-    if (Demo\\Core\\ReportCrypto::isEncrypted($bytes)) {
+    if (Demo\Core\ReportCrypto::isEncrypted($bytes)) {
         $crypto->decryptBytes($id,$bytes,'firma');
     } else {
-        if (substr($bytes,0,8)!=="\\x89PNG\\r\\n\\x1a\\n") throw new RuntimeException("Firma previa inválida en informe $id");
+        if (substr($bytes,0,8)!=="\x89PNG\r\n\x1a\n") throw new RuntimeException("Firma previa inválida en informe $id");
         $legacySignatures++;
     }
 }
@@ -107,10 +107,10 @@ foreach($signatureRows as $row) {
         $current=$signatureSelect->fetchColumn();
         $signatureSelect->closeCursor();
         if(!is_string($current)||$current===''){throw new RuntimeException("La firma del informe $id cambió durante la migración");}
-        if(Demo\\Core\\ReportCrypto::isEncrypted($current)) {
+        if(Demo\Core\ReportCrypto::isEncrypted($current)) {
             $crypto->decryptBytes($id,$current,'firma');
         } else {
-            if(substr($current,0,8)!=="\\x89PNG\\r\\n\\x1a\\n")throw new RuntimeException("Firma previa inválida en informe $id");
+            if(substr($current,0,8)!=="\x89PNG\r\n\x1a\n")throw new RuntimeException("Firma previa inválida en informe $id");
             $encrypted=$crypto->encryptBytes($id,$current,'firma');
             if($crypto->decryptBytes($id,$encrypted,'firma')!==$current)throw new RuntimeException("Error verificando firma $id");
             $signatureUpdate->execute([$encrypted,$id]);
@@ -120,5 +120,6 @@ foreach($signatureRows as $row) {
     }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
 }
 $remaining = (int)$pdo->query("SELECT COUNT(*) FROM informe_datos WHERE datos NOT LIKE 'enc:v1:%'")->fetchColumn();
-fwrite(STDOUT, "Cifrados nuevos: $updated; restantes sin cifrar: $remaining\n");
-if ($remaining !== 0) exit(1);
+$signatureRemaining=(int)$pdo->query("SELECT COUNT(*) FROM informe_revisiones WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0 AND LEFT(firma_png,7)!='enc:v1:'")->fetchColumn();
+fwrite(STDOUT, "Informes cifrados nuevos: $updated; firmas cifradas nuevas: $updatedSignatures; informes pendientes: $remaining; firmas pendientes: $signatureRemaining\\n");
+if ($remaining!==0 || $signatureRemaining!==0) exit(1);
