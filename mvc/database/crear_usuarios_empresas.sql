@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS usuario_accesos (
   usuario_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
   nombre VARCHAR(160) NOT NULL,
-  rol ENUM('administrador','responsable','digitalizador','cliente') NOT NULL,
+  rol ENUM('administrador','laboratorista','digitalizador','cliente') NOT NULL,
   empresa_id BIGINT UNSIGNED DEFAULT NULL,
   fecha_alta TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_perfiles_empresa (empresa_id,rol)
