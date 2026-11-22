@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Demo\Controllers;
 
 use Demo\Core\Database;
+use Demo\Core\Access;
 use Demo\Core\Http;
 use Demo\Middleware\Security;
 use Demo\Models\Usuario;
@@ -14,10 +15,20 @@ use RuntimeException;
 final class AuthController {
     private Usuario $users;
     private Revision $revision;
-    public function __construct(Database $db) { $this->users=new Usuario($db); $this->revision=new Revision($db); }
+    private Database $db;
+    public function __construct(Database $db) { $this->db=$db; $this->users=new Usuario($db); $this->revision=new Revision($db); }
     public function session(Request $request, Response $response): Response {
         $uid=(int)($_SESSION['uid']??0);
-        return Http::json($response,['autenticado'=>$uid>0,'csrf'=>$_SESSION['csrf'],'usuario_id'=>$uid>0?$uid:null,'puede_revisar'=>$uid>0 && $this->revision->canReview($uid)]);
+        $account=Access::user($this->db,$uid);
+        $valid=$account!==null;
+        return Http::json($response,[
+            'autenticado'=>$valid,'csrf'=>$_SESSION['csrf'],'usuario_id'=>$valid?$uid:null,
+            'rol'=>$valid?$account['rol']:null,'nombre'=>$valid?$account['nombre']:null,
+            'empresa_id'=>$valid?$account['empresa_id']:null,
+            'puede_editar'=>$valid && $account['rol']!=='cliente',
+            'puede_administrar'=>$valid && $account['rol']==='administrador',
+            'puede_revisar'=>$valid && $account['rol']!=='cliente' && $this->revision->canReview($uid)
+        ]);
     }
     public function login(Request $request, Response $response): Response {
         Security::csrf($request);
@@ -27,6 +38,7 @@ final class AuthController {
         if (!$user || !password_verify((string)($body['password'] ?? ''),$user['password_hash'])) {
             throw new RuntimeException('Credenciales incorrectas',401);
         }
+        if (!Access::user($this->db,(int)$user['id'])) throw new RuntimeException('Cuenta sin permisos de acceso configurados',403);
         session_regenerate_id(true);
         $_SESSION['uid']=(int)$user['id'];
         $_SESSION['csrf']=bin2hex(random_bytes(24));
