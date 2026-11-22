@@ -61,6 +61,11 @@ h1{margin:0 0 7px;font-size:clamp(25px,5vw,35px)}h2{font-size:20px;margin:0 0 13
     <div class="row actions"><button class="btn" id="generatePassword" type="button">Generar contraseña segura</button><button class="btn" id="showCreatePassword" type="button">Mostrar contraseña</button><button class="btn primary" id="createBtn" type="submit">Crear usuario</button></div>
     <div class="helper">Entrega la contraseña al trabajador por un canal privado. No se envía por correo ni queda guardada en esta página.</div>
     <div id="createNotice" role="status" aria-live="polite"></div>
+    <div id="newCredentialBox" class="info" hidden style="margin:12px 0">
+     <strong>Contraseña inicial — cópiala ahora</strong>
+     <div class="row" style="margin-top:8px"><input id="newCredential" type="text" readonly aria-label="Contraseña inicial recién creada" style="min-width:0;flex:1;max-width:340px;border:1px solid #b8ccda;border-radius:8px;padding:10px"><button class="btn" type="button" id="copyCredential">Copiar</button><button class="btn" type="button" id="clearCredential">Ocultar</button></div>
+     <div class="helper">Solo estará visible aquí hasta que la ocultes o salgas. Entrega la contraseña al usuario de forma privada.</div>
+    </div>
    </form>
   </div>
   <div class="panel">
@@ -120,6 +125,8 @@ function securePassword(){
 }
 function fillPassword(id){$(id).value=securePassword();$(id).type='text';}
 function togglePassword(id,button){const el=$(id);el.type=el.type==='password'?'text':'password';button.textContent=el.type==='password'?'Mostrar contraseña':'Ocultar contraseña';}
+$('copyCredential').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('newCredential').value);notice('createNotice','✓ Contraseña copiada. Compártela por un canal privado.');}catch(e){notice('createNotice','No se pudo copiar automáticamente. Selecciona el texto.',true);}});
+$('clearCredential').addEventListener('click',()=>{$('newCredential').value='';$('newCredentialBox').hidden=true;});
 $('generatePassword').addEventListener('click',()=>fillPassword('createPassword'));
 $('generateResetPassword').addEventListener('click',()=>fillPassword('resetPassword'));
 $('showCreatePassword').addEventListener('click',e=>togglePassword('createPassword',e.currentTarget));
@@ -169,9 +176,11 @@ $('search').addEventListener('input',renderList);
 $('createForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('createBtn');btn.disabled=true;notice('createNotice','');
  try{
-  await mutate('/usuarios','POST',{nombre:$('createName').value.trim(),email:$('createEmail').value.trim(),rol:$('createRole').value,clave:$('createPassword').value});
+  const initialPassword=$('createPassword').value;
+  await mutate('/usuarios','POST',{nombre:$('createName').value.trim(),email:$('createEmail').value.trim(),rol:$('createRole').value,clave:initialPassword});
   $('createForm').reset();$('createPassword').type='password';
-  notice('createNotice','✓ Usuario creado. Entrega la contraseña inicial de manera privada.');
+  $('newCredential').value=initialPassword;$('newCredentialBox').hidden=false;
+  notice('createNotice','✓ Usuario creado. Copia la contraseña inicial antes de salir de esta pantalla.');
   await reload();
  }catch(err){notice('createNotice',err.message,true);}finally{btn.disabled=false;}
 });
