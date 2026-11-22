@@ -115,6 +115,10 @@ for rel in "${BACKEND_FILES[@]}"; do
 done
 for rel in "${FRONTEND_FILES[@]}"; do
   cp -f "$REPO/mvc/frontend/$rel" "$PUBLIC/$rel"
+  # umask 077 protege los respaldos y ficheros privados, pero deja 0600
+  # cuando publica archivos nuevos (por ejemplo usuarios.html).
+  # Los recursos en public_html deben ser legibles por el servidor web.
+  chmod 0644 "$PUBLIC/$rel"
 done
 printf 'CONTROLAB_MVC_COMMIT=%s\nFECHA_UTC=%s\n' "$(git -C "$REPO" rev-parse --short HEAD)" "$STAMP" > "$BACKUP/deployed.txt"
 echo 'OK: MVC desplegado. Configuración privada conservada.'
