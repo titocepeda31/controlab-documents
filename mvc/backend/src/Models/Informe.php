@@ -11,18 +11,47 @@ final class Informe {
     private Empresa $empresa;
     private Revision $revision;
     public function __construct(private Database $db) { $this->empresa = new Empresa($db); $this->revision = new Revision($db); }
-    public function all(): array {
-        return $this->db->connection()->query("SELECT i.id,i.usuario_id,i.numero_informe,i.fecha_informe,i.estado,e.razon_social,COALESCE(r.estado,'borrador') AS revision_estado,r.motivo_devolucion FROM informes i JOIN empresas e ON e.id=i.empresa_id LEFT JOIN informe_revisiones r ON r.informe_id=i.id ORDER BY i.id DESC LIMIT 100")->fetchAll();
+    public function all(array $user): array {
+        $sql="SELECT i.id,i.usuario_id,i.numero_informe,i.fecha_informe,i.estado,e.razon_social,"
+            ."COALESCE(r.estado,'borrador') AS revision_estado,r.motivo_devolucion,"
+            ."dest.empresa_id AS destinatario_empresa_id "
+            ."FROM informes i JOIN empresas e ON e.id=i.empresa_id "
+            ."LEFT JOIN informe_revisiones r ON r.informe_id=i.id "
+            ."LEFT JOIN informe_destinatarios dest ON dest.informe_id=i.id ";
+        if ($user['rol']==='cliente') {
+            // Nunca mostrar borradores, ni informes de otra empresa.
+            $sql.="WHERE dest.empresa_id=? AND r.estado='aprobado' ORDER BY i.id DESC LIMIT 100";
+            $q=$this->db->connection()->prepare($sql);
+            $q->execute([$user['empresa_id']]);
+            return $q->fetchAll();
+        }
+        return $this->db->connection()->query($sql.'ORDER BY i.id DESC LIMIT 100')->fetchAll();
     }
-    public function find(int $id): array {
-        $q=$this->db->connection()->prepare('SELECT i.id,i.usuario_id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos FROM informes i JOIN informe_datos d ON d.informe_id=i.id WHERE i.id=?');
-        $q->execute([$id]);
+    public function find(int $id,array $user): array {
+        $sql='SELECT i.id,i.usuario_id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos '
+            .'FROM informes i JOIN informe_datos d ON d.informe_id=i.id ';
+        if ($user['rol']==='cliente') {
+            $sql.="JOIN informe_destinatarios dest ON dest.informe_id=i.id "
+                ."JOIN informe_revisiones rev ON rev.informe_id=i.id AND rev.estado='aprobado' "
+                ."WHERE i.id=? AND dest.empresa_id=?";
+            $params=[$id,$user['empresa_id']];
+        } else {
+            $sql.='WHERE i.id=?';
+            $params=[$id];
+        }
+        $q=$this->db->connection()->prepare($sql);
+        $q->execute($params);
         $row=$q->fetch();
         if (!$row) throw new RuntimeException('Informe no encontrado',404);
         $raw=(string)$row['datos'];
         $row['datos']=json_decode($raw,true) ?? [];
         $row['revision']=$this->revision->get($id,$raw);
-        $row['eventos_revision']=$this->revision->events($id);
+        // Si alguien modificó los datos después de aprobar, el cliente no debe verlo.
+        if($user['rol']==='cliente' && empty($row['revision']['integridad_verificada'])){
+            throw new RuntimeException('Informe no disponible',404);
+        }
+        // Auditoría interna no se expone a cuentas de cliente.
+        if($user['rol']!=='cliente')$row['eventos_revision']=$this->revision->events($id);
         return $row;
     }
     public static function allowedFields(array $data): array {
