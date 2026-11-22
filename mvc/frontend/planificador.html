@@ -82,6 +82,11 @@ p{margin:6px 0;color:var(--muted)}
 .person-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
 .person-card h3{margin:0}.person-card p{margin:4px 0}.person-jobs{display:grid;gap:6px;margin-top:9px}
 .person-job{padding:8px 10px;border-radius:8px;background:#edf6f4;color:#23564d;font-size:12px}
+.team-summary{font-weight:700;color:var(--muted);font-size:13px;margin-bottom:12px}
+.team-job{border-left:4px solid var(--teal);margin-bottom:13px}
+.team-job h3{font-size:21px}.team-job .team-place{font-weight:700;margin:10px 0}.team-activity{font-size:13px}
+.team-members{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.team-member{background:#edf6f4;border:1px solid #c9e4db;color:#23564d;padding:8px 10px;border-radius:9px;font-size:13px}
 .hint{color:var(--muted);font-size:12px;margin:9px 0}
 @media(max-width:850px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.calendar-day{min-height:85px;padding:5px}.dayitem{font-size:10px;padding:3px}.panel{padding:16px}}
 @media(max-width:570px){main{padding:17px 10px 45px}.intro{display:block}.intro>.btn{margin-top:12px}.top{padding:12px}.top-links a{font-size:11px;padding:8px}.panel{padding:13px}.stat{padding:10px}.stat strong{font-size:23px}.bar{display:block}.tabs{width:100%;margin-bottom:11px}.tab{flex:1}.filters{align-items:stretch}.filters select{flex:1;max-width:none}.month-title{font-size:19px}.weekday{font-size:10px;padding:7px 2px}.calendar-day{min-height:61px;padding:3px}.daynum{font-size:12px;width:21px;height:21px}.dayitems{gap:2px;margin-top:3px}.dayitem{height:6px;border:0;font-size:0;padding:0;border-radius:20px}.more{font-size:9px}.form-grid,.team-list{grid-template-columns:1fr}.full{grid-column:auto}}
@@ -139,7 +144,7 @@ p{margin:6px 0;color:var(--muted)}
     <div class="assignment-list" id="dayList"></div>
    </div>
    <div id="agendaView" hidden><h2>Trabajos del período</h2><p class="hint">Listado por fecha de inicio. Toca una orden para revisar su destino y participantes.</p><div class="assignment-list" id="agendaList"></div></div>
-   <div id="teamView" hidden><h2>¿Dónde está cada trabajador?</h2><p class="hint">Consulta quién va a cada destino en un día determinado o revisa el mes completo.</p>
+   <div id="teamView" hidden><h2>Programación de equipos por horario</h2><p class="hint">Cada orden se muestra una sola vez, con su horario, destino y todos los integrantes del equipo. Revisa el día o el mes completo.</p>
     <div class="filters" style="margin:12px 0"><label for="teamDay" style="font-weight:750">Fecha del equipo</label><input id="teamDay" type="date"><label style="display:flex;align-items:center;gap:7px"><input id="teamFullMonth" type="checkbox"> Ver mes completo</label></div>
     <div id="teamOverview"></div></div>
    <div class="notice" id="loadNotice" role="status" aria-live="polite"></div>
@@ -298,22 +303,33 @@ function renderAgenda(){
 function renderTeam(){
  const root=$('teamOverview');root.replaceChildren();
  const day=$('teamDay').value||dateKey(new Date());
- const found=$('teamFullMonth').checked?activeJobs():jobsForDay(day);
- for(const person of [...staff.map(p=>({...p,kind:'u'})),...fieldStaff.map(p=>({...p,kind:'t'}))]){
-  const key=person.kind+'-'+person.id;
-  const personJobs=found.filter(j=>person.kind==='u'
-     ?j.personal.some(p=>Number(p.id)===Number(person.id))
-     :(j.personal_terreno||[]).some(p=>Number(p.id)===Number(person.id)));
-  if($('personFilter').value&&$('personFilter').value!==key)continue;
-  const card=el('article','person-card');
-  const header=document.createElement('header');const title=el('div');title.append(el('h3','',person.nombre),el('p','',person.kind==='t'?person.cargo+' · sin usuario':(person.rol==='laboratorista'?'Laboratorista':'Digitador')));
-  header.append(title,el('span','pill',personJobs.length+' trabajo(s)'));card.append(header);
-  const assignments=el('div','person-jobs');
-  if(personJobs.length===0)assignments.append(el('span','hint','Sin órdenes durante el período.'));
-  for(const job of personJobs)assignments.append(el('div','person-job',dateLabel(job.inicio)+' · '+job.numero_ot+' · '+fullLocation(job)+' · '+statusLabels[job.estado]));
-  card.append(assignments);root.append(card);
+ const found=($('teamFullMonth').checked?activeJobs():jobsForDay(day))
+  .slice().sort((a,b)=>a.inicio.localeCompare(b.inicio)||a.fin.localeCompare(b.fin)||Number(a.id)-Number(b.id));
+ if(!found.length){root.append(el('div','empty','No hay órdenes asignadas para este período.'));return;}
+ const heading=el('div','team-summary',found.length+' orden(es) programada(s) · agrupadas por horario y destino');
+ root.append(heading);
+ for(const job of found){
+  const card=el('article','person-card team-job');
+  const header=document.createElement('header');
+  const title=el('div');
+  const from=String(job.inicio).slice(11,16),to=String(job.fin).slice(11,16);
+  title.append(el('h3','',from+' – '+to));
+  if(String(job.inicio).slice(0,10)!==String(job.fin).slice(0,10))title.append(el('small','','Desde '+dateTimeLabel(job.inicio)+' hasta '+dateTimeLabel(job.fin)));
+  title.append(el('p','',job.numero_ot+' · '+job.obra));
+  header.append(title,el('span','pill '+job.estado,statusLabels[job.estado]||job.estado));card.append(header);
+  card.append(el('p','team-place','📍 '+fullLocation(job)));
+  if(job.actividad)card.append(el('p','team-activity','Actividad: '+job.actividad));
+  const crew=el('div','team-members');
+  const members=[...(job.personal||[]).map(p=>({...p,kind:'u'})),...(job.personal_terreno||[]).map(p=>({...p,kind:'t'}))];
+  if(!members.length)crew.append(el('span','hint','Sin personal asignado'));
+  for(const member of members){
+   const pill=el('div','team-member',member.nombre+(member.cargo?' · '+member.cargo:''));
+   crew.append(pill);
+  }
+  card.append(crew);
+  const btn=el('button','btn','Ver OT y detalles');btn.type='button';btn.addEventListener('click',()=>void openDetail(job.id));card.append(btn);
+  root.append(card);
  }
- if(!root.children.length)root.append(el('div','empty','No hay personal para mostrar.'));
 }
 function render(){
  $('monthTitle').textContent=monthLabel(month);
