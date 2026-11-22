@@ -21,3 +21,11 @@ $app->post('/api/informes/{id:[0-9]+}/duplicar',[$informes,'duplicate']);
 $app->post('/api/informes/{id:[0-9]+}/solicitar-revision',[$revisiones,'request']);
 $app->post('/api/informes/{id:[0-9]+}/aprobar',[$revisiones,'approve']);
 $app->post('/api/informes/{id:[0-9]+}/devolver',[$revisiones,'returnForChanges']);
+
+// Administración y visibilidad por empresa: permisos validados en servidor.
+$app->get('/api/usuarios',[$usuarios,'index']);
+$app->post('/api/usuarios',[$usuarios,'store']);
+$app->put('/api/usuarios/{id:[0-9]+}',[$usuarios,'update']);
+$app->post('/api/usuario/password',[$usuarios,'password']);
+$app->post('/api/empresas',[$empresas,'store']);
+$app->post('/api/informes/{id:[0-9]+}/destinatario',[$destinatarios,'assign']);
