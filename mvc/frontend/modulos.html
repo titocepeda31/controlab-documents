@@ -14,4 +14,5 @@
 </div><div class="notice" id="status">Comprobando permisos…</div></main>
 <script>
 (async()=>{try{const r=await fetch('./api/session',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:'{}'});const s=await r.json();if(!r.ok||!s.autenticado)throw Error('Inicia sesión desde Informes para acceder a los módulos.');const manager=['administrador','administrativo'].includes(s.rol);for(const a of document.querySelectorAll('.admin'))a.hidden=!manager;document.getElementById('usersTile').hidden=s.rol!=='administrador';document.getElementById('status').textContent=manager?'Acceso administrativo habilitado.':'Puedes acceder a la planificación asignada y a los informes según tu perfil.';}catch(e){for(const a of document.querySelectorAll('.admin'))a.hidden=true;document.getElementById('status').textContent=e.message;}})();
-</script></body></html>
+</script><script src="./navigation.js?v=1" defer></script>
+</body></html>
