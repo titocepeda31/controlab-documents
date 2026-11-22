@@ -36,6 +36,7 @@ preg_match_all('/CREATE TABLE IF NOT EXISTS\s+\w+\s*\(.*?\) ENGINE=InnoDB[^;]*;/
 checkCatalog(count($match[0])===4,'La migración debe crear cuatro tablas');
 foreach($match[0] as $statement)$pdo->exec($statement);
 
+$usersBefore=(int)$pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
 $model=new CatalogoOperativo($db);
 $company=$model->createEmpresa(['razon_social'=>'Constructora Test 3M']);
 checkCatalog($company>0,'Crear empresa');
@@ -56,5 +57,5 @@ checkCatalog(count(array_filter($staff,static fn($x)=>(int)$x['id']===$person&&(
 $model->savePersonal(['nombre'=>'Chofer de Prueba','cargo'=>'Conductor','observaciones'=>'Turno B','activo'=>true],$person);
 checkCatalog(count($model->obras())===1,'Lista de obras');
 checkCatalog(count($model->empresas())===1,'Lista de empresas');
-checkCatalog((int)$pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn()===7,'Crear trabajador no genera cuenta de usuario');
+checkCatalog((int)$pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn()===$usersBefore,'Crear trabajador no genera cuenta de usuario');
 echo "OK: empresas, obras por empresa, dirección, comuna y personal sin login\n";
