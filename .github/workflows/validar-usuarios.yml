@@ -1,0 +1,34 @@
+name: Validación usuarios y acceso por empresa
+on:
+  push:
+    branches:
+      - feature/usuarios-acceso-empresas
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  revision-estatica:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar sintaxis PHP
+        run: |
+          set -euo pipefail
+          find mvc/backend mvc/frontend -type f -name '*.php' -print0 | xargs -0 -n 1 php -l
+      - name: Verificar JavaScript del formulario y service worker
+        run: |
+          set -euo pipefail
+          node -e "const fs=require('fs'); const text=fs.readFileSync('mvc/frontend/formulario.html','utf8'); const match=text.match(/<script>([\s\S]*?)<\/script>/); if(!match)process.exit(1); fs.writeFileSync('/tmp/controlab-inline.js',match[1]);"
+          node --check /tmp/controlab-inline.js
+          node --check mvc/frontend/sw.js
+      - name: Validar aislamiento y prechequeos
+        run: |
+          set -euo pipefail
+          grep -q "JOIN informe_destinatarios dest" mvc/backend/src/Models/Informe.php
+          grep -q "rev.estado='aprobado'" mvc/backend/src/Models/Informe.php
+          grep -q "Access::internal" mvc/backend/src/Controllers/InformeController.php
+          grep -q "Access::admin" mvc/backend/src/Controllers/UsuarioController.php
+          grep -q "No hay administrador autorizado" scripts/cpanel_mvc_deploy.sh
