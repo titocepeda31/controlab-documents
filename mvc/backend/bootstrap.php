@@ -7,6 +7,8 @@ use Demo\Controllers\AuthController;
 use Demo\Controllers\EmpresaController;
 use Demo\Controllers\InformeController;
 use Demo\Controllers\LaboratoristaFirmaController;
+use Demo\Controllers\UsuariosController;
+use Demo\Middleware\Security;
 use Demo\Controllers\RevisionController;
 use Slim\Factory\AppFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -50,11 +52,13 @@ if (session_status() !== PHP_SESSION_ACTIVE && !session_start()) {
 $_SESSION['csrf'] ??= bin2hex(random_bytes(24));
 
 $db = new Database($config);
+Security::configure($db);
 $auth = new AuthController($db);
 $empresas = new EmpresaController($db);
 $informes = new InformeController($db);
 $revisiones = new RevisionController($db);
 $firmasLaboratorista = new LaboratoristaFirmaController($db);
+$usuariosController = new UsuariosController($db);
 
 $app = AppFactory::create();
 $app->setBasePath(rtrim($config['base_path'], '/'));
