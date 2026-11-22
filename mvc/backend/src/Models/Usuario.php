@@ -56,8 +56,8 @@ final class Usuario {
     }
 
     private static function validatePassword(mixed $value): string {
-        if (!is_string($value) || strlen($value)<12 || strlen($value)>128)
-            throw new InvalidArgumentException('La contraseña debe tener entre 12 y 128 bytes');
+        if (!is_string($value) || mb_strlen($value)<12 || strlen($value)>128)
+            throw new InvalidArgumentException('La contraseña debe tener al menos 12 caracteres y no superar 128 bytes');
         if (preg_match('/[\r\n]/',$value)) throw new InvalidArgumentException('La contraseña no puede contener saltos de línea');
         return $value;
     }
