@@ -5,3 +5,13 @@ RewriteRule ^api(?:/.*)?$ index.php [QSA,L]
 <FilesMatch "^(?:\.htaccess|composer\.(?:json|lock))$">
  Require all denied
 </FilesMatch>
+
+# Controlab: evitar HTML y JavaScript obsoletos tras cada despliegue.
+# No afecta a los datos locales de IndexedDB ni al modo sin conexión del SW.
+<IfModule mod_headers.c>
+ <FilesMatch "\\.(?:html|js|json)$">
+  Header always set Cache-Control "no-cache, no-store, must-revalidate"
+  Header always set Pragma "no-cache"
+  Header always set Expires "0"
+ </FilesMatch>
+</IfModule>
