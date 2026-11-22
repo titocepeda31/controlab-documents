@@ -62,6 +62,14 @@ $mapa->guardar($work,['latitud'=>-35.42640,'longitud'=>-71.65542,'fuente'=>'mapa
 $located=$model->obraById($work);
 checkCatalog(abs((float)$located['latitud']+35.42640)<0.000001,'Coordenada latitud guardada');
 checkCatalog(abs((float)$located['longitud']+71.65542)<0.000001,'Coordenada longitud guardada');
+$model->saveObra(['empresa_id'=>$company,'nombre'=>'Obra Norte',
+ 'direccion'=>'Ruta K-33 km 6','comuna'=>'Maule','activo'=>true],$work);
+checkCatalog($model->obraById($work)['latitud']===null,
+ 'Cambiar dirección invalida coordenada anterior para evitar ruta errónea');
+$model->saveObra(['empresa_id'=>$company,'nombre'=>'Obra Norte',
+ 'direccion'=>'Ruta K-33 km 5','comuna'=>'Maule','activo'=>true],$work);
+$mapa->guardar($work,['latitud'=>-35.42640,'longitud'=>-71.65542,'fuente'=>'mapa_manual']);
+
 badCatalog(fn()=>$mapa->guardar($work,['latitud'=>90.1,'longitud'=>-71.65542]),'Coordenada fuera de Chile');
 badCatalog(fn()=>$mapa->guardar(999999,['latitud'=>-35.42640,'longitud'=>-71.65542]),'No crear marcador en obra inexistente',404);
 

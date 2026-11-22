@@ -80,15 +80,25 @@ final class CatalogoOperativo {
                 $q->execute([$empresaId,$name,$address,$comuna]);
                 return (int)$pdo->lastInsertId();
             }
+            // Dirección y geolocalización deben cambiar atómicamente para
+            // evitar enviar al personal a una obra distinta con marcador obsoleto.
+            $pdo->beginTransaction();
+            $before=$pdo->prepare('SELECT direccion,comuna FROM obras WHERE id=? FOR UPDATE');
+            $before->execute([$id]);
+            $old=$before->fetch(PDO::FETCH_ASSOC);
+            if(!$old)throw new RuntimeException('Obra no encontrada',404);
             $q=$pdo->prepare('UPDATE obras SET empresa_id=?,nombre=?,direccion=?,comuna=?,activo=? WHERE id=?');
             $q->execute([$empresaId,$name,$address,$comuna,(int)$data['activo'],$id]);
-            if(!$q->rowCount()){
-                $check=$pdo->prepare('SELECT id FROM obras WHERE id=?');$check->execute([$id]);
-                if(!$check->fetchColumn())throw new RuntimeException('Obra no encontrada',404);
+            if($old['direccion']!==$address||$old['comuna']!==$comuna){
+                $geo=$pdo->prepare('DELETE FROM obra_ubicaciones WHERE obra_id=?');
+                $geo->execute([$id]);
             }
+            $pdo->commit();
             return $id;
-        }catch(PDOException $e){
-            if($e->getCode()==='23000')throw new RuntimeException('Ya hay una obra con ese nombre en la empresa',409);
+        }catch(\Throwable $e){
+            if($pdo->inTransaction())$pdo->rollBack();
+            if($e instanceof PDOException&&$e->getCode()==='23000')
+                throw new RuntimeException('Ya hay una obra con ese nombre en la empresa',409);
             throw $e;
         }
     }
