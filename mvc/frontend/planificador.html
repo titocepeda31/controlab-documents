@@ -206,7 +206,12 @@ async function mutate(path,method,data){
 }
 function formatLocal(d,time){return dateKey(d)+'T'+time;}
 function activeJobs(){const status=$('stateFilter').value,person=$('personFilter').value;return jobs.filter(j=>(!status||j.estado===status)&&(!person||j.personal.some(p=>String(p.id)===person)));}
-function jobsForDay(day){return activeJobs().filter(j=>j.inicio.slice(0,10)<=day&&j.fin.slice(0,10)>=day);}
+function jobsForDay(day){
+ const [y,m,d]=day.split('-').map(Number);
+ const next=new Date(y,m-1,d+1);
+ const tomorrow=dateKey(next)+' 00:00:00',start=day+' 00:00:00';
+ return activeJobs().filter(j=>j.inicio<tomorrow&&j.fin>start);
+}
 function fullLocation(job){return [job.destino,job.comuna].filter(Boolean).join(', ');}
 function teamLabel(job){return job.personal?.length?job.personal.map(p=>p.nombre).join(', '):'Sin equipo asignado';}
 function setView(next){
