@@ -277,17 +277,15 @@ function renderCalendar(){
  }
 }
 function actionCard(job){
- const item=el('article','assignment');
+ const item=el('article','assignment cl-ot-row');
  const data=el('div','assignment-details');
- data.append(el('strong','OT '+job.numero_ot+' · '+job.actividad));
+ data.append(el('strong','OT '+job.numero_ot));
  data.append(el('small',job.cliente+' · '+job.obra));
  data.append(el('small','📍 '+fullLocation(job)));
- data.append(el('small','🕒 '+dateTimeLabel(job.inicio)+' — '+dateTimeLabel(job.fin)));
- data.append(el('small','👥 '+teamLabel(job)));
+ data.append(el('small','🕒 '+dateTimeLabel(job.inicio)));
  const actions=el('div','assignment-actions');
  actions.append(el('span','pill '+job.estado,statusLabels[job.estado]||job.estado));
- if(job.prioridad==='urgente')actions.append(el('span','pill urgente','Urgente'));
- const open=el('button','btn','Ver detalles');open.type='button';open.addEventListener('click',()=>void openDetail(job.id));actions.append(open);
+ const open=el('button','btn','Ver');open.type='button';open.setAttribute('aria-label','Ver detalles de OT '+job.numero_ot);open.addEventListener('click',()=>void openDetail(job.id));actions.append(open);
  item.append(data,actions);return item;
 }
 function renderDay(){
@@ -628,6 +626,25 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
 })();
 </script>
 
+<style>
+/* Vista administrativa compacta: filas en móvil y columnas alineadas en escritorio. */
+#agendaList,#dayList{display:grid;gap:0;border:1px solid #d7e3ea;border-radius:10px;overflow:hidden;background:#fff}
+#agendaList .cl-ot-row,#dayList .cl-ot-row{margin:0;border:0;border-bottom:1px solid #e3ebef;border-radius:0;box-shadow:none;padding:9px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
+#agendaList .cl-ot-row:last-child,#dayList .cl-ot-row:last-child{border-bottom:0}
+.cl-ot-row .assignment-details{display:grid;grid-template-columns:minmax(90px,.6fr) minmax(130px,1.5fr) minmax(110px,1.4fr) minmax(105px,1fr);gap:9px;align-items:center;min-width:0}
+.cl-ot-row .assignment-details>*{margin:0;min-width:0;overflow-wrap:anywhere}
+.cl-ot-row .assignment-details small{font-size:12px;line-height:1.3}
+.cl-ot-row .assignment-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.cl-ot-row .assignment-actions .btn{padding:5px 10px;min-height:32px}
+@media(max-width:750px){
+#agendaList .cl-ot-row,#dayList .cl-ot-row{padding:8px 10px;gap:7px}
+.cl-ot-row .assignment-details{grid-template-columns:minmax(0,1fr);gap:2px}
+.cl-ot-row .assignment-details small:nth-of-type(2){display:none}
+.cl-ot-row .assignment-details small{font-size:11px}
+.cl-ot-row .assignment-actions{flex-direction:column;align-items:flex-end;gap:5px}
+.cl-ot-row .assignment-actions .pill{font-size:10px}
+}
+</style>
 <script src="./tabler-shell.js?v=3" defer></script>
 </body>
 </html>
