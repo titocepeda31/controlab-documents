@@ -34,6 +34,7 @@ jobs:
           node --check mvc/frontend/sw.js
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('mvc/frontend/manifest.json','utf8'));if(!m.start_url.includes('/demo/formulario.html')||!m.icons.length||!fs.existsSync('mvc/frontend/icon.svg'))process.exit(1);"
           node mvc/frontend/tests/offline-sw.test.cjs
+          node mvc/frontend/tests/menu-firma.test.cjs
       - name: Comprobar barreras de despliegue
         run: |
           set -euo pipefail
