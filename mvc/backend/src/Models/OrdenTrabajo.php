@@ -95,6 +95,24 @@ final class OrdenTrabajo {
         if($obraId===null||$obraId==='')$data['obra_id']=null;
         elseif((is_int($obraId)||is_string($obraId)&&ctype_digit($obraId))&&(int)$obraId>0)$data['obra_id']=(int)$obraId;
         else throw new InvalidArgumentException('Obra seleccionada inválida');
+        $data['servicios']=null;
+        if(array_key_exists('servicios',$input)){
+            if(!is_array($input['servicios'])||count($input['servicios'])>60)
+                throw new InvalidArgumentException('Lista de servicios inválida (máximo 60)');
+            $list=[];$seen=[];
+            foreach($input['servicios'] as $line){
+                if(!is_array($line))throw new InvalidArgumentException('Servicio inválido');
+                $sid=$line['servicio_id']??null;$qty=$line['cantidad']??null;
+                if(!(is_int($sid)||is_string($sid)&&ctype_digit($sid))||(int)$sid<1)
+                    throw new InvalidArgumentException('Selecciona un servicio válido');
+                if(!(is_int($qty)||is_string($qty)&&ctype_digit($qty))||(int)$qty<1||(int)$qty>100000)
+                    throw new InvalidArgumentException('La cantidad debe estar entre 1 y 100000');
+                $sid=(int)$sid;
+                if(isset($seen[$sid]))throw new InvalidArgumentException('No repitas el mismo servicio en la OT');
+                $seen[$sid]=true;$list[]=['servicio_id'=>$sid,'cantidad'=>(int)$qty];
+            }
+            $data['servicios']=$list;
+        }
         return $data;
     }
 
@@ -152,6 +170,7 @@ final class OrdenTrabajo {
         $q=$this->db->connection()->prepare($sql);$q->execute($params);
         $items=$q->fetchAll(PDO::FETCH_ASSOC);
         $this->attachTeam($items);
+        $this->attachServicios($items);
         return $items;
     }
 
@@ -167,8 +186,44 @@ final class OrdenTrabajo {
             $q->execute([$id,(int)$viewer['id']]);
             if(!$q->fetchColumn())throw new RuntimeException('No tienes acceso a esta orden de trabajo',403);
         }
-        $items=[$item];$this->attachTeam($items);
+        $items=[$item];$this->attachTeam($items);$this->attachServicios($items);
         return $items[0];
+    }
+
+
+    private function saveServicios(PDO $pdo,int $otId,?array $items): void {
+        if($items===null)return; // Compatibilidad con clientes antiguos que no envían servicios.
+        $ids=array_column($items,'servicio_id');$catalog=[];
+        if($ids){
+            $marks=implode(',',array_fill(0,count($ids),'?'));
+            $q=$pdo->prepare("SELECT id,nombre,unidad,activo FROM catalogo_servicios WHERE id IN ($marks) ORDER BY id FOR UPDATE");
+            $q->execute($ids);
+            foreach($q->fetchAll(PDO::FETCH_ASSOC) as $row)$catalog[(int)$row['id']]=$row;
+            foreach($ids as $sid){
+                if(!isset($catalog[$sid])||(int)$catalog[$sid]['activo']!==1)
+                    throw new InvalidArgumentException('Hay servicios inexistentes o inactivos en la OT');
+            }
+        }
+        $q=$pdo->prepare('DELETE FROM ot_servicios WHERE ot_id=?');$q->execute([$otId]);
+        $q=$pdo->prepare('INSERT INTO ot_servicios (ot_id,servicio_id,cantidad,servicio_nombre,unidad) VALUES (?,?,?,?,?)');
+        foreach($items as $item){
+            $s=$catalog[$item['servicio_id']];
+            $q->execute([$otId,$item['servicio_id'],$item['cantidad'],$s['nombre'],$s['unidad']]);
+        }
+    }
+
+    private function attachServicios(array &$items): void {
+        if(!$items)return;
+        $ids=array_map(static fn($item)=>(int)$item['id'],$items);
+        $marks=implode(',',array_fill(0,count($ids),'?'));
+        $q=$this->db->connection()->prepare("SELECT ot_id,servicio_id,servicio_nombre AS nombre,unidad,cantidad FROM ot_servicios WHERE ot_id IN ($marks) ORDER BY servicio_nombre");
+        $q->execute($ids);$group=[];
+        foreach($q->fetchAll(PDO::FETCH_ASSOC) as $line){
+            $line['servicio_id']=(int)$line['servicio_id'];$line['cantidad']=(int)$line['cantidad'];
+            $group[(int)$line['ot_id']][]=$line;
+        }
+        foreach($items as &$item)$item['servicios']=$group[(int)$item['id']]??[];
+        unset($item);
     }
 
     private function attachTeam(array &$items): void {
@@ -313,6 +368,7 @@ final class OrdenTrabajo {
             $this->saveAssignments($pdo,$id,$data['personal'],$data['inicio'],$data['fin'],$data['estado']);
             $this->saveFieldAssignments($pdo,$id,$data['personal_terreno_ids'],$data['inicio'],$data['fin'],$data['estado']);
             $this->saveObraLink($pdo,$id,$data['obra_id']);
+            $this->saveServicios($pdo,$id,$data['servicios']);
             $q=$pdo->prepare("INSERT INTO ot_eventos (ot_id,usuario_id,accion,resumen) VALUES (?,?,'crear',?)");
             $q->execute([$id,$actor,'OT creada con '.count($data['personal']).' persona(s)']);
             $pdo->commit();return $id;
