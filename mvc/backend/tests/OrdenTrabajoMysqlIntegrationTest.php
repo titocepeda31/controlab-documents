@@ -106,6 +106,8 @@ assertOt($saved['cliente']==='Constructora Test 3M','Cliente verificado por cat�
 assertOt($saved['obra']==='Obra Norte','Obra tomada del catálogo');
 assertOt($saved['destino']==='Ruta K-33 km 5','Dirección de obra del catálogo');
 assertOt($saved['comuna']==='Maule','Comuna de obra del catálogo');
+assertOt(abs((float)$saved['latitud']+35.42640)<0.000001,'Latitud de obra en OT');
+assertOt(abs((float)$saved['longitud']+71.65542)<0.000001,'Longitud de obra en OT');
 assertOt((int)$saved['obra_id']===$workId,'Vínculo de obra');
 assertOt(count($saved['personal_terreno'])===1,'Personal sin usuario asignado');
 assertOt($saved['personal_terreno'][0]['nombre']==='Chofer de Prueba','Nombre del personal de terreno');

@@ -149,8 +149,14 @@ p{margin:6px 0;color:var(--muted)}
    <form id="otForm" autocomplete="off">
     <div class="form-grid">
      <div class="field"><label for="numero_ot">Número de OT (opcional)</label><input id="numero_ot" name="numero_ot" maxlength="40" placeholder="Automático si queda vacío"></div>
-     <div class="field"><label for="empresaCatalogo">Empresa constructora</label><select id="empresaCatalogo"><option value="">Seleccionar empresa</option></select></div>
-     <div class="field"><label for="obraCatalogo">Obra de la empresa</label><select id="obraCatalogo"><option value="">Seleccionar obra</option></select></div>
+     <div class="field"><label for="empresaSearch">Buscar empresa constructora</label>
+ <input id="empresaSearch" list="empresaMatches" type="search" autocomplete="off" placeholder="Escribe el nombre de la constructora">
+ <datalist id="empresaMatches"></datalist>
+ <select id="empresaCatalogo" hidden aria-label="Empresa seleccionada"><option value="">Seleccionar empresa</option></select></div>
+     <div class="field"><label for="obraSearch">Buscar obra de esa empresa</label>
+ <input id="obraSearch" list="obraMatches" type="search" autocomplete="off" placeholder="Escribe el nombre de la obra">
+ <datalist id="obraMatches"></datalist>
+ <select id="obraCatalogo" hidden aria-label="Obra seleccionada"><option value="">Seleccionar obra</option></select></div>
      <div class="field full"><span class="hint">Selecciona una obra para completar cliente, dirección y comuna. <a href="./catalogos.html">Gestionar empresas y obras</a></span></div>
      <div class="field"><label for="cliente">Cliente / contratista *</label><input id="cliente" name="cliente" maxlength="160" required placeholder="Nombre de empresa"></div>
      <div class="field"><label for="obra">Obra o proyecto *</label><input id="obra" name="obra" maxlength="180" required placeholder="Ej.: Camino forestal, sector 3"></div>
@@ -341,9 +347,33 @@ async function openDetail(id){
   fieldLine(body,'Prioridad',j.prioridad==='urgente'?'Urgente':'Normal');
   if(j.observaciones)fieldLine(body,'Instrucciones',j.observaciones);
   const actions=$('detailActions');
-  const mapBtn=el('button','btn','Buscar ubicación en Maps');mapBtn.type='button';
-  mapBtn.addEventListener('click',()=>{const search=encodeURIComponent(fullLocation(j));window.open('https://www.google.com/maps/search/?api=1&query='+search,'_blank','noopener,noreferrer');});
+  const lat=Number(j.latitud),lon=Number(j.longitud);
+  const hasPoint=j.latitud!==null&&j.longitud!==null&&Number.isFinite(lat)&&Number.isFinite(lon);
+  const mapBtn=el('button','btn','Ver en OpenStreetMap');mapBtn.type='button';
+  mapBtn.addEventListener('click',()=>{
+   const url=hasPoint?'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon
+      :'https://www.openstreetmap.org/search?query='+encodeURIComponent(fullLocation(j)+', Chile');
+   window.open(url,'_blank','noopener,noreferrer');
+  });
   actions.append(mapBtn);
+  if(hasPoint){
+   const mapFrame=document.createElement('iframe');
+   mapFrame.title='Mapa de ubicación programada de la obra';
+   mapFrame.loading='lazy';mapFrame.style.cssText='width:100%;height:260px;border:1px solid #c7d9df;border-radius:10px;margin-top:12px';
+   const bounds=[lon-.014,lat-.010,lon+.014,lat+.010].join(',');
+   mapFrame.src='https://www.openstreetmap.org/export/embed.html?bbox='+encodeURIComponent(bounds)+'&layer=mapnik&marker='+encodeURIComponent(lat+','+lon);
+   body.append(mapFrame);
+   const routeBtn=el('button','btn primary','Cómo llegar desde mi ubicación');routeBtn.type='button';
+   routeBtn.addEventListener('click',()=>{
+    if(!navigator.geolocation){notice('loadNotice','El navegador no admite ubicación. Abre OpenStreetMap y elige origen.',true);return;}
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const path=pos.coords.latitude+','+pos.coords.longitude+';'+lat+','+lon;
+      window.location.assign('https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route='+encodeURIComponent(path));
+    },()=>notice('loadNotice','No se obtuvo tu ubicación; puedes configurar el origen en OpenStreetMap.',true),
+      {enableHighAccuracy:false,timeout:12000,maximumAge:0});
+   });
+   actions.append(routeBtn);
+  }
   if(manager){const edit=el('button','btn primary','Editar / reasignar');edit.type='button';edit.addEventListener('click',()=>openForm(j));actions.append(edit);}
   $('detailSection').hidden=false;
   $('formSection').hidden=true;
@@ -353,14 +383,21 @@ async function openDetail(id){
 }
 function fillCompanies(){
  const select=$('empresaCatalogo');select.replaceChildren();
+ const matches=$('empresaMatches');matches.replaceChildren();
  const first=el('option','','Seleccionar empresa');first.value='';select.append(first);
- for(const company of companies){const option=el('option','',company.razon_social);option.value=String(company.id);select.append(option);}
+ for(const company of companies){
+  const option=el('option','',company.razon_social);option.value=String(company.id);select.append(option);
+  const match=document.createElement('option');match.value=company.razon_social;matches.append(match);
+ }
 }
 function fillWorks(companyId='',chosenId=''){
  const select=$('obraCatalogo');select.replaceChildren();
+ const matches=$('obraMatches');matches.replaceChildren();
  const first=el('option','','Seleccionar obra');first.value='';select.append(first);
  for(const work of works.filter(w=>Number(w.activo)===1&&String(w.empresa_id)===String(companyId))){
-  const option=el('option','',work.nombre+' · '+work.comuna);option.value=String(work.id);select.append(option);
+  const label=work.nombre+' · '+work.comuna;
+  const option=el('option','',label);option.value=String(work.id);select.append(option);
+  const match=document.createElement('option');match.value=label;matches.append(match);
  }
  select.value=chosenId;
 }
@@ -370,8 +407,16 @@ function applyWork(){
  $('cliente').value=work.empresa;$('obra').value=work.nombre;
  $('destino').value=work.direccion;$('comuna').value=work.comuna;
 }
-$('empresaCatalogo').addEventListener('change',()=>{fillWorks($('empresaCatalogo').value);});
-$('obraCatalogo').addEventListener('change',applyWork);
+$('empresaSearch').addEventListener('input',()=>{
+  const chosen=companies.find(c=>c.razon_social.toLocaleLowerCase('es-CL')===$('empresaSearch').value.trim().toLocaleLowerCase('es-CL'));
+  $('empresaCatalogo').value=chosen?String(chosen.id):'';
+  $('obraSearch').value='';fillWorks($('empresaCatalogo').value);
+});
+$('obraSearch').addEventListener('input',()=>{
+  const option=Array.from($('obraCatalogo').options).find(o=>o.textContent.toLocaleLowerCase('es-CL')===$('obraSearch').value.trim().toLocaleLowerCase('es-CL'));
+  $('obraCatalogo').value=option?option.value:'';
+  if(option)applyWork();
+});
 function fillFieldCheckboxes(selectedIds=[]){
  const root=$('fieldChoices');root.replaceChildren();const selectedSet=new Set(selectedIds.map(Number));
  if(!fieldStaff.length){root.append(el('div','empty','Todavía no hay personal de terreno. Regístralo en Catálogos.'));return;}
@@ -403,7 +448,9 @@ function openForm(record=null){
  fillCompanies();
  const linked=record?.obra_id?works.find(w=>Number(w.id)===Number(record.obra_id)):null;
  $('empresaCatalogo').value=linked?String(linked.empresa_id):'';
+ $('empresaSearch').value=linked?linked.empresa:'';
  fillWorks($('empresaCatalogo').value,linked?String(linked.id):'');
+ $('obraSearch').value=linked?linked.nombre+' · '+linked.comuna:'';
  for(const key of ['numero_ot','cliente','obra','actividad','destino','comuna','estado','prioridad','observaciones']){
   if(record&&record[key]!==undefined)$(key).value=record[key]||'';
  }
