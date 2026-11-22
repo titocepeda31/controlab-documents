@@ -3,7 +3,7 @@
 ## Qué incluye esta primera versión
 - Registro de OT: número propio o correlativo automático `OT-AAAA-ID`, cliente/contratista, obra, actividad, predio/dirección de destino, comuna, inicio/fin, prioridad, estado e instrucciones.
 - Asignación de **varios laboratoristas y digitadores** a una OT, utilizando los perfiles activos existentes.
-- **Calendario mensual** con fecha seleccionable, **agenda** y vista **Equipo** para saber a qué trabajo y ubicación quedó asignada cada persona.
+- **Calendario mensual** con fecha seleccionable, **agenda** y vista **Equipo** para consultar, por día o mes completo, a qué trabajo y ubicación quedó asignada cada persona.
 - Filtro por trabajador y estado, con visualización en móvil.
 - Al consultar una OT, opción **Buscar ubicación en Maps** (abre una búsqueda externa por el texto proporcionado; no implica coordenadas verificadas).
 - Evita la **superposición de horarios** para una misma persona si ambas OT están planificadas o en curso. Se permite OT contiguas en las que una termina exactamente cuando empieza otra.
