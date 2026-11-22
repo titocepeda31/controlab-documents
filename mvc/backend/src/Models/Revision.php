@@ -104,7 +104,9 @@ final class Revision {
             $q=$pdo->prepare('SELECT estado FROM informe_revisiones WHERE informe_id=? FOR UPDATE');
             $q->execute([$reportId]);
             if ($q->fetchColumn()!=='pendiente') throw new RuntimeException('El informe no está pendiente de revisión',409);
-            $hash=hash('sha256',$data);
+            // La huella de aprobación usa el JSON original, nunca el ciphertext aleatorio.
+            $plaintext=$this->db->reportCrypto()->decrypt($reportId,$data);
+            $hash=hash('sha256',$plaintext);
             $q=$pdo->prepare('UPDATE informe_revisiones SET estado=\'aprobado\',revisor_id=?,fecha_revision=UTC_TIMESTAMP(),motivo_devolucion=NULL,hash_datos=?,firma_png=? WHERE informe_id=?');
             $q->bindValue(1,$userId,PDO::PARAM_INT);
             $q->bindValue(2,$hash);
