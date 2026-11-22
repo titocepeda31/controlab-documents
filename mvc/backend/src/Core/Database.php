@@ -7,6 +7,9 @@ use PDO;
 final class Database {
     private ?PDO $pdo = null;
     public function __construct(private array $config) {}
+    public function reportCrypto(): ReportCrypto {
+        return new ReportCrypto((string)($this->config['data_encryption_key'] ?? ''));
+    }
     public function connection(): PDO {
         if ($this->pdo === null) {
             $dsn = 'mysql:host=' . $this->config['db_host'] . ';dbname=' . $this->config['db_name'] . ';charset=utf8mb4';
