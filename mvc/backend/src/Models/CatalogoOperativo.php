@@ -151,4 +151,35 @@ final class CatalogoOperativo {
         }
         return $id;
     }
+    public function servicios(): array {
+        return $this->db->connection()->query(
+            'SELECT id,nombre,unidad,descripcion,activo FROM catalogo_servicios ORDER BY nombre,id LIMIT 1000'
+        )->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function saveServicio(array $data,?int $id=null): int {
+        $nombre=self::text($data,'nombre',180);
+        $unidad=self::text($data,'unidad',60);
+        $descripcion=self::text($data,'descripcion',500,false);
+        if($id!==null&&!is_bool($data['activo']??null))
+            throw new InvalidArgumentException('Indica si el servicio está activo');
+        $pdo=$this->db->connection();
+        try {
+            if($id===null){
+                $q=$pdo->prepare('INSERT INTO catalogo_servicios (nombre,unidad,descripcion) VALUES (?,?,?)');
+                $q->execute([$nombre,$unidad,$descripcion]);
+                return (int)$pdo->lastInsertId();
+            }
+            $q=$pdo->prepare('UPDATE catalogo_servicios SET nombre=?,unidad=?,descripcion=?,activo=? WHERE id=?');
+            $q->execute([$nombre,$unidad,$descripcion,(int)$data['activo'],$id]);
+            $q=$pdo->prepare('SELECT id FROM catalogo_servicios WHERE id=?');
+            $q->execute([$id]);
+            if(!$q->fetchColumn())throw new RuntimeException('Servicio no encontrado',404);
+            return $id;
+        } catch(PDOException $e) {
+            if($e->getCode()==='23000')throw new RuntimeException('Ya existe un servicio con ese nombre',409);
+            throw $e;
+        }
+    }
+
 }
