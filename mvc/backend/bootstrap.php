@@ -8,6 +8,7 @@ use Demo\Controllers\EmpresaController;
 use Demo\Controllers\InformeController;
 use Demo\Controllers\LaboratoristaFirmaController;
 use Demo\Controllers\UsuariosController;
+use Demo\Controllers\OrdenTrabajoController;
 use Demo\Middleware\Security;
 use Demo\Controllers\RevisionController;
 use Slim\Factory\AppFactory;
@@ -59,6 +60,7 @@ $informes = new InformeController($db);
 $revisiones = new RevisionController($db);
 $firmasLaboratorista = new LaboratoristaFirmaController($db);
 $usuariosController = new UsuariosController($db);
+$ordenTrabajoController = new OrdenTrabajoController($db);
 
 $app = AppFactory::create();
 $app->setBasePath(rtrim($config['base_path'], '/'));
