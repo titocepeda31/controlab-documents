@@ -7,7 +7,7 @@ const model=fs.readFileSync('mvc/backend/src/Models/OrdenTrabajo.php','utf8');
 const routes=fs.readFileSync('mvc/backend/routes/api.php','utf8');
 const access=fs.readFileSync('mvc/backend/src/Controllers/CatalogoOperativoController.php','utf8');
 const deploy=fs.readFileSync('scripts/cpanel_mvc_deploy.sh','utf8');
-for(const id of ['empresaForm','obraForm','personalForm','obraEmpresa','obraNombre','obraDireccion','obraComuna','personalNombre','personalCargo','obraActivo','personalActivo']){
+for(const id of ['empresaForm','obraForm','personalForm','obraEmpresa','obraNombre','obraDireccion','obraComuna','personalNombre','personalCargo','geoSearch','obraMap','geoSaveBtn','geoRouteBtn','obraActivo','personalActivo']){
  assert.ok(panel.includes('id="'+id+'"'),'Falta control de catálogos '+id);
 }
 for(const id of ['empresaCatalogo','obraCatalogo','fieldChoices','teamChoices','catalogLink']){
@@ -24,6 +24,8 @@ for(const action of ['empresas','crearEmpresa','obras','crearObra','editarObra',
 assert.ok(model.includes('ot_personal_terreno'),'OT no guarda personal sin usuario');
 assert.ok(model.includes('ot_obra_vinculos'),'OT no vincula obra');
 assert.ok(model.includes('saveFieldAssignments'),'No valida choque horarios de personal de terreno');
+assert.ok(panel.includes('nominatim.openstreetmap.org')===false,'No consultar Nominatim directamente desde JS del cliente');
+assert.ok(panel.includes('https://tile.openstreetmap.org/{z}/{x}/{y}.png'),'Falta capa OSM');
 assert.ok(model.includes('applyObraCatalog'),'No toma dirección desde catálogo');
 assert.ok(planner.includes('function fillFieldCheckboxes'),'No permite asignar terreno');
 assert.ok(planner.includes('function applyWork'),'No autocompleta ubicación');
