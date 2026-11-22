@@ -1,0 +1,7 @@
+Options -Indexes
+DirectoryIndex index.php
+RewriteEngine On
+RewriteRule ^api(?:/.*)?$ index.php [QSA,L]
+<FilesMatch "^(?:\.htaccess|composer\.(?:json|lock))$">
+ Require all denied
+</FilesMatch>

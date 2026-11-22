@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#112b42">
+<title>Registro de Calidad | Mecánica de Suelo</title>
+<style>
+:root{--navy:#10283d;--navy2:#193950;--accent:#087d70;--accent2:#0f9d8d;--bg:#f3f6f8;--line:#dce4ea;--muted:#65788a;--text:#152b3f;--red:#af283c;--blue:#3265ac;--card:#fff;--radius:15px}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.55}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #a2dbd7;outline-offset:2px}
+.login-view{min-height:100vh;display:grid;grid-template-columns:1.05fr 1fr;background:#fff}
+.login-intro{padding:clamp(34px,7vw,100px);background:radial-gradient(circle at 10% 10%,#1d4a61 0,transparent 50%),linear-gradient(125deg,#0e263a,#174755);color:#f6ffff;display:flex;flex-direction:column;justify-content:space-between;min-height:100vh}
+.logo{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.4px}
+.logo-icon{width:43px;height:43px;display:grid;place-items:center;border-radius:12px;background:#32b6a3;color:#073236;font-size:21px;font-weight:900}
+.login-intro h1{font-size:clamp(32px,4vw,58px);line-height:1.08;max-width:560px;letter-spacing:-1.5px}
+.login-intro p{max-width:540px;color:#c4d9df;font-size:17px}
+.login-bullet{margin-top:45px;display:flex;flex-wrap:wrap;gap:10px}
+.login-bullet span{font-size:13px;color:#d4f0eb;border:1px solid #658991;padding:8px 12px;border-radius:50px}
+.login-intro small{color:#bad1d5}
+.login-panel{display:grid;place-items:center;padding:30px}
+.login-card{width:min(400px,100%)}
+.eyebrow{text-transform:uppercase;font-size:11px;letter-spacing:1.7px;color:var(--accent);font-weight:800}
+.login-card h2{font-size:30px;letter-spacing:-.8px;margin:10px 0 8px}
+.login-card p{color:var(--muted);margin-bottom:32px}
+.fld{display:flex;flex-direction:column;min-width:0;gap:7px}
+.fld>label{font-weight:700;font-size:13px;color:#31495e}
+.fld .help{font-weight:400;color:#7c8c99;font-size:12px;margin-top:0}
+.fld input,.fld textarea,.fld select{background:#fff;border:1px solid #cbd7e0;border-radius:10px;color:var(--text);padding:12px 13px;min-height:46px;width:100%;min-width:0;outline:none;transition:border-color .15s,box-shadow .15s}
+.fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #0f9d8d18}
+.fld textarea{min-height:134px;resize:vertical;line-height:1.55}
+.login-card .fld{margin-bottom:20px}
+.password-line{display:flex;position:relative}
+.password-line input{padding-right:80px}
+.password-line button{position:absolute;right:8px;top:7px;border:0;background:transparent;color:#116f69;padding:8px;font-size:13px;font-weight:700}
+.btn{border:1px solid transparent;border-radius:10px;padding:11px 15px;min-height:43px;font-weight:750;display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:filter .15s,background .15s}
+.btn:hover{filter:brightness(.97)}
+.btn.primary{color:#fff;background:var(--accent)}
+.btn.dark{color:#fff;background:var(--navy)}
+.btn.light{color:var(--navy);background:#fff;border-color:#cfdae2}
+.btn.ghost{color:#365469;background:#edf3f5}
+.btn.danger{color:#b91c1c;background:#fff1f2;border-color:#fecdd3}
+.btn:disabled{filter:none}
+.btn.wide{width:100%}
+.notice{padding:12px 14px;background:#eaf7f4;border:1px solid #a7dace;border-radius:10px;color:#075e54;font-size:13px}
+.notice.error{background:#fff0f0;border-color:#f3b7bb;color:#a52335}
+.notice:empty{display:none}
+.app-view{min-height:100vh}
+.topbar{height:72px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,3.8vw,55px);gap:15px}
+.topbar .logo{font-size:14px}
+.topbar .logo-icon{width:35px;height:35px;font-size:16px;border-radius:9px}
+.top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.session-tag{font-size:12px;border:1px solid #547180;color:#d2efe9;padding:6px 12px;border-radius:40px}
+.topbar .btn{min-height:36px;padding:7px 11px;font-size:12px}
+.layout{max-width:1450px;margin:auto;padding:26px clamp(15px,3vw,40px) 60px;display:grid;grid-template-columns:245px minmax(0,1fr);gap:26px}
+.side{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:23px 13px;align-self:start;position:sticky;top:20px;box-shadow:0 5px 24px #17324a08}
+.side-head{padding:0 11px 18px;border-bottom:1px solid #e5ebef;margin-bottom:15px}
+.side-head small{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8090a0;font-weight:800}
+.side-head h3{font-size:19px;margin:5px 0 0}
+.step-nav{width:100%;display:flex;gap:13px;align-items:center;text-align:left;border:0;background:transparent;padding:14px 10px;border-radius:11px;color:#4b6579;font-weight:650;margin:3px 0}
+.step-nav:hover{background:#f3f7f8}
+.step-nav.active{background:#e5f4f1;color:#086c60}
+.num{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;border:1px solid #c5d5df;color:#5d7486;flex:none;font-size:12px;font-weight:800}
+.active .num{color:#fff;border-color:var(--accent);background:var(--accent)}
+.step-nav.done .num{color:#067268;background:#cff3ec;border-color:#92d7c9}
+.side-note{margin:25px 9px 5px;background:#f4f7f9;padding:14px;border-radius:12px;color:#6a7d8a;font-size:12px;line-height:1.6}
+.mainhead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin:2px 0 20px}
+.mainhead .eyebrow{margin-bottom:7px}
+.mainhead h1{font-size:clamp(24px,3vw,33px);line-height:1.15;letter-spacing:-.75px;margin:0 0 9px}
+.mainhead p{margin:0;color:var(--muted);font-size:14px;max-width:630px}
+.progress-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:17px 20px;margin-bottom:17px}
+.progress-top{display:flex;justify-content:space-between;align-items:center;color:#526b7e;font-size:12px;font-weight:750;margin-bottom:10px}
+.progress{height:7px;background:#e7eff3;border-radius:99px;overflow:hidden}
+.progress>span{display:block;width:25%;height:100%;border-radius:99px;background:var(--accent);transition:width .2s}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:clamp(20px,3vw,30px);box-shadow:0 5px 24px #17324a08;margin-bottom:18px}
+.section-title{font-size:19px;letter-spacing:-.3px;margin:0 0 6px;color:#19374a}
+.section-sub{color:#738698;font-size:13px;margin:0 0 24px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:19px 22px}
+.fields.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.span-all{grid-column:1/-1}
+.group-title{font-size:14px;color:#164b5b;margin:29px 0 17px;border-top:1px solid #e4eaef;padding-top:21px;font-weight:800}
+.card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sieve-card{border:1px solid #dce5eb;border-radius:12px;padding:15px;background:#fcfdfd}
+.sieve-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:13px}
+.sieve-head strong{font-size:14px;color:#183c53}
+.sieve-head small{font-size:11px;color:#72899a}
+.sieve-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sieve-pair .fld label{font-size:11px}
+.sieve-pair .fld input{min-height:40px;padding:8px}
+.section-slab{border:1px solid #dce5eb;background:#fdfefe;padding:20px;border-radius:13px;margin-bottom:14px}
+.section-slab h3{font-size:16px;margin:0 0 16px}
+.info-strip{background:#f2f8fc;border:1px solid #d2e5f2;color:#3e667e;padding:13px 16px;border-radius:10px;font-size:13px;margin-bottom:18px}
+.mic-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.btn.recording{background:#b42337!important;color:#fff;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 #ef9da9aa}50%{box-shadow:0 0 0 7px transparent}}
+.voice-feedback{color:#64788a;font-size:12px}
+.validation{display:flex;align-items:flex-start;gap:10px;background:#fff9e8;color:#806422;border:1px solid #f4e2ac;border-radius:11px;padding:14px;font-size:13px;margin:15px 0}
+.actionbar{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap}
+.actions-right{display:flex;gap:10px;flex-wrap:wrap}
+.checklist{display:grid;gap:12px;margin:17px 0}
+.checkline{display:flex;align-items:center;gap:10px;color:#3f5768;font-size:14px}
+.check-dot{height:23px;width:23px;display:grid;place-items:center;border-radius:50%;background:#dff4eb;color:#08735d;font-weight:900}
+.preview-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.preview-meta>div{padding:15px;background:#f5f8fa;border-radius:12px;min-width:0}
+.preview-meta small{font-size:11px;color:#6e8494;display:block;margin-bottom:6px}
+.preview-meta strong{font-size:14px;overflow-wrap:anywhere}
+.review-notes{white-space:pre-wrap;background:#fafcfd;border-left:3px solid var(--accent);padding:14px;color:#375062;font-size:13px;min-height:55px}
+.modal-bg{position:fixed;inset:0;background:#0c2636ae;z-index:100;display:grid;place-items:center;padding:20px}
+.modal{background:#fff;max-height:min(80vh,750px);overflow:auto;width:min(760px,100%);border-radius:17px;box-shadow:0 20px 80px #12273860;padding:28px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.modal-head h2{margin:0;font-size:22px}
+.history-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #dfebef;border-radius:12px;padding:15px;margin-top:11px;flex-wrap:wrap}
+.history-item strong{font-size:15px}
+.history-item small{color:#678095;display:block;margin-top:5px}
+.history-buttons{display:flex;flex-wrap:wrap;gap:6px}
+.history-buttons .btn{font-size:12px;min-height:36px;padding:7px 10px}
+.save-msg{margin-top:14px}
+.print-sheet{display:none}
+@media(max-width:1100px){.fields.three{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:205px minmax(0,1fr);gap:17px}.side{padding:16px 8px}}
+@media(max-width:790px){.login-view{grid-template-columns:1fr}.login-intro{min-height:0;padding:30px}.login-intro h1{font-size:29px;margin:20px 0 10px}.login-intro p{font-size:14px}.login-bullet,.login-intro small{display:none}.login-panel{padding:30px 16px 60px}.layout{display:block;padding:15px 12px 35px}.side{position:static;padding:12px;margin-bottom:18px}.side-head,.side-note{display:none}.step-links{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.step-nav{justify-content:center;text-align:center;flex-direction:column;gap:4px;font-size:10px;padding:8px 3px;margin:0}.num{width:27px;height:27px}.mainhead{flex-wrap:wrap}.mainhead .btn{font-size:12px}.topbar{height:auto;min-height:66px;padding:14px}.session-tag{display:none}}
+@media(max-width:540px){.fields,.fields.three,.card-grid{grid-template-columns:1fr}.panel{padding:18px}.sieve-pair{grid-template-columns:1fr 1fr}.preview-meta{grid-template-columns:1fr 1fr}.mainhead h1{font-size:24px}.login-card h2{font-size:26px}.actionbar{display:block}.actions-right{margin-top:10px;display:flex}.actions-right .btn{flex:1}.topbar .logo{font-size:12px}.topbar .logo-icon{width:30px;height:30px}}
+@page{size:A4 portrait;margin:12mm}
+@media print{body{background:#fff;font:11px Arial,sans-serif;color:#111}.app-view,.login-view,.modal-bg{display:none!important}.print-sheet{display:block!important;padding:0;margin:0;width:100%;color:#111}.print-title{text-align:center;border:1px solid #555;padding:7px}.print-title h1{font-size:16px;margin:0}.print-title p{margin:2px}.print-fields{display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;margin:12px 0}.print-fields>div{display:flex;gap:6px;border-bottom:1px dotted #bbb;padding:3px}.print-fields strong{min-width:100px}.print-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.print-sheet h2{font-size:12px;margin:13px 0 5px;padding-bottom:5px;border-bottom:1px solid #888}.print-sheet table{border-collapse:collapse;width:100%;font-size:10px}.print-sheet th,.print-sheet td{border:1px solid #999;text-align:center;padding:4px}.print-sheet th{background:#f4f4f4}.print-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px}.print-metrics div{padding:5px;border:1px solid #ddd}.print-notes{white-space:pre-wrap;border:1px solid #bbb;min-height:60px;padding:8px}.print-sheet .print-footer{display:flex;justify-content:space-between;margin-top:15px}}
+
+/* Sincronización / trabajo sin conexión */
+.connect-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eaf3f6;padding:10px clamp(15px,3vw,40px);border-bottom:1px solid #d6e5eb;font-size:13px;color:#345469}
+.connect-strip .btn{min-height:32px;padding:5px 10px;font-size:12px}
+.status-dot{width:9px;height:9px;border-radius:50%;background:#1b936f;display:inline-block;flex:none}
+.status-dot.offline{background:#c57a12}
+.sync-pill{background:#fff;border:1px solid #c8dbe4;border-radius:30px;padding:5px 11px;font-weight:700}
+.sync-message{margin-left:auto;color:#486478;font-size:12px}
+.reuse-shortcut{background:#edf9f5;border:1px solid #c5e7db;padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-radius:13px;margin-bottom:16px}
+.reuse-shortcut>div{flex:1;min-width:160px}
+.reuse-shortcut strong{display:block;color:#175b53}
+.reuse-shortcut small{display:block;color:#476e66;margin-top:3px}
+.history-search{width:100%;padding:12px 14px;border:1px solid #cfdae2;border-radius:10px;margin:10px 0;min-height:45px}
+.history-subtitle{font-size:12px;color:#59768a;margin:10px 0}
+.queue-item{border:1px solid #d7e2e9;border-radius:12px;padding:14px;margin:9px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.queue-item strong{display:block}.queue-item small{color:#647d8f;display:block;margin-top:5px}
+.queue-actions{display:flex;gap:8px;flex-wrap:wrap}
+.offline-entry{margin-top:15px;border:1px solid #efdcab;padding:14px;background:#fff9e7;border-radius:12px;color:#755a24}
+.offline-entry p{font-size:13px;margin:7px 0}
+@media(max-width:790px){.connect-strip{align-items:flex-start}.sync-message{width:100%;margin-left:0}}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<section class="login-view" id="loginView">
+ <div class="login-intro">
+  <div class="logo"><div class="logo-icon">RC</div> CONTROL DE CALIDAD</div>
+  <div><span class="eyebrow" style="color:#76e6ce">Plataforma de ensayos</span><h1>Informes técnicos, sin doble digitación.</h1><p>Registra resultados de mecánica de suelo, reutiliza antecedentes y mantén tus informes organizados en un solo lugar.</p><div class="login-bullet"><span>Registro inteligente</span><span>Dictado de observaciones</span><span>Historial de informes</span></div></div>
+  <small>Acceso privado · Demostración del sistema</small>
+ </div>
+ <div class="login-panel"><div class="login-card">
+  <span class="eyebrow">Acceso seguro</span><h2>Bienvenido</h2><p>Ingresa con tu usuario para comenzar a trabajar.</p>
+  <form id="loginForm">
+   <div class="fld"><label for="loginEmail">Correo electrónico</label><input type="email" id="loginEmail" autocomplete="username" placeholder="usuario@empresa.cl" required></div>
+   <div class="fld"><label for="loginPassword">Contraseña</label><div class="password-line"><input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Tu contraseña"><button id="togglePassword" type="button">Mostrar</button></div></div>
+   <button class="btn primary wide" id="loginBtn" type="submit">Ingresar al sistema</button>
+   <div class="notice error" id="loginError" role="status" aria-live="polite" style="margin-top:15px"></div>
+   <div id="offlineEntry" class="offline-entry" hidden><strong>Sin conexión al servidor</strong><p>Puedes continuar con los borradores locales de este dispositivo. Los informes se enviarán cuando inicies sesión nuevamente y vuelva la conexión. Usa solo equipos de confianza.</p><button class="btn light wide" id="offlineEnterBtn" type="button">Continuar sin conexión</button></div>
+  </form>
+ </div></div>
+</section>
+
+<!-- CAPTURA MODERNA: SIN TABLAS -->
+<div class="app-view" id="appView" hidden>
+ <div class="topbar"><div class="logo"><div class="logo-icon">RC</div><span>CONTROL DE CALIDAD<br><small style="color:#a8c9d1;font-weight:500">Mecánica de suelo</small></span></div><div class="top-actions"><span class="session-tag">● Sesión activa</span><button class="btn light" id="historyBtn" type="button">Historial</button><button class="btn light" id="logoutBtn" type="button">Salir</button></div></div>
+ <div class="connect-strip"><span class="status-dot" id="connectionDot"></span><strong id="connectionStatus">Comprobando conexión…</strong><span class="sync-pill" id="pendingCount">0 pendientes</span><button class="btn light" type="button" id="syncBtn">↻ Sincronizar</button><button class="btn light" type="button" id="pendingBtn">Ver pendientes</button><span class="sync-message" id="draftState" role="status" aria-live="polite">Borrador local preparado</span></div>
+ <div class="layout">
+  <aside class="side"><div class="side-head"><small>Espacio de trabajo</small><h3>Nuevo informe</h3></div>
+   <div class="step-links" role="navigation" aria-label="Etapas del informe">
+    <button class="step-nav active" data-step="0" type="button"><span class="num">1</span><span>Antecedentes</span></button>
+    <button class="step-nav" data-step="1" type="button"><span class="num">2</span><span>Ensayos</span></button>
+    <button class="step-nav" data-step="2" type="button"><span class="num">3</span><span>Clasificación</span></button>
+    <button class="step-nav" data-step="3" type="button"><span class="num">4</span><span>Revisar y guardar</span></button>
+   </div><div class="side-note">Solo estás editando la captura web. El formato de impresión se prepara por separado.<br><br><b>DEMO:</b> usa «Datos de prueba» para validar la inserción en MySQL.</div>
+  </aside>
+  <main>
+   <div class="mainhead"><div><div class="eyebrow">Registro de calidad / Mecánica de suelo</div><h1 id="stepTitle">Antecedentes de la muestra</h1><p id="stepDesc">Comienza con los datos de identificación del informe, la obra y las fechas.</p></div><button class="btn light" id="demoBtn" type="button">✳ Datos de prueba</button></div>
+   <div class="progress-card"><div class="progress-top"><span id="progressLabel">Etapa 1 de 4</span><span id="progressPct">25%</span></div><div class="progress"><span id="progressBar"></span></div></div>
+   <form id="reportForm" novalidate>
+    <div class="step-panel" data-panel="0">
+     <div class="reuse-shortcut"><div><strong>¿Ya ingresaste datos de esta obra?</strong><small>Reutiliza la información y evita escribirla otra vez.</small></div><button class="btn primary" type="button" id="reuseQuickBtn">↻ Usar datos anteriores</button><button class="btn light" type="button" id="lastWorkBtn" hidden>Usar última obra</button></div>
+     <section class="panel"><h2 class="section-title">Identificación del informe</h2><p class="section-sub">Información general que identifica la muestra y el ensayo.</p>
+      <div class="fields three"><div class="fld"><label for="nInforme">N° de informe</label><input id="nInforme" name="nInforme" placeholder="Ej.: MS-2026-001"></div><div class="fld"><label for="muestra">N° de muestra</label><input id="muestra" name="muestra" placeholder="Ej.: M-001"></div><div class="fld"><label for="estructura">Estructura</label><input id="estructura" name="estructura" placeholder="Ej.: Subbase"></div><div class="fld"><label for="fechaMuestreo">Fecha de muestreo</label><input type="date" id="fechaMuestreo" name="fechaMuestreo"></div><div class="fld"><label for="fechaEnsayo">Fecha de ensayo *</label><input type="date" id="fechaEnsayo" name="fechaEnsayo"></div><div class="fld"><label for="fechaRegistro">Fecha de registro</label><input type="date" id="fechaRegistro" name="fechaRegistro"></div></div>
+     </section>
+     <section class="panel"><h2 class="section-title">Obra y ubicación</h2><p class="section-sub">Estos antecedentes pueden reutilizarse desde un informe anterior.</p>
+      <div class="fields"><div class="fld"><label for="contratista">Contratista *</label><input id="contratista" name="contratista" placeholder="Empresa contratista" required></div><div class="fld"><label for="mandante">Mandante</label><input id="mandante" name="mandante" placeholder="Empresa mandante"></div><div class="fld"><label for="zona">Zona</label><input id="zona" name="zona" placeholder="Ej.: Zona Sur"></div><div class="fld"><label for="predio">Predio</label><input id="predio" name="predio" placeholder="Ej.: Los Aromos"></div><div class="fld"><label for="camino">Camino N°</label><input id="camino" name="camino" placeholder="Ej.: C-12"></div><div class="fld"><label for="sector">Sector / Tramo</label><input id="sector" name="sector" placeholder="Ej.: Tramo 2"></div><div class="fld"><label for="kmp">Kilómetro (Kmp)</label><input id="kmp" name="kmp" inputmode="decimal" placeholder="Ej.: 2.35"></div><div class="fld"><label for="responsable">Responsable</label><input id="responsable" name="responsable" placeholder="Nombre del responsable"></div></div>
+     </section>
+    </div>
+    <div class="step-panel" data-panel="1" hidden>
+     <section class="panel"><h2 class="section-title">Granulometría</h2><p class="section-sub">Los tamices se muestran como tarjetas individuales. No necesitas rellenar una tabla.</p><div class="info-strip">Puedes escribir el % retenido; el sistema calcula automáticamente el % pasa acumulado. También puedes ajustar el % pasa manualmente.</div><div class="card-grid" id="sieveCards"></div></section>
+     <section class="panel"><h2 class="section-title">Otros ensayos</h2><p class="section-sub">Resultados de compactación y propiedades del material.</p>
+      <div class="section-slab"><h3>Proctor</h3><div class="fields three"><div class="fld"><label for="dch">DCH</label><input id="dch" name="dch" inputmode="decimal" placeholder="Ej.: 2.05"></div><div class="fld"><label for="humedadProctor">Humedad óptima (% W)</label><input id="humedadProctor" name="humedadProctor" inputmode="decimal" placeholder="Ej.: 9.5"></div><div class="fld"><label for="dcs">DCS</label><input id="dcs" name="dcs" inputmode="decimal" placeholder="Ej.: 1.91"></div><div class="fld"><label for="metodo">Método</label><input id="metodo" name="metodo" placeholder="A, B, C, D..."></div></div></div>
+      <div class="section-slab"><h3>Capacidad de soporte y plasticidad</h3><div class="fields three"><div class="fld"><label for="cbr">CBR (%)</label><input id="cbr" name="cbr" inputmode="decimal"></div><div class="fld"><label for="ll">Límite líquido (LL)</label><input id="ll" name="ll" inputmode="decimal"></div><div class="fld"><label for="lp">Límite plástico (LP)</label><input id="lp" name="lp" inputmode="decimal"></div><div class="fld"><label for="ip">Índice de plasticidad (IP)</label><input id="ip" name="ip" inputmode="decimal" placeholder="Calculado desde LL − LP"><small class="help">Se calcula al ingresar LL y LP; puedes corregirlo.</small></div></div></div>
+      <div class="section-slab"><h3>Otros resultados</h3><div class="fields three"><div class="fld"><label for="chancado">Chancado (%)</label><input id="chancado" name="chancado" inputmode="decimal"></div><div class="fld"><label for="desgaste">Desgaste (%)</label><input id="desgaste" name="desgaste" inputmode="decimal"></div><div class="fld"><label for="humedad">Humedad (%)</label><input id="humedad" name="humedad" inputmode="decimal"></div></div></div>
+     </section>
+    </div>
+    <div class="step-panel" data-panel="2" hidden>
+     <section class="panel"><h2 class="section-title">Clasificación del material</h2><p class="section-sub">Registra las clasificaciones determinadas por el profesional responsable.</p><div class="fields"><div class="fld"><label for="aashto">Clasificación AASHTO</label><input id="aashto" name="aashto" placeholder="Ej.: A-1-a"></div><div class="fld"><label for="usc">Clasificación USCS</label><input id="usc" name="usc" placeholder="Ej.: GW"></div></div></section>
+     <section class="panel"><h2 class="section-title">Observaciones técnicas</h2><p class="section-sub">Escribe normalmente o utiliza el micrófono. El texto queda editable antes de guardarlo.</p><div class="fld"><label for="observaciones">Observaciones</label><textarea id="observaciones" name="observaciones" rows="7" placeholder="Describe las condiciones de la muestra, los resultados y las recomendaciones pertinentes..."></textarea></div><div class="mic-bar"><button class="btn primary" type="button" id="micBtn">🎙 Iniciar dictado</button><button class="btn light" type="button" id="clearNotes">Limpiar texto</button><span class="voice-feedback" id="voiceInfo" role="status" aria-live="polite">Dictado en español de Chile (si el navegador lo permite).</span></div><div class="validation">ℹ️ El reconocimiento de voz puede procesar audio mediante servicios del navegador. Revisa la transcripción antes de usarla en un informe real.</div></section>
+    </div>
+    <div class="step-panel" data-panel="3" hidden>
+     <section class="panel"><h2 class="section-title">Revisión del informe</h2><p class="section-sub">Revisa el informe. Se guardará primero en este equipo y, cuando haya conexión, se enviará a MySQL.</p><div class="preview-meta" id="reviewMeta"></div><h3 class="group-title">Observaciones</h3><div class="review-notes" id="reviewNotes"></div><div class="checklist"><div class="checkline"><span class="check-dot">✓</span> Los datos se guardan primero en este dispositivo y luego se sincronizan con MySQL.</div><div class="checkline"><span class="check-dot">✓</span> Cada envío tendrá un identificador único para evitar duplicados al reintentar.</div><div class="checkline"><span class="check-dot">✓</span> El archivo impreso es una vista de referencia del reporte.</div></div><div class="validation" id="formWarnings" hidden></div><button class="btn primary" id="saveBtn" type="button">Guardar informe (con o sin conexión)</button><button class="btn light" id="printBtn" type="button" style="margin-left:8px">Imprimir / PDF de prueba</button><div class="notice save-msg" role="status" aria-live="polite" id="saveResult"></div></section>
+    </div>
+   </form>
+   <div class="actionbar"><button class="btn light" type="button" id="prevBtn" hidden>← Anterior</button><span id="stepHint" style="color:#728698;font-size:12px">Borrador automático en este dispositivo.</span><div class="actions-right"><button class="btn ghost" id="resetBtn" type="button">Nuevo informe</button><button class="btn dark" id="nextBtn" type="button">Siguiente →</button></div></div>
+  </main>
+ </div>
+</div>
+
+<div class="modal-bg" id="historyModal" hidden role="dialog" aria-modal="true" aria-labelledby="historyTitle"><div class="modal"><div class="modal-head"><div><span class="eyebrow">Informes registrados</span><h2 id="historyTitle">Historial reciente</h2></div><button class="btn light" type="button" id="closeHistory">Cerrar ✕</button></div><p style="color:#667f90;font-size:13px">Busca por número de informe o empresa. «Solo antecedentes» deja los resultados de ensayo en blanco. Copiar el informe completo conserva los resultados, pero borra el número, la muestra y las fechas de ensayo para que ingreses datos nuevos.</p><input id="historySearch" class="history-search" type="search" placeholder="Buscar empresa, informe o fecha..." aria-label="Buscar informes anteriores"><p id="historySource" class="history-subtitle"></p><div id="historyList" role="status"></div></div></div>
+
+<div class="modal-bg" id="pendingModal" hidden role="dialog" aria-modal="true" aria-labelledby="pendingTitle"><div class="modal"><div class="modal-head"><div><span class="eyebrow">Sincronización</span><h2 id="pendingTitle">Informes guardados en este equipo</h2></div><button class="btn light" type="button" id="closePending">Cerrar ✕</button></div><p class="history-subtitle">Cada informe pendiente permanece aquí hasta recibir confirmación de MySQL. Puedes reintentar sin duplicarlo.</p><div id="pendingList" role="status"></div><button class="btn primary" type="button" id="syncAllBtn" style="margin-top:14px">Sincronizar ahora</button></div></div>
+
+<!-- Diseño de impresión, separado de la interfaz de captura -->
+<section class="print-sheet" id="printSheet" aria-label="Formato de impresión">
+ <div class="print-title"><h1>REGISTRO DE CALIDAD</h1><p><strong>Área Mecánica de Suelo</strong></p><p>Ensayos de muestras · Caminos Forestales Forestal Celco</p></div>
+ <div class="print-fields" id="printGeneral"></div>
+ <div class="print-grid"><section><h2>1. GRANULOMETRÍA</h2><table><thead><tr><th>Tamiz</th><th>% Retenido</th><th>% Pasa</th></tr></thead><tbody id="printSieves"></tbody></table></section><section><h2>2. PROCTOR</h2><div class="print-metrics" id="printMetrics"></div></section></div>
+ <h2>CLASIFICACIÓN Y OBSERVACIONES</h2><div class="print-metrics" id="printClasses"></div><p id="printObservations" class="print-notes"></p><div class="print-footer"><span id="printResponsible"></span><span id="printDate"></span></div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const API='./api';
+const tamices=['6″','4″','3″','2 ½″','2″','1 ½″','1″','¾″','⅜″','#4','#10','#40','#200'];
+const antecedentKeys=['estructura','zona','predio','camino','sector','kmp','contratista','mandante','responsable'];
+let activeStep=0, authenticated=false, recognition=null, recording=false, offlineMode=false, currentUid=null, syncing=false, draftTimer=null, lastSavedSignature=null, lastServerId=null, availableHistory=[], dataReady=false;
+const steps=[
+ {title:'Antecedentes de la muestra',desc:'Comienza con los datos de identificación del informe, la obra y las fechas.'},
+ {title:'Resultados de los ensayos',desc:'Ingresa la granulometría y las mediciones técnicas, ordenadas por tipo de ensayo.'},
+ {title:'Clasificación y observaciones',desc:'Completa la clasificación del material y dicta o escribe las observaciones.'},
+ {title:'Revisar y guardar',desc:'Verifica los datos antes de insertar el informe en MySQL.'}
+];
+function showNotice(el,text,error=false){el.textContent=text;el.classList.toggle('error',error);}
+async function apiRequest(path, opts={}){
+ const resp=await fetch(API+path,{credentials:'same-origin',cache:'no-store',...opts});
+ const raw=await resp.text(); let json;
+ try{json=JSON.parse(raw);}catch(e){throw new Error('La API no devolvió JSON (HTTP '+resp.status+')');}
+ if(!resp.ok)throw new Error(json.error||'Error HTTP '+resp.status);
+ return json;
+}
+// POST evita recuperar de cache un token de otra sesión. Endpoint incluido en nuestro MVC.
+async function session(){return apiRequest('/session',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:'{}'});}
+function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hidden=canEdit;$('appView').hidden=!canEdit;if(!canEdit)stopVoice();updateConnectivity();}
+function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
+async function syncAuth(){const r=await session();authenticated=!!r.autenticado;offlineMode=false;if(authenticated){setOwner(Number(r.usuario_id));await restoreDraft();}renderAuth();if(authenticated)void syncPending();return r;}
+function updateConnectivity(){const online=navigator.onLine;const active=authenticated&&online;$('connectionDot').classList.toggle('offline',!active);$('connectionStatus').textContent=active?'Con conexión · sesión activa':(online?'Sin sesión validada · guardado local':'Sin conexión · guardado local');document.querySelector('.session-tag').textContent=active?'● Sesión activa':'● Modo local (sin autenticar)';$('syncBtn').disabled=!active||syncing;}
+async function offerOfflineAccess(){const uid=Number(localStorage.getItem('demo_last_user'));$('offlineEntry').hidden=!(Number.isSafeInteger(uid)&&uid>0);}
+$('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();});
+
+$('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('loginBtn');btn.disabled=true;showNotice($('loginError'),'Verificando...');
+ try{
+  const s=await session();const email=$('loginEmail').value.trim();const password=$('loginPassword').value;
+  await apiRequest('/login',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf,email,password})});
+  $('loginPassword').value='';await syncAuth();$('offlineEntry').hidden=true;showNotice($('loginError'),'');
+ }catch(err){showNotice($('loginError'),'No fue posible ingresar: '+err.message,true);}
+ finally{btn.disabled=false;}
+});
+$('togglePassword').addEventListener('click',()=>{const el=$('loginPassword');el.type=el.type==='password'?'text':'password';$('togglePassword').textContent=el.type==='password'?'Mostrar':'Ocultar';});
+$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;renderAuth();$('loginPassword').value='';}catch(e){alert('No fue posible cerrar sesión: '+e.message);}});
+function getData(){const data={};$('reportForm').querySelectorAll('[name]').forEach(el=>{data[el.name]=el.value.trim();});return data;}
+function setData(data){$('reportForm').querySelectorAll('[name]').forEach(el=>{el.value=data[el.name]===undefined?'':String(data[el.name]);});updateReview();scheduleDraft();}
+function goStep(n){
+ activeStep=Math.max(0,Math.min(3,n));
+ document.querySelectorAll('[data-panel]').forEach(el=>el.hidden=Number(el.dataset.panel)!==activeStep);
+ document.querySelectorAll('[data-step]').forEach(el=>{const i=Number(el.dataset.step);el.classList.toggle('active',i===activeStep);el.classList.toggle('done',i<activeStep);el.setAttribute('aria-current',i===activeStep?'step':'false');});
+ $('stepTitle').textContent=steps[activeStep].title;$('stepDesc').textContent=steps[activeStep].desc;
+ $('progressLabel').textContent='Etapa '+(activeStep+1)+' de 4';$('progressPct').textContent=((activeStep+1)*25)+'%';$('progressBar').style.width=((activeStep+1)*25)+'%';
+ $('prevBtn').hidden=activeStep===0;$('nextBtn').hidden=activeStep===3;
+ if(activeStep===3)updateReview();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-step]').forEach(btn=>btn.addEventListener('click',()=>goStep(Number(btn.dataset.step))));
+$('prevBtn').addEventListener('click',()=>goStep(activeStep-1));$('nextBtn').addEventListener('click',()=>goStep(activeStep+1));
+function today(offset=0){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+offset);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+$('fechaRegistro').value=today();
+// 13 tamices como tarjetas, nunca como tabla en la captura.
+tamices.forEach((s,i)=>{
+ const card=document.createElement('div');card.className='sieve-card';
+ const h=document.createElement('div');h.className='sieve-head';
+ const title=document.createElement('strong');title.textContent='Tamiz '+s;
+ const n=document.createElement('small');n.textContent=(i+1)+' / 13';h.append(title,n);
+ const pair=document.createElement('div');pair.className='sieve-pair';
+ for(const [key,label] of [['retenido_'+i,'% retenido'],['pasa_'+i,'% pasa']]){
+  const f=document.createElement('div');f.className='fld';
+  const lab=document.createElement('label');lab.htmlFor=key;lab.textContent=label;
+  const inp=document.createElement('input');inp.id=key;inp.name=key;inp.inputMode='decimal';inp.placeholder='0.0';inp.setAttribute('aria-label',label+' tamiz '+s);
+  f.append(lab,inp);pair.append(f);
+ }
+ card.append(h,pair);$('sieveCards').append(card);
+});
+function parseNumber(v){const n=Number(String(v).replace(',','.'));return Number.isFinite(n)?n:null;}
+// Deriva la curva acumulada cuando se edita un retenido. No sustituye la validación técnica del laboratorio.
+function computePass(){let sum=0;for(let i=0;i<13;i++){const v=$('retenido_'+i).value.trim();if(v===''){ $('pasa_'+i).value=''; continue;}const n=parseNumber(v);if(n===null)return;sum+=n;$('pasa_'+i).value=Math.max(0,100-sum).toFixed(1);}}
+for(let i=0;i<13;i++)$('retenido_'+i).addEventListener('input',computePass);
+function computeIP(){const ll=$('ll').value.trim(),lp=$('lp').value.trim();if(!ll||!lp)return;const a=parseNumber(ll),b=parseNumber(lp);if(a!==null&&b!==null)$('ip').value=String(Number((a-b).toFixed(2)));}
+$('ll').addEventListener('input',computeIP);$('lp').addEventListener('input',computeIP);
+function fillRandomData(){
+ if(Object.entries(getData()).some(([k,v])=>v&&k!=='fechaRegistro')&&!confirm('Se reemplazarán los datos actuales. ¿Continuar?'))return;
+ const ri=(a,b)=>Math.floor(a+Math.random()*(b-a+1)),rf=(a,b,d=1)=>(a+Math.random()*(b-a)).toFixed(d);
+ const lp=ri(17,25),ip=ri(4,14);const num='DEMO-'+Date.now().toString().slice(-9);
+ const d={nInforme:num,muestra:'M-DEMO-'+ri(100,999),estructura:['Subbase granular','Base estabilizada','Subrasante','Terraplén'][ri(0,3)],fechaMuestreo:today(-ri(4,8)),fechaEnsayo:today(-ri(0,3)),fechaRegistro:today(),contratista:'Constructora DEMO',mandante:'Mandante DEMO',zona:'Zona Sur',predio:'Predio de Prueba '+ri(1,9),camino:'C-'+ri(10,99),sector:'Tramo '+ri(1,5),kmp:rf(.3,20,2),responsable:'Técnico DEMO',dch:rf(1.9,2.2,2),humedadProctor:rf(7,12),dcs:rf(1.7,2.1,2),metodo:['A','B','C'][ri(0,2)],cbr:rf(30,90),ll:String(lp+ip),lp:String(lp),ip:String(ip),chancado:rf(35,80),desgaste:rf(12,34),humedad:rf(6,13),aashto:'A-1-a (simulado)',usc:'GW (simulado)',observaciones:'DATOS FICTICIOS PARA PRUEBAS DEL SISTEMA. No corresponden a resultados de laboratorio ni deben utilizarse en informes técnicos reales.'};
+ const weights=[0,0,0,0,1,2,4,7,15,19,18,20,14].map(v=>v===0?0:v*(.7+Math.random()*.6));const target=100-ri(5,15),total=weights.reduce((a,b)=>a+b,0);let accumulated=0;
+ weights.forEach((v,i)=>{const r=i===12?Number((target-accumulated).toFixed(1)):Number((target*v/total).toFixed(1));accumulated=Number((accumulated+r).toFixed(1));d['retenido_'+i]=r.toFixed(1);d['pasa_'+i]=Math.max(0,100-accumulated).toFixed(1);});
+ setData(d);goStep(0);showNotice($('saveResult'),'');
+}
+$('demoBtn').addEventListener('click',fillRandomData);
+$('resetBtn').addEventListener('click',()=>{if(!confirm('¿Iniciar un informe nuevo? Los pendientes de sincronización no se borrarán. El borrador actual será reemplazado.'))return;lastSavedSignature=null;lastServerId=null;setData({fechaRegistro:today()});goStep(0);showNotice($('saveResult'),'');});
+function updateReview(){const d=getData();const fields=[['N° informe','nInforme'],['Muestra','muestra'],['Contratista','contratista'],['Mandante','mandante'],['Fecha de ensayo','fechaEnsayo'],['Sector / tramo','sector'],['CBR (%)','cbr'],['Clasificación USCS','usc'],['Responsable','responsable']];$('reviewMeta').replaceChildren();fields.forEach(([label,key])=>{const node=document.createElement('div');const small=document.createElement('small');const strong=document.createElement('strong');small.textContent=label;strong.textContent=d[key]||'—';node.append(small,strong);$('reviewMeta').append(node);});$('reviewNotes').textContent=d.observaciones||'Sin observaciones.';const issues=[];if(!d.contratista)issues.push('Completa Contratista.');if(!/^\d{4}-\d{2}-\d{2}$/.test(d.fechaEnsayo||d.fechaRegistro||''))issues.push('Completa Fecha de ensayo o Fecha de registro.');$('formWarnings').hidden=!issues.length;$('formWarnings').textContent=issues.join(' ');}
+// IndexedDB mantiene borradores, historial descargado y envíos pendientes por usuario.
+const DB_NAME='demo_mecanica_suelo_offline_v1';
+const STORE_VERSION=1;
+let localDbPromise=null;
+function localDB(){
+ if(!('indexedDB' in window))return Promise.reject(new Error('Este navegador no admite almacenamiento local IndexedDB.'));
+ if(!localDbPromise){
+  localDbPromise=new Promise((resolve,reject)=>{
+   const r=indexedDB.open(DB_NAME,STORE_VERSION);
+   r.onupgradeneeded=()=>{const db=r.result;for(const name of ['drafts','pending','history','reports'])if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:'key'});};
+   r.onsuccess=()=>resolve(r.result);
+   r.onerror=()=>reject(r.error||new Error('No fue posible abrir el almacenamiento local'));
+  });
+ }
+ return localDbPromise;
+}
+async function storageGet(store,key){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly');const r=tx.objectStore(store).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
+async function storagePut(store,value){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(value);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+async function storageDel(store,key){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+async function storageAll(store){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly');const r=tx.objectStore(store).getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error);});}
+function ownerKey(suffix){if(!currentUid)throw new Error('No hay usuario local identificado.');return currentUid+':'+suffix;}
+function signature(data){return JSON.stringify(data);}
+function queueUUID(){if(crypto.randomUUID)return crypto.randomUUID();const a=crypto.getRandomValues(new Uint8Array(16));a[6]=(a[6]&15)|64;a[8]=(a[8]&63)|128;const h=Array.from(a,x=>x.toString(16).padStart(2,'0')).join('');return [h.slice(0,8),h.slice(8,12),h.slice(12,16),h.slice(16,20),h.slice(20)].join('-');}
+function scheduleDraft(){if(!currentUid||!dataReady)return;clearTimeout(draftTimer);$('draftState').textContent='Guardando borrador local…';draftTimer=setTimeout(()=>void persistDraft(),650);}
+async function persistDraft(){if(!currentUid||!dataReady)return;try{await storagePut('drafts',{key:ownerKey('actual'),datos:getData(),fecha:new Date().toISOString(),lastSavedSignature,lastServerId});$('draftState').textContent='✓ Borrador guardado en este equipo';}catch(e){$('draftState').textContent='⚠ No se pudo guardar localmente: '+e.message;}}
+async function restoreDraft(){if(!currentUid)return;const v=await storageGet('drafts',ownerKey('actual'));dataReady=false;if(v&&v.datos){setData(v.datos);lastSavedSignature=v.lastSavedSignature??null;lastServerId=v.lastServerId??null;$('draftState').textContent='✓ Borrador anterior recuperado de este equipo';}else{$('draftState').textContent='Borrador local listo';}dataReady=true;await refreshPending();updateLastWork();}
+$('reportForm').addEventListener('input',e=>{if(e.target.matches('[name]'))scheduleDraft();});
+$('reportForm').addEventListener('change',e=>{if(e.target.matches('[name]'))scheduleDraft();});
+async function refreshPending(){if(!currentUid)return;try{const q=(await storageAll('pending')).filter(x=>x.uid===currentUid);$('pendingCount').textContent=q.length+' pendiente'+(q.length===1?'':'s');if(!$('pendingModal').hidden)renderPending(q);return q;}catch(e){$('pendingCount').textContent='Almacenamiento no disponible';return [];}}
+async function saveReport(){
+ const btn=$('saveBtn');const d=getData();updateReview();if(!$('formWarnings').hidden)return;
+ if(!currentUid){showNotice($('saveResult'),'Inicia sesión al menos una vez en este dispositivo antes de guardar.',true);return;}
+ const sig=signature(d);
+ if(sig===lastSavedSignature){showNotice($('saveResult'),lastServerId?'Este informe ya está en MySQL (ID '+lastServerId+'). Para registrar otro, pulsa Nuevo informe.':'Este informe ya está pendiente de sincronizar. Puedes verlo en «Ver pendientes».');return;}
+ btn.disabled=true;showNotice($('saveResult'),'Guardando primero en este equipo…');
+ try{
+  const id=queueUUID();
+  const entry={key:id,uid:currentUid,datos:d,fecha:new Date().toISOString(),state:'pendiente',lastError:''};
+  await storagePut('pending',entry);
+  lastSavedSignature=sig;lastServerId=null;
+  await persistDraft();await storagePut('history',{key:ownerKey('ultimaObra'),datos:onlyAntecedents(d),fecha:new Date().toISOString()});updateLastWork();await refreshPending();
+  showNotice($('saveResult'),'✓ Informe guardado en este equipo. Pendiente de sincronización.');
+  if(authenticated&&navigator.onLine)await syncPending();
+ }catch(e){showNotice($('saveResult'),'No fue posible guardar localmente: '+e.message,true);}
+ finally{btn.disabled=false;}
+}
+$('saveBtn').addEventListener('click',saveReport);
+async function syncPending(){
+ if(syncing||!authenticated||!currentUid||!navigator.onLine)return;
+ syncing=true;updateConnectivity();$('draftState').textContent='Sincronizando…';
+ try{
+  const pending=(await storageAll('pending')).filter(x=>x.uid===currentUid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  for(const entry of pending){
+   let s;
+   try{s=await session();if(!s.autenticado){authenticated=false;offlineMode=true;renderAuth();throw new Error('Inicia sesión para sincronizar.');}
+    if(Number(s.usuario_id)!==entry.uid)throw new Error('Esta cuenta no corresponde al usuario que guardó el informe.');
+    const reply=await apiRequest('/informes',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf,client_uuid:entry.key,datos:entry.datos})});
+    if(!reply.id)throw new Error('El servidor no confirmó el ID de informe.');
+    await storageDel('pending',entry.key);
+    if(signature(getData())===signature(entry.datos)&&lastSavedSignature===signature(entry.datos)){lastServerId=reply.id;await persistDraft();}
+    showNotice($('saveResult'),'✓ Informe sincronizado en MySQL. ID: '+reply.id);
+   }catch(e){
+    entry.state='error';entry.lastError=e.message;await storagePut('pending',entry);
+    $('draftState').textContent='Pendiente de sincronizar: '+e.message;
+    break; // No perder el informe ni reintentarlo en un bucle.
+   }
+  }
+ }catch(e){$('draftState').textContent='No se pudo sincronizar: '+e.message;}
+ finally{syncing=false;await refreshPending();updateConnectivity();if($('pendingCount').textContent==='0 pendientes')$('draftState').textContent='✓ Todo sincronizado';}
+}
+$('syncBtn').addEventListener('click',()=>void syncPending());
+$('syncAllBtn').addEventListener('click',()=>void syncPending());
+$('pendingBtn').addEventListener('click',async()=>{$('pendingModal').hidden=false;await refreshPending();});
+$('closePending').addEventListener('click',()=>{$('pendingModal').hidden=true;});
+$('pendingModal').addEventListener('click',e=>{if(e.target===$('pendingModal'))$('pendingModal').hidden=true;});
+function renderPending(items){const list=$('pendingList');list.replaceChildren();if(!items.length){list.textContent='No hay informes pendientes. Todo lo confirmado está en MySQL.';return;}
+ for(const entry of items){const row=document.createElement('div');row.className='queue-item';const meta=document.createElement('div');meta.append(node('strong',(entry.datos.nInforme||'Sin número')+' · '+(entry.datos.contratista||'Sin contratista')),node('small',new Date(entry.fecha).toLocaleString('es-CL')+' · '+(entry.lastError||'Pendiente de envío')));
+ const action=document.createElement('div');action.className='queue-actions';const send=document.createElement('button');send.className='btn primary';send.textContent='Sincronizar';send.disabled=!authenticated||!navigator.onLine;send.addEventListener('click',()=>void syncPending());
+ const remove=document.createElement('button');remove.className='btn danger';remove.textContent='Eliminar local';remove.addEventListener('click',async()=>{if(!confirm('¿Eliminar este informe pendiente del dispositivo? Si aún no llegó a MySQL, se perderá.'))return;await storageDel('pending',entry.key);await refreshPending();});action.append(send,remove);row.append(meta,action);list.append(row);}
+}
+// Guardado en IndexedDB, nunca en el cache del service worker.
+async function updateLastWork(){if(!currentUid)return;try{const item=await storageGet('history',ownerKey('ultimaObra'));$('lastWorkBtn').hidden=!(item&&item.datos&&Object.keys(item.datos).length);}catch(e){$('lastWorkBtn').hidden=true;}}
+function onlyAntecedents(d){return Object.fromEntries(antecedentKeys.filter(k=>d[k]!==undefined&&d[k]!=='').map(k=>[k,d[k]]));}
+$('lastWorkBtn').addEventListener('click',async()=>{const stored=await storageGet('history',ownerKey('ultimaObra'));if(!stored)return;if(!confirm('¿Usar los antecedentes de la última obra? Se reemplazará el formulario actual. Los ensayos quedarán en blanco.'))return;lastSavedSignature=null;lastServerId=null;setData({...stored.datos,fechaRegistro:today()});goStep(0);});
+
+function appendText(el,txt){txt=txt.trim();if(!txt)return;txt=txt.replace(/\b(punto y aparte|nueva línea|salto de línea)\b/gi,'\n');el.value+=(!el.value||/\s$/.test(el.value)?'':' ')+txt;el.dispatchEvent(new Event('input',{bubbles:true}));}
+const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!Speech){$('micBtn').disabled=true;$('voiceInfo').textContent='Este navegador no admite dictado. Puedes escribir normalmente.';}
+else{
+ recognition=new Speech();recognition.lang='es-CL';recognition.continuous=true;recognition.interimResults=true;
+ recognition.onstart=()=>{recording=true;$('micBtn').textContent='■ Detener dictado';$('micBtn').classList.add('recording');$('voiceInfo').textContent='Escuchando...';};
+ recognition.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const res=e.results[i];if(res.isFinal)appendText($('observaciones'),res[0].transcript);else interim+=res[0].transcript;}$('voiceInfo').textContent=interim?'Escuchando: '+interim:'Texto reconocido. Continúa hablando si lo necesitas.';};
+ recognition.onerror=e=>{const msg={'not-allowed':'Autoriza el micrófono en el navegador.','no-speech':'No se detectó voz.','audio-capture':'No se encontró un micrófono.','network':'El servicio de voz no está disponible.'};$('voiceInfo').textContent=msg[e.error]||'Error de reconocimiento: '+e.error;};
+ recognition.onend=()=>{recording=false;$('micBtn').textContent='🎙 Iniciar dictado';$('micBtn').classList.remove('recording');};
+}
+function stopVoice(){if(recording&&recognition)recognition.stop();}
+$('micBtn').addEventListener('click',()=>{if(!recognition)return;if(recording){stopVoice();return;}if(!window.isSecureContext){$('voiceInfo').textContent='Usa HTTPS para activar el micrófono.';return;}try{recognition.start();}catch(e){$('voiceInfo').textContent='No se pudo activar el micrófono.';}});
+$('clearNotes').addEventListener('click',()=>{if($('observaciones').value&&confirm('¿Borrar las observaciones?')){$('observaciones').value='';scheduleDraft();}});
+window.addEventListener('pagehide',stopVoice);
+// Historial sencillo: buscar, copiar antecedentes o resultados; permite cache local por usuario.
+function closeHistory(){$('historyModal').hidden=true;}
+$('closeHistory').addEventListener('click',closeHistory);
+$('historyModal').addEventListener('click',e=>{if(e.target===$('historyModal'))closeHistory();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHistory();$('pendingModal').hidden=true;}});
+$('historyBtn').addEventListener('click',openHistory);
+$('reuseQuickBtn').addEventListener('click',openHistory);
+$('historySearch').addEventListener('input',renderHistory);
+async function openHistory(){
+ $('historyModal').hidden=false;$('historyList').textContent='Buscando informes anteriores…';$('historySearch').value='';
+ try{
+  const cached=await storageGet('history',ownerKey('listado'));
+  availableHistory=cached?.items||[];
+  if(authenticated&&navigator.onLine){
+   const r=await apiRequest('/informes');availableHistory=r.informes||[];
+   await storagePut('history',{key:ownerKey('listado'),items:availableHistory,fecha:new Date().toISOString()});
+   $('historySource').textContent='Informes de MySQL · los 12 más recientes se guardan también para reutilizarlos sin internet.';
+   void cacheRecentReports(availableHistory.slice(0,12));
+  }else{$('historySource').textContent='Sin conexión: mostrando únicamente el historial descargado en este equipo.';}
+  renderHistory();
+ }catch(e){if(availableHistory.length){$('historySource').textContent='Historial local (sin acceso al servidor).';renderHistory();}else $('historyList').textContent='No fue posible cargar el historial: '+e.message;}
+}
+async function cacheRecentReports(list){
+ // Peticiones secuenciales y de pocos registros para no sobrecargar el hosting.
+ for(const info of list){if(!authenticated||!navigator.onLine||!currentUid)break;
+  try{const key=ownerKey('informe:'+info.id);const cached=await storageGet('reports',key);if(cached)continue;const full=await apiRequest('/informes/'+info.id);await storagePut('reports',{key,datos:full.datos,fecha:new Date().toISOString()});}catch(e){break;}
+ }
+}
+function renderHistory(){const search=$('historySearch').value.trim().toLocaleLowerCase('es-CL');const list=$('historyList');list.replaceChildren();const matches=availableHistory.filter(i=>[i.numero_informe,i.razon_social,i.fecha_informe,String(i.id)].join(' ').toLocaleLowerCase('es-CL').includes(search));
+ if(!matches.length){list.textContent=search?'No se encontraron informes con esa búsqueda.':'Todavía no hay informes anteriores.';return;}
+ for(const info of matches.slice(0,50)){
+  const item=document.createElement('div');item.className='history-item';
+  const desc=document.createElement('div');desc.append(node('strong',(info.numero_informe||'Sin número')+' · ID '+info.id),node('small',(info.razon_social||'')+' · '+(info.fecha_informe||'')));
+  const actions=document.createElement('div');actions.className='history-buttons';
+  for(const [label,mode] of [['Usar antecedentes','antecedentes'],['Copiar ensayos también','completo']]){
+   const b=document.createElement('button');b.className=mode==='antecedentes'?'btn primary':'btn light';b.type='button';b.textContent=label;b.addEventListener('click',()=>reuseReport(info.id,mode,b));actions.append(b);
+  }item.append(desc,actions);list.append(item);
+ }
+}
+async function reuseReport(id,mode,button){button.disabled=true;try{
+ const key=ownerKey('informe:'+id);let cached=await storageGet('reports',key);let data=cached?.datos;
+ if(authenticated&&navigator.onLine){try{const old=await apiRequest('/informes/'+id);data=old.datos||{};await storagePut('reports',{key,datos:data,fecha:new Date().toISOString()});}catch(e){if(!data)throw e;}}
+ if(!data)throw new Error('Ese informe no se descargó previamente. Conéctate a internet para utilizarlo.');
+ if(!confirm('¿'+(mode==='antecedentes'?'Reutilizar solo los datos de la obra':'Copiar datos generales y resultados')+'? Se reemplazará el formulario actual (no se modificará el informe anterior).'))return;
+ let d=mode==='antecedentes'?onlyAntecedents(data):{...data};
+ for(const field of ['nInforme','muestra','fechaMuestreo','fechaEnsayo'])delete d[field];
+ d.fechaRegistro=today();lastSavedSignature=null;lastServerId=null;setData(d);closeHistory();goStep(0);
+ }catch(e){alert('No fue posible reutilizar el informe: '+e.message);}finally{button.disabled=false;}}
+// La impresión usa un layout separado. Los datos provienen de la captura dinámica.
+function node(tag,text){const el=document.createElement(tag);el.textContent=text;return el;}
+function fillPrint(){const d=getData();$('printGeneral').replaceChildren();
+ const general=[['N° informe','nInforme'],['N° muestra','muestra'],['Fecha muestreo','fechaMuestreo'],['Fecha ensayo','fechaEnsayo'],['Estructura','estructura'],['Zona','zona'],['Predio','predio'],['Camino N°','camino'],['Sector / Tramo','sector'],['Kmp','kmp'],['Contratista','contratista'],['Mandante','mandante']];
+ general.forEach(([title,key])=>{const el=document.createElement('div');el.append(node('strong',title+':'),node('span',d[key]||'—'));$('printGeneral').append(el);});
+ $('printSieves').replaceChildren();tamices.forEach((s,i)=>{const tr=document.createElement('tr');[s,d['retenido_'+i]||'—',d['pasa_'+i]||'—'].forEach(v=>tr.append(node('td',v)));$('printSieves').append(tr);});
+ $('printMetrics').replaceChildren();for(const [title,key] of [['DCH','dch'],['% W Proctor','humedadProctor'],['DCS','dcs'],['Método','metodo'],['CBR (%)','cbr'],['LL','ll'],['LP','lp'],['IP','ip'],['Chancado (%)','chancado'],['Desgaste (%)','desgaste'],['Humedad (%)','humedad']])$('printMetrics').append(node('div',title+': '+(d[key]||'—')));
+ $('printClasses').replaceChildren();$('printClasses').append(node('div','AASHTO: '+(d.aashto||'—')),node('div','USCS: '+(d.usc||'—')));$('printObservations').textContent=d.observaciones||'—';$('printResponsible').textContent='Responsable: '+(d.responsable||'—');$('printDate').textContent='Fecha de registro: '+(d.fechaRegistro||'—');
+}
+$('printBtn').addEventListener('click',()=>{fillPrint();window.print();});
+window.addEventListener('beforeprint',fillPrint);
+async function init(){
+ try{await localDB();}catch(e){showNotice($('loginError'),'Este navegador no permite guardar datos sin conexión: '+e.message,true);}
+ if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+ try{await syncAuth();$('offlineEntry').hidden=true;}catch(e){authenticated=false;renderAuth();await offerOfflineAccess();showNotice($('loginError'),navigator.onLine?'No fue posible consultar la sesión: '+e.message:'No hay conexión al servidor. Puedes entrar en modo local si ya usaste este equipo.',!(!navigator.onLine));}
+ updateConnectivity();
+}
+window.addEventListener('online',async()=>{updateConnectivity();if(offlineMode||!authenticated){try{await syncAuth();}catch(e){updateConnectivity();}}if(authenticated)void syncPending();});
+window.addEventListener('offline',()=>{updateConnectivity();$('draftState').textContent='Sin conexión: los informes se guardarán en este equipo';});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&authenticated&&navigator.onLine)void syncPending();});
+setInterval(()=>{if(authenticated&&navigator.onLine)void syncPending();},45000);
+window.addEventListener('pagehide',()=>{if(currentUid&&dataReady)void persistDraft();});
+init();goStep(0);
+</script>
+</body>
+</html>

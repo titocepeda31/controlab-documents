@@ -1,5 +1,17 @@
-/private/config.php
-/vendor/
+# Datos privados del hosting: JAMAS versionar.
+**/config.php
+!**/config.example.php
 .env
-.DS_Store
+.env.*
 *.log
+vendor/
+**/vendor/
+*.pem
+*.key
+*.p12
+*.pfx
+**/firmas/
+**/informes_emitidos/
+**/uploads/
+**/backups/
+.DS_Store
