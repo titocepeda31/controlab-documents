@@ -31,21 +31,43 @@ final class CatalogoOperativo {
 
     public function empresas(): array {
         return $this->db->connection()->query(
-            'SELECT id,razon_social,rut,contacto,email FROM empresas ORDER BY razon_social LIMIT 500'
+            'SELECT id,razon_social,nombre_comercial,rut,contacto,telefono,email,activo FROM empresas ORDER BY razon_social LIMIT 500'
         )->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function createEmpresa(array $data): int {
+    public function saveEmpresa(array $data,?int $id=null): int {
         $name=self::text($data,'razon_social',160);
+        $commercial=self::text($data,'nombre_comercial',160,false);
+        $rut=self::text($data,'rut',20,false);
+        $contact=self::text($data,'contacto',160,false);
+        $phone=self::text($data,'telefono',40,false);
+        $email=self::text($data,'email',190,false);
+        if($email!==''&&!filter_var($email,FILTER_VALIDATE_EMAIL))throw new InvalidArgumentException('Correo electrónico inválido');
+        if($id!==null&&!is_bool($data['activo']??null))throw new InvalidArgumentException('Indica el estado de la empresa');
         $db=$this->db->connection();
-        // Reutilizar la empresa existente en vez de crear una duplicada para la misma razón social.
-        $q=$db->prepare('SELECT id FROM empresas WHERE LOWER(TRIM(razon_social))=LOWER(?) LIMIT 1');
-        $q->execute([$name]);
+        $q=$db->prepare('SELECT id FROM empresas WHERE LOWER(TRIM(razon_social))=LOWER(?) AND id<>? LIMIT 1');
+        $q->execute([$name,$id??0]);
         if($q->fetchColumn())throw new RuntimeException('La empresa ya existe',409);
-        $q=$db->prepare('INSERT INTO empresas (razon_social) VALUES (?)');
-        $q->execute([$name]);
-        return (int)$db->lastInsertId();
+        $normalizedRut=strtoupper(preg_replace('/[^0-9K]/i','',$rut));
+        if($normalizedRut!==''){
+            $q=$db->prepare("SELECT id FROM empresas WHERE UPPER(REPLACE(REPLACE(rut,'.',''),'-',''))=? AND id<>? LIMIT 1");
+            $q->execute([$normalizedRut,$id??0]);
+            if($q->fetchColumn())throw new RuntimeException('El RUT ya está registrado',409);
+        }
+        if($id===null){
+            $q=$db->prepare('INSERT INTO empresas (razon_social,nombre_comercial,rut,contacto,telefono,email,activo) VALUES (?,?,?,?,?,?,1)');
+            $q->execute([$name,$commercial,$rut,$contact,$phone,$email]);
+            return (int)$db->lastInsertId();
+        }
+        $q=$db->prepare('UPDATE empresas SET razon_social=?,nombre_comercial=?,rut=?,contacto=?,telefono=?,email=?,activo=? WHERE id=?');
+        $q->execute([$name,$commercial,$rut,$contact,$phone,$email,(int)$data['activo'],$id]);
+        if(!$q->rowCount()){
+            $check=$db->prepare('SELECT id FROM empresas WHERE id=? AND activo=1');$check->execute([$id]);
+            if(!$check->fetchColumn())throw new RuntimeException('Empresa no encontrada',404);
+        }
+        return $id;
     }
+    public function createEmpresa(array $data): int {return $this->saveEmpresa($data);}
 
     public function obras(): array {
         return $this->db->connection()->query(
