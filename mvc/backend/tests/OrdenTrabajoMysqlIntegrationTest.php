@@ -6,6 +6,7 @@ require __DIR__.'/../src/Models/CatalogoOperativo.php';
 require __DIR__.'/../src/Models/OrdenTrabajo.php';
 use Demo\Core\Database;
 use Demo\Models\OrdenTrabajo;
+use Demo\Models\CatalogoOperativo;
 
 function assertOt(bool $ok,string $label): void {
     if(!$ok)throw new RuntimeException('Falló: '.$label);
