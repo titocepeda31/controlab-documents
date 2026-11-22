@@ -25,7 +25,8 @@ final class AuthController {
             'autenticado'=>$valid,'csrf'=>$_SESSION['csrf'],'usuario_id'=>$valid?$uid:null,
             'rol'=>$valid?$account['rol']:null,'nombre'=>$valid?$account['nombre']:null,
             'empresa_id'=>$valid?$account['empresa_id']:null,
-            'puede_editar'=>$valid && $account['rol']!=='cliente',
+            'puede_editar'=>$valid && in_array($account['rol'],['administrador','laboratorista'],true),
+            'puede_enviar'=>$valid && in_array($account['rol'],['administrador','laboratorista','digitalizador'],true),
             'puede_administrar'=>$valid && $account['rol']==='administrador',
             'puede_revisar'=>$valid && $account['rol']!=='cliente' && $this->revision->canReview($uid)
         ]);
