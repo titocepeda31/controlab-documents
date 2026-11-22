@@ -6,7 +6,7 @@ const form=fs.readFileSync('mvc/frontend/formulario.html','utf8');
 const api=fs.readFileSync('mvc/backend/routes/api.php','utf8');
 const controller=fs.readFileSync('mvc/backend/src/Controllers/OrdenTrabajoController.php','utf8');
 const deploy=fs.readFileSync('scripts/cpanel_mvc_deploy.sh','utf8');
-for(const id of ['calendarGrid','dayList','agendaList','teamOverview','teamChoices','destino','cliente','obra','inicio','fin','estado','saveBtn','personFilter','stateFilter','loadNotice']){
+for(const id of ['calendarGrid','dayList','agendaList','teamOverview','teamChoices','teamDay','teamFullMonth','destino','cliente','obra','inicio','fin','estado','saveBtn','personFilter','stateFilter','loadNotice']){
  assert.ok(planner.includes('id="'+id+'"'),'Falta elemento de planificación '+id);
 }
 for(const endpoint of ["/api/ot'","/api/ot/equipo'","/api/ot/{id:[0-9]+}'"]){
