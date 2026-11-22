@@ -22,7 +22,7 @@ final class InformeController {
         return Http::json($response,$this->informes->find((int)$args['id']));
     }
     public function store(Request $request, Response $response): Response {
-        Security::requireRole('administrador','laboratorista','digitador'); Security::csrf($request);
+        Security::requireRole('administrador','administrativo','laboratorista','digitador'); Security::csrf($request);
         $input=Http::jsonBody($request);
         if (!isset($input['datos']) || !is_array($input['datos'])) throw new InvalidArgumentException('Datos del informe inválidos');
         $uuid=$input['client_uuid'] ?? null;
@@ -32,14 +32,14 @@ final class InformeController {
         return Http::json($response,['id'=>$this->informes->create($input['datos'],$uuid)],201);
     }
     public function update(Request $request, Response $response, array $args): Response {
-        Security::requireRole('administrador','laboratorista','digitador'); Security::csrf($request);
+        Security::requireRole('administrador','administrativo','laboratorista','digitador'); Security::csrf($request);
         $input=Http::jsonBody($request);
         if (!isset($input['datos']) || !is_array($input['datos'])) throw new InvalidArgumentException('Datos del informe inválidos');
         $this->informes->update((int)$args['id'],(int)$_SESSION['uid'],$input['datos']);
         return Http::json($response,['ok'=>true,'id'=>(int)$args['id']]);
     }
     public function duplicate(Request $request, Response $response, array $args): Response {
-        Security::requireRole('administrador','laboratorista','digitador'); Security::csrf($request);
+        Security::requireRole('administrador','administrativo','laboratorista','digitador'); Security::csrf($request);
         $input=Http::jsonBody($request);
         $mode=$input['modo'] ?? '';
         if (!in_array($mode,['completo','antecedentes'],true)) throw new InvalidArgumentException('Modo inválido');
