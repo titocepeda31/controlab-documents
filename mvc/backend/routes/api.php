@@ -5,7 +5,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 
 $app->get('/',static function(Request $request,Response $response) use ($config) {
-    return $response->withHeader('Location',rtrim($config['base_path'],'/').'/formulario.html')->withStatus(302);
+    return $response->withHeader('Location',rtrim($config['base_path'],'/').'/dashboard.html')->withStatus(302);
 });
 $app->get('/api/session',[$auth,'session']);
 // Version POST no cacheable del mismo endpoint (sin cambios de estado).
