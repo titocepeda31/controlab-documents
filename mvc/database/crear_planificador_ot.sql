@@ -32,8 +32,10 @@ CREATE TABLE IF NOT EXISTS ot_asignaciones (
   asignado_el TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (ot_id,usuario_id),
   KEY idx_ot_persona (usuario_id,ot_id),
-  CONSTRAINT fk_ot_asignacion_orden FOREIGN KEY (ot_id) REFERENCES ot_ordenes(id) ON DELETE CASCADE,
-  CONSTRAINT fk_ot_asignacion_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+  CONSTRAINT fk_ot_asignacion_orden FOREIGN KEY (ot_id) REFERENCES ot_ordenes(id) ON DELETE CASCADE
+  -- usuario_id se valida contra usuarios activos en la API; no se crea FK
+  -- para conservar compatibilidad con instalaciones antiguas donde usuarios.id
+  -- podría no tener el mismo tipo físico BIGINT UNSIGNED.
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS ot_eventos (
