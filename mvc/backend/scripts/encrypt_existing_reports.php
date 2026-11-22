@@ -121,5 +121,5 @@ foreach($signatureRows as $row) {
 }
 $remaining = (int)$pdo->query("SELECT COUNT(*) FROM informe_datos WHERE datos NOT LIKE 'enc:v1:%'")->fetchColumn();
 $signatureRemaining=(int)$pdo->query("SELECT COUNT(*) FROM informe_revisiones WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0 AND LEFT(firma_png,7)!='enc:v1:'")->fetchColumn();
-fwrite(STDOUT, "Informes cifrados nuevos: $updated; firmas cifradas nuevas: $updatedSignatures; informes pendientes: $remaining; firmas pendientes: $signatureRemaining\\n");
+fwrite(STDOUT, "Informes cifrados nuevos: $updated; firmas cifradas nuevas: $updatedSignatures; informes pendientes: $remaining; firmas pendientes: $signatureRemaining\n");
 if ($remaining!==0 || $signatureRemaining!==0) exit(1);
