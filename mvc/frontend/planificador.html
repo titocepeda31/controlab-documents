@@ -95,8 +95,8 @@ p{margin:6px 0;color:var(--muted)}
 <body>
 <header class="top"><div class="brand">CONTROL DE CALIDAD<small>Planificador de órdenes de trabajo</small></div>
  <nav class="top-links" aria-label="Navegación">
-  <a href="./formulario.html">Informes</a>
-  <a href="./usuarios.html" id="usersLink" hidden>Usuarios</a><a href="./catalogos.html" id="catalogLink" hidden>Empresas · Obras · Servicios · Personal</a>
+  <a href="./modulos.html">Módulos</a><a href="./formulario.html">Informes</a>
+  <a href="./usuarios.html" id="usersLink" hidden>Usuarios</a><a href="./catalogos.html?modulo=empresas" id="catalogLink" hidden>Empresas</a><a href="./catalogos.html?modulo=obras" id="worksLink" hidden>Obras</a><a href="./catalogos.html?modulo=servicios" id="servicesLink" hidden>Servicios</a><a href="./catalogos.html?modulo=personal" id="staffLink" hidden>Personal</a>
  </nav>
 </header>
 <main>
@@ -166,13 +166,13 @@ p{margin:6px 0;color:var(--muted)}
  <input id="obraSearch" type="search" autocomplete="off" placeholder="Escribe parte del nombre de la obra" aria-controls="obraMatches" aria-expanded="false">
  <div id="obraMatches" class="search-results" role="listbox" hidden></div>
  <select id="obraCatalogo" hidden aria-label="Obra seleccionada"><option value="">Seleccionar obra</option></select></div>
-     <div class="field full"><span class="hint">Selecciona una obra para completar cliente, dirección y comuna. <a href="./catalogos.html">Gestionar empresas y obras</a></span></div>
+     <div class="field full"><span class="hint">Selecciona una obra para completar cliente, dirección y comuna. <a href="./catalogos.html?modulo=obras">Gestionar empresas y obras</a></span></div>
      <div class="field"><label for="cliente">Cliente / contratista *</label><input id="cliente" name="cliente" maxlength="160" required placeholder="Nombre de empresa"></div>
      <div class="field"><label for="obra">Obra o proyecto *</label><input id="obra" name="obra" maxlength="180" required placeholder="Ej.: Camino forestal, sector 3"></div>
      <div class="field"><label for="actividad">Trabajo a realizar *</label><input id="actividad" name="actividad" maxlength="200" required placeholder="Ej.: Ensayo de densidad in situ"></div>
      <div class="field full">
       <label>Servicios solicitados y cantidades</label>
-      <div class="hint">Selecciona los servicios registrados en el catálogo. Los precios y cobros se agregarán después. <a href="./catalogos.html">Administrar servicios</a>.</div>
+      <div class="hint">Selecciona los servicios registrados en el catálogo. Los precios y cobros se agregarán después. <a href="./catalogos.html?modulo=servicios">Administrar servicios</a>.</div>
       <div id="otServicios" class="service-lines"></div>
       <button type="button" class="btn" id="addOtServicio" style="margin-top:8px">+ Agregar servicio</button>
      </div>
@@ -182,7 +182,7 @@ p{margin:6px 0;color:var(--muted)}
      <div class="field"><label for="fin">Fin programado *</label><input id="fin" name="fin" type="datetime-local" required></div>
      <div class="field"><label for="estado">Estado</label><select id="estado" name="estado"><option value="planificada">Planificada</option><option value="en_curso">En curso</option><option value="finalizada">Finalizada</option><option value="cancelada">Cancelada</option></select></div>
      <div class="field"><label for="prioridad">Prioridad</label><select id="prioridad" name="prioridad"><option value="normal">Normal</option><option value="urgente">Urgente</option></select></div>
-     <div class="field full"><label>Personal de terreno (sin cuenta de usuario)</label><div class="hint">Muestreadores, conductores y ayudantes. <a href="./catalogos.html">Registrar trabajador</a>. Los horarios se verificarán automáticamente.</div><div class="team-list" id="fieldChoices"></div></div>
+     <div class="field full"><label>Personal de terreno (sin cuenta de usuario)</label><div class="hint">Muestreadores, conductores y ayudantes. <a href="./catalogos.html?modulo=personal">Registrar trabajador</a>. Los horarios se verificarán automáticamente.</div><div class="team-list" id="fieldChoices"></div></div>
      <div class="field full"><label>Usuarios del sistema que también participarán</label><div class="hint">Opcional: laboratoristas o digitadores que ingresan a Controlab.</div><div class="team-list" id="teamChoices"></div></div>
      <div class="field full"><label for="observaciones">Instrucciones y observaciones</label><textarea id="observaciones" name="observaciones" maxlength="5000" placeholder="Punto de encuentro, contacto, equipamiento necesario, instrucciones…"></textarea></div>
     </div>
@@ -601,7 +601,7 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
   if(!s.autenticado)throw new Error('Inicia sesión en Controlab para ver tus órdenes de trabajo.');
   viewerId=Number(s.usuario_id);manager=['administrador','administrativo'].includes(s.rol);
   $('usersLink').hidden=s.rol!=='administrador';
-   $('catalogLink').hidden=!manager;
+   for(const id of ['catalogLink','worksLink','servicesLink','staffLink'])$(id).hidden=!manager;
   $('newBtn').hidden=!manager;$('teamTab').hidden=!manager;$('personFilter').hidden=!manager;
   if(manager){
    const [people,catalogCompanies,catalogWorks,catalogServices]=await Promise.all([
