@@ -302,7 +302,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 <!-- Diseño de impresión, separado de la interfaz de captura -->
 <section class="print-sheet" id="printSheet" aria-label="Formato de impresión">
- <div class="print-title"><h1>REGISTRO DE CALIDAD</h1><p><strong>Área Mecánica de Suelo</strong></p><p>Ensayos de muestras · Caminos Forestales Forestal Celco</p><p><strong>DOCUMENTO DE PRUEBA — NO ES INFORME TÉCNICO OFICIAL</strong></p></div>
+ <div class="print-title"><h1>REGISTRO DE CALIDAD</h1><p><strong>Área Mecánica de Suelo</strong></p><p>Ensayos de muestras <span id="printClientName"></span></p><p><strong>DOCUMENTO DE PRUEBA — NO ES INFORME TÉCNICO OFICIAL</strong></p></div>
  <div class="print-fields" id="printGeneral"></div>
  <div class="print-grid"><section><h2>1. GRANULOMETRÍA</h2><table><thead><tr><th>Tamiz</th><th>% Retenido</th><th>% Pasa</th></tr></thead><tbody id="printSieves"></tbody></table></section><section><h2>2. PROCTOR</h2><div class="print-metrics" id="printMetrics"></div></section></div>
  <h2>CLASIFICACIÓN Y OBSERVACIONES</h2><div class="print-metrics" id="printClasses"></div><p id="printObservations" class="print-notes"></p><div class="print-footer"><span id="printResponsible"></span><span id="printDate"></span></div><div class="print-review" id="printRevision"></div>
@@ -597,6 +597,7 @@ function renderHistory(){const search=$('historySearch').value.trim().toLocaleLo
  for(const info of matches.slice(0,50)){
   const item=document.createElement('div');item.className='history-item';
   const desc=document.createElement('div');desc.append(node('strong',(info.numero_informe||'Sin número')+' · ID '+info.id),node('small',(info.razon_social||'')+' · '+(info.fecha_informe||'')));
+   if(info.destinatario_empresa)desc.append(node('small','Acceso asignado a: '+info.destinatario_empresa));
   const state=info.revision_estado||'borrador';const tag=node('span',reviewLabel(state));tag.className='review-tag '+state;desc.append(tag);
   if(state==='devuelto'&&info.motivo_devolucion)desc.append(node('small','Motivo: '+info.motivo_devolucion));
   const actions=document.createElement('div');actions.className='history-buttons';
@@ -826,7 +827,7 @@ $('returnReport').addEventListener('click',async()=>{
 async function printStoredReport(id,button){
  button.disabled=true;
  try{
-  const r=await apiRequest('/informes/'+id);printOverride={datos:r.datos,revision:r.revision};fillPrint();
+  const r=await apiRequest('/informes/'+id);printOverride={datos:r.datos,revision:r.revision,empresa_destinataria:r.destinatario_empresa};fillPrint();
   // Evita abrir el diálogo de impresión antes de que se dibuje la firma PNG.
   const signatureImage=$('printRevision').querySelector('img');
   if(signatureImage&&signatureImage.decode){try{await signatureImage.decode();}catch(e){throw new Error('No se pudo cargar la firma visual.');}}
@@ -851,6 +852,7 @@ function renderPrintReview(revision){
 // La impresión usa un layout separado. Los datos provienen de la captura dinámica.
 function node(tag,text){const el=document.createElement(tag);el.textContent=text;return el;}
 function fillPrint(){const d=printOverride?.datos||getData();$('printGeneral').replaceChildren();
+ $('printClientName').textContent=printOverride?.empresa_destinataria?'· Empresa destinataria: '+printOverride.empresa_destinataria:'· Copia de prueba sin destinatario asignado';
  const general=[['N° informe','nInforme'],['N° muestra','muestra'],['Fecha muestreo','fechaMuestreo'],['Fecha ensayo','fechaEnsayo'],['Estructura','estructura'],['Zona','zona'],['Predio','predio'],['Camino N°','camino'],['Sector / Tramo','sector'],['Kmp','kmp'],['Contratista','contratista'],['Mandante','mandante']];
  general.forEach(([title,key])=>{const el=document.createElement('div');el.append(node('strong',title+':'),node('span',d[key]||'—'));$('printGeneral').append(el);});
  $('printSieves').replaceChildren();tamices.forEach((s,i)=>{const tr=document.createElement('tr');[s,d['retenido_'+i]||'—',d['pasa_'+i]||'—'].forEach(v=>tr.append(node('td',v)));$('printSieves').append(tr);});
