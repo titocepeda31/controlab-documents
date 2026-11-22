@@ -596,6 +596,105 @@ async function reuseReport(id,mode,button){button.disabled=true;try{
  for(const field of ['nInforme','muestra','fechaMuestreo','fechaEnsayo'])delete d[field];
  d.fechaRegistro=today();lastSavedSignature=null;lastServerId=null;setData(d);closeHistory();goStep(0);
  }catch(e){feedback('No fue posible reutilizar el informe: '+e.message,true);}finally{button.disabled=false;}}
+
+// Usuarios y acceso por empresa. La API controla todos los permisos en servidor.
+function companyOptions(select,selected=null,emptyLabel='Sin empresa asignada'){
+ select.replaceChildren();
+ const blank=document.createElement('option');blank.value='';blank.textContent=emptyLabel;select.append(blank);
+ for(const c of companiesCache){
+  const op=document.createElement('option');op.value=String(c.id);op.textContent=c.razon_social;
+  if(Number(selected)===Number(c.id))op.selected=true;
+  select.append(op);
+ }
+}
+function adminRequest(path,body,method='POST'){
+ return session().then(s=>apiRequest(path,{
+  method,headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},
+  body:JSON.stringify({...body,csrf:s.csrf})
+ }));
+}
+async function loadAccounts(){
+ if(!canManageUsers||!authenticated)return;
+ try{
+  const [companies,users]=await Promise.all([apiRequest('/empresas'),apiRequest('/usuarios')]);
+  companiesCache=companies.empresas||[];
+  companyOptions($('userCompany'),null,'Selecciona una empresa');
+  const list=$('usersList');list.replaceChildren();
+  for(const u of users.usuarios||[]){
+   const row=document.createElement('div');row.className='manager-row';
+   const meta=document.createElement('div');
+   meta.append(node('strong',u.nombre+' · '+u.email),node('small',u.rol+' · '+(u.empresa||'Equipo interno')+' · '+(Number(u.activo)?'Activo':'Desactivado')));
+   row.append(meta);
+   if(Number(u.id)!==currentUid){
+    const b=document.createElement('button');b.type='button';b.className=Number(u.activo)?'btn danger':'btn primary';
+    b.textContent=Number(u.activo)?'Desactivar':'Activar';
+    b.addEventListener('click',async()=>{
+     if(!confirmInline(b,(Number(u.activo)?'Desactivar':'Activar')+' la cuenta '+u.email+'.'))return;
+     b.disabled=true;
+     try{await adminRequest('/usuarios/'+u.id,{activo:!Number(u.activo)},'PUT');await loadAccounts();feedback('Estado de usuario actualizado.');}
+     catch(e){feedback('No se pudo actualizar el usuario: '+e.message,true);}finally{b.disabled=false;}
+    });
+    row.append(b);
+   }
+   list.append(row);
+  }
+ }catch(e){feedback('No fue posible cargar la administración: '+e.message,true);}
+}
+$('usersBtn').addEventListener('click',async()=>{if(!canManageUsers)return;showWorkspace('usersScreen');feedback('');await loadAccounts();});
+$('closeUsers').addEventListener('click',()=>{showWorkspace(null);feedback('');});
+$('userRole').addEventListener('change',()=>{
+ const isClient=$('userRole').value==='cliente';$('userCompanyField').hidden=!isClient;$('userCompany').required=isClient;
+});
+$('companyForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!canManageUsers)return;
+ const b=$('companySaveBtn');b.disabled=true;
+ try{
+  const name=$('companyName').value.trim();
+  const result=await adminRequest('/empresas',{razon_social:name});
+  $('companyName').value='';
+  showNotice($('companyMessage'),'Empresa registrada: '+result.razon_social);
+  await loadAccounts();
+  $('userRole').value='cliente';$('userRole').dispatchEvent(new Event('change'));
+  $('userCompany').value=String(result.id);
+ }catch(err){showNotice($('companyMessage'),'Error: '+err.message,true);}finally{b.disabled=false;}
+});
+$('userForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!canManageUsers)return;
+ const b=$('userSaveBtn');b.disabled=true;
+ try{
+  const body={nombre:$('userName').value.trim(),email:$('userEmail').value.trim(),rol:$('userRole').value,
+    empresa_id:$('userRole').value==='cliente'?Number($('userCompany').value):null};
+  const result=await adminRequest('/usuarios',body);
+  showNotice($('userMessage'),'Usuario creado: '+result.email+' · CONTRASEÑA TEMPORAL (se muestra una sola vez): '+result.contrasena_temporal);
+  $('userName').value='';$('userEmail').value='';
+  await loadAccounts();
+ }catch(err){showNotice($('userMessage'),'No se pudo crear: '+err.message,true);}finally{b.disabled=false;}
+});
+async function showRecipientSelector(info,button){
+ if(!canManageUsers)return;
+ let row=button.closest('.history-item');let old=row.querySelector('.client-assign');
+ if(old){old.remove();return;}
+ try{
+  if(!companiesCache.length){const result=await apiRequest('/empresas');companiesCache=result.empresas||[];}
+  const block=document.createElement('div');block.className='client-assign';block.style.width='100%';
+  const label=node('strong','Visible para:');
+  const select=document.createElement('select');select.setAttribute('aria-label','Empresa autorizada');
+  companyOptions(select,info.destinatario_empresa_id,'No compartir con clientes');
+  const save=document.createElement('button');save.type='button';save.className='btn primary';save.textContent='Guardar acceso';
+  save.addEventListener('click',async()=>{
+   if(!confirmInline(save,'Solo esta empresa verá el informe cuando esté aprobado.'))return;
+   save.disabled=true;
+   try{
+    await adminRequest('/informes/'+info.id+'/destinatario',{empresa_id:select.value||null});
+    info.destinatario_empresa_id=select.value||null;
+    feedback('Se actualizó la empresa autorizada para el informe #'+info.id+'.');
+    block.remove();
+   }catch(e){feedback('No se pudo compartir el informe: '+e.message,true);}finally{save.disabled=false;}
+  });
+  block.append(label,select,save);row.append(block);
+ }catch(e){feedback('Error cargando empresas: '+e.message,true);}
+}
+
 // La revisión siempre se hace contra el registro guardado en MySQL, nunca con el borrador local.
 function reviewLabel(state){return ({borrador:'Borrador',pendiente:'Pendiente de revisión',devuelto:'Devuelto para correcciones',aprobado:'Aprobado con firma'})[state]||'Sin revisión';}
 function stampUTC(utc){if(!utc)return '—';const d=new Date(String(utc).replace(' ','T')+'Z');return Number.isNaN(d.getTime())?String(utc):d.toLocaleString('es-CL',{dateStyle:'short',timeStyle:'short'});}
