@@ -31,34 +31,43 @@ final class ReportCrypto {
     }
 
     public function encrypt(int $reportId, string $json): string {
-        if ($reportId < 1) throw new RuntimeException('ID del informe inválido');
         json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        return $this->encryptBytes($reportId,$json,'datos');
+    }
+
+    public function decrypt(int $reportId, string $stored, bool $allowLegacy=false): string {
+        $plain=$this->decryptBytes($reportId,$stored,'datos',$allowLegacy);
+        json_decode($plain, true, 512, JSON_THROW_ON_ERROR);
+        return $plain;
+    }
+
+    public function encryptBytes(int $reportId, string $bytes, string $purpose): string {
+        if ($reportId < 1 || !in_array($purpose,['datos','firma'],true)) {
+            throw new RuntimeException('Contexto de cifrado inválido');
+        }
         $nonce = random_bytes(12);
         $tag = '';
         $ciphertext = openssl_encrypt(
-            $json, 'aes-256-gcm', $this->key, OPENSSL_RAW_DATA,
-            $nonce, $tag, $this->aad($reportId), 16
+            $bytes, 'aes-256-gcm', $this->key, OPENSSL_RAW_DATA,
+            $nonce, $tag, $this->aad($reportId,$purpose), 16
         );
         if ($ciphertext === false || strlen($tag) !== 16) {
-            throw new RuntimeException('No se pudo cifrar el informe');
+            throw new RuntimeException('No se pudo cifrar el documento');
         }
         return self::PREFIX . base64_encode($nonce . $tag . $ciphertext);
     }
 
-    /**
-     * El texto claro heredado SOLO puede leerse durante una migración explícita
-     * (allowLegacy=true); nunca se utiliza para nuevos guardados.
-     */
-    public function decrypt(int $reportId, string $stored, bool $allowLegacy=false): string {
-        if ($reportId < 1) throw new RuntimeException('ID del informe inválido');
+    public function decryptBytes(int $reportId, string $stored, string $purpose, bool $allowLegacy=false): string {
+        if ($reportId < 1 || !in_array($purpose,['datos','firma'],true)) {
+            throw new RuntimeException('Contexto de descifrado inválido');
+        }
         if (!self::isEncrypted($stored)) {
-            if (!$allowLegacy) throw new RuntimeException('El informe no está cifrado: migración pendiente');
-            json_decode($stored, true, 512, JSON_THROW_ON_ERROR);
+            if (!$allowLegacy) throw new RuntimeException('El documento no está cifrado: migración pendiente');
             return $stored;
         }
         $encoded = substr($stored, strlen(self::PREFIX));
         $packed = base64_decode($encoded, true);
-        if ($packed === false || strlen($packed) < 29 || base64_encode($packed) !== $encoded) {
+        if ($packed === false || strlen($packed) < 28 || base64_encode($packed) !== $encoded) {
             throw new RuntimeException('El registro cifrado está dañado');
         }
         $nonce = substr($packed, 0, 12);
@@ -66,14 +75,13 @@ final class ReportCrypto {
         $ciphertext = substr($packed, 28);
         $plaintext = openssl_decrypt(
             $ciphertext, 'aes-256-gcm', $this->key, OPENSSL_RAW_DATA,
-            $nonce, $tag, $this->aad($reportId)
+            $nonce, $tag, $this->aad($reportId,$purpose)
         );
-        if (!is_string($plaintext)) throw new RuntimeException('No se pudo autenticar el informe cifrado');
-        json_decode($plaintext, true, 512, JSON_THROW_ON_ERROR);
+        if (!is_string($plaintext)) throw new RuntimeException('No se pudo autenticar el documento cifrado');
         return $plaintext;
     }
 
-    private function aad(int $reportId): string {
-        return 'controlab:informe_datos:v1:' . $reportId;
+    private function aad(int $reportId,string $purpose): string {
+        return 'controlab:'.$purpose.':v1:' . $reportId;
     }
 }
