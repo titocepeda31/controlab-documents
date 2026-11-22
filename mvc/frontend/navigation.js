@@ -1,0 +1,32 @@
+/* Navegación unificada de Controlab. No modifica datos ni permisos del servidor. */
+(()=>{'use strict';
+const page=location.pathname.split('/').pop(), isForm=page==='formulario.html';
+const links=[['dashboard.html','▦','Dashboard gerencial','all'],['planificador.html','▤','Órdenes de trabajo','all'],['catalogos.html?modulo=empresas','▣','Empresas','manager'],['catalogos.html?modulo=obras','⌂','Obras','manager'],['catalogos.html?modulo=servicios','◈','Servicios','manager'],['catalogos.html?modulo=personal','♙','Personal de terreno','manager'],['formulario.html','▤','Informes (prototipo)','all'],['usuarios.html','⚙','Usuarios','admin']];
+const css=`#cl-nav-toggle{display:none!important}#cl-nav-sidebar{position:fixed;z-index:110;top:72px;bottom:0;left:0;width:245px;background:#fff;border-right:1px solid #dbe4eb;padding:22px 12px;overflow-y:auto;display:flex;flex-direction:column;box-shadow:3px 0 20px #10283d08}#cl-nav-sidebar .cl-caption{font:800 11px system-ui;letter-spacing:.08em;color:#8194a1;margin:0 12px 14px}#cl-nav-sidebar .cl-links{display:grid;gap:5px}#cl-nav-sidebar a,#cl-nav-sidebar .cl-actions button{display:block;width:100%;border:0;text-align:left;text-decoration:none;padding:11px 12px;border-radius:9px;font:650 14px/1.45 system-ui;color:#385367;background:transparent;cursor:pointer}#cl-nav-sidebar a:hover,#cl-nav-sidebar button:hover{background:#edf5f4!important;color:#075f59!important}#cl-nav-sidebar a.cl-active{background:#e3f4ef;color:#087d70}#cl-nav-sidebar .cl-actions{display:grid;gap:3px;border-top:1px solid #dbe4eb;margin-top:15px;padding-top:12px}#cl-nav-sidebar .cl-actions button[hidden],#cl-nav-sidebar a[hidden]{display:none!important}#cl-nav-sidebar .cl-foot{margin-top:auto;padding:20px 12px 0;color:#78909e;font:11px/1.5 system-ui}#cl-nav-scrim{display:none}body.cl-nav-ready main,body.cl-nav-ready .layout{margin-left:245px}body.cl-nav-ready .layout main{margin-left:0}body.cl-nav-ready .topbar .top-actions,body.cl-nav-ready .topbar #menuToggle{display:none!important}body.cl-nav-ready .topbar{position:relative}body.cl-nav-ready .topbar .logo{margin-left:0}body.cl-nav-ready header.top,body.cl-nav-ready header.header{min-height:72px}body.cl-nav-ready .topbar,body.cl-nav-ready header.top,body.cl-nav-ready header.header{padding-left:24px;padding-right:24px}body.cl-nav-ready #cl-nav-toggle{display:none!important}@media(max-width:900px){body.cl-nav-ready main,body.cl-nav-ready .layout{margin-left:0}#cl-nav-toggle{display:inline-flex!important;align-items:center;justify-content:center;position:fixed;right:15px;top:88px;z-index:109;width:45px;height:45px;background:#15364c;color:#fff;border:1px solid #698294;border-radius:10px;font-size:24px;cursor:pointer;box-shadow:0 5px 15px #0c223a30}#cl-nav-sidebar{top:0;bottom:0;width:min(300px,85vw);z-index:121;transform:translateX(-105%);transition:transform .18s ease;box-shadow:10px 0 40px #132c3c20}#cl-nav-sidebar.cl-open{transform:translateX(0)}#cl-nav-scrim.cl-open{display:block;position:fixed;inset:0;background:#0c223a75;z-index:120}body.cl-nav-ready .topbar{padding-right:68px}body.cl-nav-ready header.top,body.cl-nav-ready header.header{padding-right:70px}}@media(min-width:901px){#cl-nav-sidebar{transform:none!important}}`;
+const style=document.createElement('style');style.textContent=css;document.head.append(style);
+function start(){
+ if(document.getElementById('cl-nav-sidebar'))return;
+ const toggle=document.createElement('button');toggle.type='button';toggle.id='cl-nav-toggle';toggle.textContent='☰';toggle.setAttribute('aria-label','Abrir menú principal');toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-controls','cl-nav-sidebar');
+ const scrim=document.createElement('div');scrim.id='cl-nav-scrim';
+ const side=document.createElement('aside');side.id='cl-nav-sidebar';side.setAttribute('aria-label','Menú principal');
+ const caption=document.createElement('div');caption.className='cl-caption';caption.textContent='MENÚ PRINCIPAL';side.append(caption);
+ const nav=document.createElement('nav');nav.className='cl-links';
+ const query=new URLSearchParams(location.search), section=page==='catalogos.html'?query.get('modulo'):null;
+ for(const [href,icon,label,role] of links){const a=document.createElement('a');a.href='./'+href;a.textContent=icon+'  '+label;a.dataset.role=role;
+ const target=href.split('?')[0];const targetSection=href.includes('modulo=')?href.split('modulo=')[1]:null;
+ if(page===target&&(!targetSection||targetSection===section)){a.classList.add('cl-active');a.setAttribute('aria-current','page');}
+ if(role!=='all')a.hidden=true;nav.append(a);}
+ side.append(nav);
+ if(isForm){const old=document.getElementById('topActions');if(old){const actions=document.createElement('div');actions.className='cl-actions';
+ for(const id of ['historyBtn','reviewsBtn','profileFirmaBtn','logoutBtn']){const b=document.getElementById(id);if(b){b.classList.remove('btn','light');actions.append(b);}}
+ side.append(actions);}}
+ const foot=document.createElement('div');foot.className='cl-foot';foot.textContent='Controlab · Gestión interna';side.append(foot);
+ document.body.append(scrim,side,toggle);document.body.classList.add('cl-nav-ready');
+ const setOpen=(on)=>{side.classList.toggle('cl-open',on);scrim.classList.toggle('cl-open',on);toggle.setAttribute('aria-expanded',String(on));toggle.setAttribute('aria-label',on?'Cerrar menú principal':'Abrir menú principal');};
+ toggle.addEventListener('click',()=>setOpen(!side.classList.contains('cl-open')));scrim.addEventListener('click',()=>setOpen(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setOpen(false)});
+ const refresh=async()=>{try{const r=await fetch('./api/session',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:'{}'});const s=await r.json();if(!r.ok||!s.autenticado)return;for(const a of nav.querySelectorAll('[data-role]'))a.hidden=a.dataset.role==='manager'?!['administrador','administrativo'].includes(s.rol):a.dataset.role==='admin'?s.rol!=='administrador':false;}catch(e){/* El backend protege cada recurso. */}};
+ refresh();
+ if(isForm){const app=document.getElementById('appView');if(app){const observer=new MutationObserver(()=>{const active=!app.hidden;side.hidden=!active;toggle.hidden=!active;});observer.observe(app,{attributes:true,attributeFilter:['hidden']});side.hidden=app.hidden;toggle.hidden=app.hidden;}}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
