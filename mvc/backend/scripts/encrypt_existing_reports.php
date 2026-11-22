@@ -7,19 +7,30 @@ declare(strict_types=1);
  * Uso:
  *   php scripts/encrypt_existing_reports.php /ruta/privada/config.php --dry-run
  *   php scripts/encrypt_existing_reports.php /ruta/privada/config.php --apply --maintenance-confirmed --backup-confirmed
+ *   php scripts/encrypt_existing_reports.php /ruta/privada/config.php --apply --maintenance-confirmed --dev-no-backup-accept-loss
+ *
+ * La opción sin respaldo es SOLO para datos ficticios de desarrollo: pérdida irreversible posible.
  *
  * Ejecutar JUSTO ANTES de instalar la versión que lee datos cifrados.
  * El sistema anterior no puede leer los registros cifrados. Probar en copia primero.
  */
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 if ($argc < 3 || !in_array($argv[2], ['--dry-run','--apply'], true)) {
-    fwrite(STDERR, "Uso: php encrypt_existing_reports.php /ruta/privada/config.php --dry-run|--apply [--maintenance-confirmed --backup-confirmed]\n");
+    fwrite(STDERR, "Uso: php encrypt_existing_reports.php /ruta/privada/config.php --dry-run|--apply [--maintenance-confirmed (--backup-confirmed|--dev-no-backup-accept-loss)]\n");
     exit(2);
 }
 $mode = $argv[2];
-if ($mode === '--apply' && (!in_array('--maintenance-confirmed',$argv,true) || !in_array('--backup-confirmed',$argv,true))) {
-    fwrite(STDERR,"Bloqueado: confirmar ventana de mantenimiento y respaldo probado con --maintenance-confirmed --backup-confirmed\n");
-    exit(2);
+if ($mode === '--apply') {
+    $maint = in_array('--maintenance-confirmed', $argv, true);
+    $withBackup = in_array('--backup-confirmed', $argv, true);
+    $devNoBackup = in_array('--dev-no-backup-accept-loss', $argv, true);
+    if (!$maint || $withBackup === $devNoBackup) {
+        fwrite(STDERR, "Bloqueado: confirmar mantenimiento y elegir SOLO UNA opción: --backup-confirmed o --dev-no-backup-accept-loss (desarrollo, riesgo de pérdida).\n");
+        exit(2);
+    }
+    if ($devNoBackup) {
+        fwrite(STDERR, "ADVERTENCIA: migración de desarrollo SIN respaldo. Datos anteriores pueden quedar irrecuperables.\n");
+    }
 }
 $configPath = realpath($argv[1]);
 if ($configPath === false || !is_file($configPath)) throw new RuntimeException('Configuración privada no encontrada');
