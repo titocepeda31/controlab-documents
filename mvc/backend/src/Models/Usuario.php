@@ -102,14 +102,18 @@ final class Usuario {
         try {
             // Orden consistente al bloquear administradores activos evita dos degradaciones simultáneas.
             $admins=$pdo->query("SELECT p.usuario_id FROM usuario_perfiles p JOIN usuarios u ON u.id=p.usuario_id WHERE p.rol='administrador' AND u.activo=1 ORDER BY p.usuario_id FOR UPDATE")->fetchAll(PDO::FETCH_COLUMN);
-            $q=$pdo->prepare('SELECT u.id,u.activo,p.rol FROM usuarios u JOIN usuario_perfiles p ON p.usuario_id=u.id WHERE u.id=? FOR UPDATE');
+            $q=$pdo->prepare('SELECT u.id,u.activo,p.rol FROM usuarios u LEFT JOIN usuario_perfiles p ON p.usuario_id=u.id WHERE u.id=? FOR UPDATE');
             $q->execute([$id]);$current=$q->fetch(PDO::FETCH_ASSOC);
-            if(!$current)throw new RuntimeException('Usuario no encontrado o sin perfil',404);
+            if(!$current)throw new RuntimeException('Usuario no encontrado',404);
             if ($current['rol']==='administrador' && (int)$current['activo']===1
                 && (!$active || $role!=='administrador') && count($admins)<=1)
                 throw new RuntimeException('Debe quedar al menos un administrador activo',409);
-            $q=$pdo->prepare('UPDATE usuario_perfiles SET nombre=?,rol=? WHERE usuario_id=?');
-            $q->execute([$name,$role,$id]);
+            if($current['rol']===null){
+                $q=$pdo->prepare('INSERT INTO usuario_perfiles (usuario_id,nombre,rol) VALUES (?,?,?)');
+            }else{
+                $q=$pdo->prepare('UPDATE usuario_perfiles SET nombre=?,rol=? WHERE usuario_id=?');
+            }
+            $q->execute($current['rol']===null?[$id,$name,$role]:[$name,$role,$id]);
             $q=$pdo->prepare('UPDATE usuarios SET activo=? WHERE id=?');
             $q->execute([(int)$active,$id]);
             $pdo->commit();
