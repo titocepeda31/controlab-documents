@@ -94,10 +94,7 @@ p{margin:6px 0;color:var(--muted)}
 </head>
 <body>
 <header class="top"><div class="brand">CONTROL DE CALIDAD<small>Planificador de órdenes de trabajo</small></div>
- <nav class="top-links" aria-label="Navegación">
-  <a href="./modulos.html">Módulos</a><a href="./formulario.html">Informes</a>
-  <a href="./usuarios.html" id="usersLink" hidden>Usuarios</a><a href="./catalogos.html?modulo=empresas" id="catalogLink" hidden>Empresas</a><a href="./catalogos.html?modulo=obras" id="worksLink" hidden>Obras</a><a href="./catalogos.html?modulo=servicios" id="servicesLink" hidden>Servicios</a><a href="./catalogos.html?modulo=personal" id="staffLink" hidden>Personal</a>
- </nav>
+ 
 </header>
 <main>
  <div class="intro">
@@ -630,6 +627,6 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
  }catch(e){$('content').hidden=true;$('authError').hidden=false;$('authErrorText').textContent=e.message;}
 })();
 </script>
-<script src="./navigation.js?v=1" defer></script>
+<script src="./navigation.js?v=4" defer></script>
 </body>
 </html>
