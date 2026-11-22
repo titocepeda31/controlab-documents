@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 use Demo\Core\Database;
+use Demo\Controllers\UsuarioController;
+use Demo\Controllers\DestinatarioController;
 use Demo\Core\Http;
 use Demo\Controllers\AuthController;
 use Demo\Controllers\EmpresaController;
@@ -53,6 +55,8 @@ $auth = new AuthController($db);
 $empresas = new EmpresaController($db);
 $informes = new InformeController($db);
 $revisiones = new RevisionController($db);
+$usuarios = new UsuarioController($db);
+$destinatarios = new DestinatarioController($db);
 
 $app = AppFactory::create();
 $app->setBasePath(rtrim($config['base_path'], '/'));
