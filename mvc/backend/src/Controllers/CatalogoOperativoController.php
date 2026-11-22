@@ -6,6 +6,7 @@ use Demo\Core\Database;
 use Demo\Core\Http;
 use Demo\Middleware\Security;
 use Demo\Models\CatalogoOperativo;
+use Demo\Models\MapaObras;
 use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -13,7 +14,8 @@ use Psr\Http\Message\ResponseInterface as Response;
 /** Solo administradores y administrativos pueden alterar registros operativos. */
 final class CatalogoOperativoController {
     private CatalogoOperativo $catalogo;
-    public function __construct(Database $db){$this->catalogo=new CatalogoOperativo($db);}
+    private MapaObras $mapa;
+    public function __construct(Database $db){$this->catalogo=new CatalogoOperativo($db);$this->mapa=new MapaObras($db);}
 
     public function empresas(Request $request,Response $response): Response {
         Security::requireRole('administrador','administrativo');
@@ -48,5 +50,18 @@ final class CatalogoOperativoController {
         Security::requireRole('administrador','administrativo');Security::csrf($request);
         $id=$this->catalogo->savePersonal(Http::jsonBody($request),(int)$args['id']);
         return Http::json($response,['id'=>$id,'ok'=>true]);
+    }
+
+    public function buscarDireccion(Request $request,Response $response): Response {
+        Security::requireRole('administrador','administrativo');
+        $q=$request->getQueryParams()['q']??'';
+        if(!is_string($q))throw new InvalidArgumentException('Búsqueda inválida');
+        return Http::json($response,['resultados'=>$this->mapa->buscar($q)]);
+    }
+
+    public function guardarUbicacion(Request $request,Response $response,array $args): Response {
+        Security::requireRole('administrador','administrativo');Security::csrf($request);
+        $this->mapa->guardar((int)$args['id'],Http::jsonBody($request));
+        return Http::json($response,['ok'=>true]);
     }
 }
