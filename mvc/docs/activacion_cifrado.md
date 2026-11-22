@@ -1,11 +1,11 @@
 # Activación segura del cifrado de informes — Forestal 3M
 
-**Estado (2026-11-22): código preparado en rama `feature/cifrado-informes`; NO desplegado al sitio público.**
-El sistema publicado sigue guardando datos como antes hasta que se ejecute el procedimiento de migración.
+**Estado (2026-11-22): cifrado incorporado a `main`; rama de mantenimiento corrige compatibilidad con la columna JSON/LONGTEXT de MariaDB.**
+Después de actualizar, verificar el cifrado real de un informe desde phpMyAdmin. No hay que ejecutar migraciones ni borrar los informes pendientes del móvil solo por este cambio.
 
 ## Qué queda cifrado en el código nuevo
 
-- **MySQL:** contenido de `informe_datos.datos` con AES-256-GCM en PHP/OpenSSL, con nonce aleatorio distinto en cada guardado y autenticación del ID de informe.
+- **MySQL:** contenido de `informe_datos.datos` con AES-256-GCM en PHP/OpenSSL, con nonce aleatorio distinto en cada guardado y autenticación del ID de informe. El texto cifrado se almacena como **valor JSON string** (ej. `\"enc:v1:...\"`) para satisfacer restricciones `CHECK (JSON_VALID(datos))` en MariaDB, sin cifrar menos.
 - **MySQL:** contenido binario de `informe_revisiones.firma_png` con cifrado separado y autenticación por ID.
 - **Navegador:** datos persistidos en IndexedDB en `drafts`, `pending`, `history` y `reports`, con AES-GCM/Web Crypto antes de cada guardado y migración de registros legados cuando el usuario abra la nueva versión. Cada usuario tiene una clave AES no exportable conservada por el navegador.
 - **No queda cifrado a nivel de aplicación:** índices y metadatos de búsqueda de las tablas (IDs, empresa, número/fecha/estado), motivos y eventos de revisión; estos requieren permisos restrictivos y cifrado de disco/backups. La clave local del navegador **está en el mismo perfil del navegador** y la protección no resiste a alguien con acceso al sitio y al perfil desbloqueado, ni ataques XSS. Para seguridad local más fuerte habría que exigir un secreto de desbloqueo que no se almacene.
@@ -21,7 +21,7 @@ Abrir **cPanel → phpMyAdmin → base maderas7_informes → SQL** y ejecutar:
 ```sql
 SELECT
   (SELECT COUNT(*) FROM informe_datos) AS total_informes,
-  (SELECT COUNT(*) FROM informe_datos WHERE datos NOT LIKE 'enc:v1:%') AS informes_sin_cifrar,
+  (SELECT COUNT(*) FROM informe_datos WHERE LEFT(datos,7) <> 'enc:v1:' AND LEFT(datos,8) <> CONCAT(CHAR(34),'enc:v1:')) AS informes_sin_cifrar,
   (SELECT COUNT(*) FROM informe_revisiones WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0) AS total_firmas,
   (SELECT COUNT(*) FROM informe_revisiones
    WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0 AND LEFT(firma_png,7) <> 'enc:v1:') AS firmas_sin_cifrar;
@@ -47,7 +47,7 @@ No asumir que `/usr/local/bin/php` es la ruta válida: puede variar entre provee
 
 La versión del cifrado está en la rama **`feature/cifrado-informes`**, separada de los cambios de usuarios y planificador. El mecanismo de Git de cPanel debe tomar expresamente esa rama; si no permite cambiarla, no asumir que actualizar desde `main` instala el cifrado.
 
-Después de migrar, desplegar con el script existente de forma controlada. La protección del script impide instalar si detecta registros sin cifrar, clave ausente o columnas pequeñas. Comprobar en phpMyAdmin que **solamente el contenido técnico** comience por `enc:v1:`, no que las claves aparezcan en la base; no copiar textos descifrados en chats ni capturas.
+Después de migrar, desplegar con el script existente de forma controlada. La protección del script impide instalar si detecta registros sin cifrar, clave ausente o columnas pequeñas. Comprobar en phpMyAdmin que **solamente el contenido técnico** esté guardado como texto cifrado válido en JSON (`\"enc:v1:...\"`, o `enc:v1:` para datos de versiones previas), no que las claves aparezcan en la base; no copiar textos descifrados en chats ni capturas.
 
 ## Alternativa autorizada: descartar los 3 informes ficticios (2026-11-22)
 
@@ -113,7 +113,7 @@ El script es idempotente, verifica hashes de informes aprobados y autenticación
 
 ## Verificación posterior
 
-1. Guardar un informe ficticio con la nueva versión y comprobar que `informe_datos.datos` comienza por `enc:v1:`, sin resultados legibles.
+1. Guardar un informe ficticio con la nueva versión y comprobar que `JSON_VALID(informe_datos.datos)=1` y que el valor empieza por `\"enc:v1:` (comillas incluidas como JSON), sin resultados legibles.
 2. Abrirlo y constatar que los valores son idénticos.
 3. Aprobar un informe de prueba, revisar la firma y su `integridad_verificada`.
 4. Guardar un borrador sin internet, recargar, comprobar recuperación, reintentar sincronización sin duplicar registros. En herramientas del navegador, `IndexedDB` debe contener `ciphertext`, nunca un objeto `datos` en claro.
@@ -127,3 +127,27 @@ El script es idempotente, verifica hashes de informes aprobados y autenticación
 - La clave del servidor no debe almacenarse en GitHub ni servirse al navegador.
 - La autenticación en el frontend y el acceso al equipo siguen importando: cifrado local con clave guardada en el propio navegador **no es cifrado de extremo a extremo**.
 - Si una clave se extravía o se cambia sin re-cifrar todos los registros, los datos podrían perderse de forma irrecuperable.
+
+## Compatibilidad MariaDB: SQLSTATE[23000] en Informe.php:67
+
+Al guardar resultados, una tabla definida con `datos JSON` puede mostrarse como LONGTEXT en phpMyAdmin, pero MariaDB le agrega automáticamente un `CHECK (JSON_VALID(datos))`. Un texto crudo `enc:v1:...` **no es un JSON válido** y genera un error de integridad al ejecutar el INSERT de `informe_datos`.
+
+**Solución desde código (sin ALTER TABLE y sin desactivar restricciones):** `ReportCrypto::encrypt` devuelve la cadena cifrada como JSON string, por ejemplo `"enc:v1:..."`, y `ReportCrypto::decrypt` reconoce tanto ese formato como el cifrado crudo anterior. El migrador, verificación del despliegue y pruebas también reconocen ambos. Así el CHECK permanece activo y los datos siguen cifrados.
+
+Para comprobar la sospecha sin alterar datos:
+
+```sql
+SHOW CREATE TABLE informe_datos;
+```
+
+Buscar `CHECK (json_valid(`datos`))` en el resultado. No borrar los informes pendientes que están en el teléfono; tras desplegar el arreglo, pulsar «Sincronizar».
+
+Para verificar el resultado de un informe nuevo:
+
+```sql
+SELECT informe_id, JSON_VALID(datos) AS json_valido,
+       LEFT(datos, 8) AS inicio_cifrado
+FROM informe_datos ORDER BY informe_id DESC LIMIT 5;
+```
+
+Se espera `json_valido=1` e `inicio_cifrado` empezando por `"enc:v1:` (el primer carácter es la comilla JSON).
