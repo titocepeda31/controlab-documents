@@ -2,7 +2,7 @@
 <html lang="es-CL">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#10283d">
-<title>Empresas, obras y personal | Controlab</title>
+<title>Empresas, obras, servicios y personal | Controlab</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--navy:#10283d;--accent:#087d70;--bg:#f3f6f8;--border:#d7e3ea;--text:#19384b;--muted:#60798c}
@@ -40,13 +40,14 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
 <body>
 <header class="top"><div><strong>CONTROL DE CALIDAD</strong><small>Catálogos de operación · Forestal 3M</small></div><nav class="nav"><a href="./planificador.html">← Planificador</a><a href="./formulario.html">Informes</a></nav></header>
 <main>
- <span class="eyebrow">Administración operativa</span><h1>Empresas, obras y personal</h1>
+ <span class="eyebrow">Administración operativa</span><h1>Empresas, obras, servicios y personal</h1>
  <p>Las constructoras tienen obras propias, cada una con su dirección y comuna. El personal de terreno se registra aquí sin crear contraseñas ni acceso al sistema.</p>
  <section id="accessError" class="panel" hidden><h2>Acceso restringido</h2><p id="accessText"></p></section>
  <div id="app" hidden>
   <div class="tabs" role="group" aria-label="Elegir catálogo">
    <button type="button" class="tab active" data-tab="empresas" aria-pressed="true">Empresas</button>
    <button type="button" class="tab" data-tab="obras" aria-pressed="false">Obras</button>
+   <button type="button" class="tab" data-tab="servicios" aria-pressed="false">Servicios</button>
    <button type="button" class="tab" data-tab="personal" aria-pressed="false">Personal de terreno</button>
   </div>
   <section id="viewEmpresas" class="panel">
@@ -93,6 +94,18 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
    </div>
    <div class="section-title" style="margin-top:25px"><h2>Obras registradas</h2><span id="obraCount" class="help"></span></div><div class="card-list" id="obrasList"></div>
   </section>
+  <section id="viewServicios" class="panel" hidden>
+   <h2>Catálogo de servicios</h2>
+   <p>Registra los ensayos y trabajos que se pueden solicitar en una OT. Los precios y la facturación se configurarán en otra etapa.</p>
+   <form id="servicioForm"><div class="grid">
+    <div class="field full"><label for="servicioNombre">Nombre del servicio *</label><input id="servicioNombre" maxlength="180" required placeholder="Ej.: Ensayo de densidad en terreno"></div>
+    <div class="field"><label for="servicioUnidad">Unidad de medida *</label><input id="servicioUnidad" maxlength="60" required value="unidad" placeholder="Ej.: ensayo, calicata, unidad"></div>
+    <div class="field full"><label for="servicioDescripcion">Descripción (opcional)</label><textarea id="servicioDescripcion" maxlength="500"></textarea></div>
+    <div class="field" id="servicioActiveWrap" hidden><label><input id="servicioActivo" type="checkbox" checked> Servicio activo</label></div>
+   </div><div class="actions"><button class="btn primary" id="guardarServicio" type="submit">Agregar servicio</button><button class="btn" id="cancelServicio" type="button" hidden>Cancelar edición</button></div><div id="servicioNotice" class="notice" role="status" aria-live="polite"></div></form>
+   <div class="section-title" style="margin-top:25px"><h2>Servicios registrados</h2><span id="servicioCount" class="help"></span></div>
+   <div class="card-list" id="serviciosList"></div>
+  </section>
   <section id="viewPersonal" class="panel" hidden>
    <h2>Trabajadores de terreno (sin cuenta)</h2>
    <p class="hint">Para choferes, ayudantes, muestreadores, operadores u otros integrantes que solo necesitan aparecer en la programación. No tendrán correo, contraseña ni acceso a Controlab.</p>
@@ -115,7 +128,7 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
 'use strict';
 const $=id=>document.getElementById(id);
 const API='./api';
-let companies=[],works=[],people=[],editEmpresa=null,editObra=null,editPerson=null;
+let companies=[],works=[],people=[],services=[],editEmpresa=null,editObra=null,editPerson=null,editServicio=null;
 let obraMap=null,marker=null,geoChoice=null,geoSource='mapa_manual';
 function elem(tag,cls='',value=''){const n=document.createElement(tag);n.className=cls;n.textContent=value;return n;}
 function notice(id,value,isError=false){const e=$(id);e.textContent=value;e.className=value?'notice'+(isError?' error':''):'notice';}
@@ -137,13 +150,13 @@ async function write(path,method,data){
 }
 function tab(name){
  for(const button of document.querySelectorAll('[data-tab]')){const active=button.dataset.tab===name;button.classList.toggle('active',active);button.setAttribute('aria-pressed',active?'true':'false');}
- for(const name2 of ['Empresas','Obras','Personal'])$('view'+name2).hidden=name2.toLowerCase()!==name;
+ for(const name2 of ['Empresas','Obras','Servicios','Personal'])$('view'+name2).hidden=name2.toLowerCase()!==name;
 }
 for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>tab(b.dataset.tab));
 async function refresh(){
- const [c,w,p]=await Promise.all([request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/personal')]);
- companies=c.empresas||[];works=w.obras||[];people=p.personal||[];
- renderCompanies();renderWorks();renderPeople();renderOptions();
+ const [c,w,p,s]=await Promise.all([request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/personal'),request('/catalogo/servicios')]);
+ companies=c.empresas||[];works=w.obras||[];people=p.personal||[];services=s.servicios||[];
+ renderCompanies();renderWorks();renderPeople();renderServices();renderOptions();
 }
 function renderOptions(){
  const select=$('obraEmpresa'),keep=select.value;
@@ -171,6 +184,42 @@ function renderWorks(){
   card.append(meta,btn);root.append(card);
  }
 }
+
+function renderServices(){
+ const root=$('serviciosList');root.replaceChildren();$('servicioCount').textContent=services.length+' servicios';
+ if(!services.length){root.append(elem('p','','Todavía no hay servicios registrados.'));return;}
+ for(const s of services){
+  const card=elem('article','record'),meta=elem('div');
+  meta.append(elem('strong','',s.nombre),elem('small','','Unidad: '+s.unidad));
+  if(s.descripcion)meta.append(elem('small','',s.descripcion));
+  meta.append(elem('span','status'+(Number(s.activo)?'':' off'),Number(s.activo)?'Activo':'Inactivo'));
+  const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editService(s.id));
+  card.append(meta,btn);root.append(card);
+ }
+}
+function editService(id){
+ const s=services.find(x=>Number(x.id)===Number(id));if(!s)return;
+ tab('servicios');editServicio=Number(id);
+ $('servicioNombre').value=s.nombre;$('servicioUnidad').value=s.unidad;
+ $('servicioDescripcion').value=s.descripcion||'';$('servicioActivo').checked=Number(s.activo)===1;
+ $('servicioActiveWrap').hidden=false;$('guardarServicio').textContent='Guardar cambios';$('cancelServicio').hidden=false;
+ $('servicioForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetService(){
+ editServicio=null;$('servicioForm').reset();$('servicioUnidad').value='unidad';
+ $('servicioActiveWrap').hidden=true;$('guardarServicio').textContent='Agregar servicio';$('cancelServicio').hidden=true;
+}
+$('cancelServicio').addEventListener('click',resetService);
+$('servicioForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarServicio');btn.disabled=true;
+ try{
+  const data={nombre:$('servicioNombre').value.trim(),unidad:$('servicioUnidad').value.trim(),descripcion:$('servicioDescripcion').value.trim()};
+  if(editServicio!==null)data.activo=$('servicioActivo').checked;
+  await write(editServicio===null?'/catalogo/servicios':'/catalogo/servicios/'+editServicio,editServicio===null?'POST':'PUT',data);
+  resetService();await refresh();notice('servicioNotice','✓ Servicio guardado correctamente.');
+ }catch(e){notice('servicioNotice',e.message,true);}finally{btn.disabled=false;}
+});
+
 function renderPeople(){
  const root=$('personalList');root.replaceChildren();$('personalCount').textContent=people.length+' trabajadores';
  if(!people.length){root.append(elem('p','','Aún no hay personal de terreno registrado.'));return;}
