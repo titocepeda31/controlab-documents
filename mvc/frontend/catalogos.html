@@ -160,7 +160,7 @@ function renderWorks(){
   const card=elem('article','record'),meta=elem('div');
   meta.append(elem('strong','',w.nombre),elem('small','',w.empresa),elem('small','',w.direccion+' · '+w.comuna));
   const status=elem('span','status'+(Number(w.activo)?'':' off'),Number(w.activo)?'Activa':'Inactiva');meta.append(status);
-  const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editWork(w.id));
+  const btn=elem('button','btn','Editar y ubicar');btn.type='button';btn.addEventListener('click',()=>editWork(w.id));
   card.append(meta,btn);root.append(card);
  }
 }
@@ -283,7 +283,7 @@ $('geoRouteBtn').addEventListener('click',()=>{
  navigator.geolocation.getCurrentPosition(pos=>{
   const origin=pos.coords.latitude+','+pos.coords.longitude;
   const end=geoChoice.lat+','+geoChoice.lon;
-  window.open('https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route='+encodeURIComponent(origin+';'+end),'_blank','noopener,noreferrer');
+  window.location.assign('https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route='+encodeURIComponent(origin+';'+end));
   notice('geoNotice','Ruta abierta en OpenStreetMap. Tu ubicación no fue almacenada.');
  },()=>notice('geoNotice','No se pudo obtener tu ubicación. También puedes abrir el destino en OpenStreetMap y elegir un origen allí.',true),
  {enableHighAccuracy:false,timeout:12000,maximumAge:0});
