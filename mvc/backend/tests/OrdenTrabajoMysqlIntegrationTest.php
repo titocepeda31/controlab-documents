@@ -76,7 +76,7 @@ $nonOverlap=[...$plan,'inicio'=>'2026-11-24T12:00','fin'=>'2026-11-24T14:00','pe
 $second=$model->create($nonOverlap,$admin);
 assertOt($second!==$first,'dos OT contiguas');
 
-$stale=[...$plan,'numero_ot'=>$original['numero_ot'],'version'=>$original['version']-1];
+$stale=[...$plan,'numero_ot'=>$original['numero_ot'],'version'=>$original['version']+1];
 expectOtFailure(fn()=>$model->update($first,$stale,$admin),409,'versión anterior');
 expectOtFailure(fn()=>$model->update($first,[...$stale,'version'=> $original['version'],'fin'=>'2026-11-24T13:00'],$admin),409,'editar causa choque');
 $model->update($first,[...$plan,'numero_ot'=>$original['numero_ot'],'version'=>$original['version'],'estado'=>'cancelada'],$admin);
