@@ -51,8 +51,15 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
   </div>
   <section id="viewEmpresas" class="panel">
    <h2>Empresas constructoras</h2><p>El catálogo conserva las empresas ya usadas para emitir informes; no se duplican.</p>
-   <form id="empresaForm"><div class="grid"><div class="field full"><label for="empresaNombre">Razón social *</label><input id="empresaNombre" maxlength="160" placeholder="Nombre de la constructora" required></div></div>
-    <div class="actions"><button class="btn primary" id="guardarEmpresa" type="submit">Agregar empresa</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form>
+   <form id="empresaForm"><div class="grid">
+    <div class="field full"><label for="empresaNombre">Razón social *</label><input id="empresaNombre" maxlength="160" required></div>
+    <div class="field"><label for="empresaComercial">Nombre comercial</label><input id="empresaComercial" maxlength="160"></div>
+    <div class="field"><label for="empresaRut">RUT (opcional)</label><input id="empresaRut" maxlength="20"></div>
+    <div class="field"><label for="empresaContacto">Persona de contacto</label><input id="empresaContacto" maxlength="160"></div>
+    <div class="field"><label for="empresaTelefono">Teléfono</label><input id="empresaTelefono" type="tel" maxlength="40"></div>
+    <div class="field"><label for="empresaEmail">Correo electrónico</label><input id="empresaEmail" type="email" maxlength="190"></div>
+    <div class="field" id="empresaActiveWrap" hidden><label><input id="empresaActivo" type="checkbox" checked> Empresa activa</label></div>
+    </div><div class="actions"><button class="btn primary" id="guardarEmpresa" type="submit">Agregar empresa</button><button class="btn" type="button" id="cancelEmpresa" hidden>Cancelar edición</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form>
    <div class="section-title" style="margin-top:25px"><h2>Empresas registradas</h2><span id="empresaCount" class="help"></span></div>
    <div class="card-list" id="empresasList"></div>
   </section>
@@ -108,7 +115,7 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
 'use strict';
 const $=id=>document.getElementById(id);
 const API='./api';
-let companies=[],works=[],people=[],editObra=null,editPerson=null;
+let companies=[],works=[],people=[],editEmpresa=null,editObra=null,editPerson=null;
 let obraMap=null,marker=null,geoChoice=null,geoSource='mapa_manual';
 function elem(tag,cls='',value=''){const n=document.createElement(tag);n.className=cls;n.textContent=value;return n;}
 function notice(id,value,isError=false){const e=$(id);e.textContent=value;e.className=value?'notice'+(isError?' error':''):'notice';}
@@ -141,16 +148,16 @@ async function refresh(){
 function renderOptions(){
  const select=$('obraEmpresa'),keep=select.value;
  select.replaceChildren();const placeholder=elem('option','','Selecciona una constructora');placeholder.value='';select.append(placeholder);
- for(const company of companies){const option=elem('option','',company.razon_social);option.value=String(company.id);select.append(option);}
+ for(const company of companies.filter(c=>Number(c.activo)===1)){const option=elem('option','',company.razon_social);option.value=String(company.id);select.append(option);}
  select.value=keep;
 }
 function renderCompanies(){
  const root=$('empresasList');root.replaceChildren();$('empresaCount').textContent=companies.length+' empresas';
  if(!companies.length){root.append(elem('p','','Todavía no hay constructoras.'));return;}
  for(const c of companies){
-  const card=elem('article','record');const meta=elem('div');meta.append(elem('strong','',c.razon_social),elem('small','',c.rut||'Sin RUT registrado'));
+  const card=elem('article','record');const meta=elem('div');meta.append(elem('strong','',c.razon_social),elem('small','',c.nombre_comercial||'Sin nombre comercial'),elem('small','',c.rut||'Sin RUT'),elem('small','',c.contacto||'Sin contacto'),elem('small','',c.telefono||'Sin teléfono'),elem('small','',c.email||'Sin correo'));meta.append(elem('span','status'+(Number(c.activo)?'':' off'),Number(c.activo)?'Activa':'Inactiva'));const edit=elem('button','btn','Editar');edit.type='button';edit.addEventListener('click',()=>editCompany(c.id));
   const btn=elem('button','btn','Ver obras');btn.type='button';btn.addEventListener('click',()=>{tab('obras');$('obraEmpresa').value=String(c.id);$('viewObras').scrollIntoView({behavior:'smooth'});});
-  card.append(meta,btn);root.append(card);
+  card.append(meta,edit,btn);root.append(card);
  }
 }
 function renderWorks(){
@@ -289,13 +296,26 @@ $('geoRouteBtn').addEventListener('click',()=>{
  {enableHighAccuracy:false,timeout:12000,maximumAge:0});
 });
 
+function editCompany(id){
+ const c=companies.find(x=>Number(x.id)===Number(id));if(!c)return;
+ editEmpresa=id;$('empresaNombre').value=c.razon_social;$('empresaComercial').value=c.nombre_comercial||'';
+ $('empresaRut').value=c.rut||'';$('empresaContacto').value=c.contacto||'';
+ $('empresaTelefono').value=c.telefono||'';$('empresaEmail').value=c.email||'';
+ $('empresaActivo').checked=Number(c.activo)===1;$('empresaActiveWrap').hidden=false;
+ $('guardarEmpresa').textContent='Guardar cambios';$('cancelEmpresa').hidden=false;
+ $('empresaForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetCompany(){editEmpresa=null;$('empresaForm').reset();$('empresaActiveWrap').hidden=true;$('guardarEmpresa').textContent='Agregar empresa';$('cancelEmpresa').hidden=true;}
+$('cancelEmpresa').addEventListener('click',resetCompany);
 $('cancelObra').addEventListener('click',resetWork);
 $('cancelPersonal').addEventListener('click',resetWorker);
 $('empresaForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('guardarEmpresa');btn.disabled=true;
  try{
-  await write('/catalogo/empresas','POST',{razon_social:$('empresaNombre').value.trim()});
-  $('empresaForm').reset();await refresh();notice('empresaNotice','✓ Empresa registrada.');
+  const data={razon_social:$('empresaNombre').value.trim(),nombre_comercial:$('empresaComercial').value.trim(),rut:$('empresaRut').value.trim(),contacto:$('empresaContacto').value.trim(),telefono:$('empresaTelefono').value.trim(),email:$('empresaEmail').value.trim()};
+  if(editEmpresa!==null)data.activo=$('empresaActivo').checked;
+  await write(editEmpresa===null?'/catalogo/empresas':'/catalogo/empresas/'+editEmpresa,editEmpresa===null?'POST':'PUT',data);
+  resetCompany();await refresh();notice('empresaNotice','✓ Empresa guardada correctamente.');
  }catch(e){notice('empresaNotice',e.message,true);}finally{btn.disabled=false;}
 });
 $('obraForm').addEventListener('submit',async e=>{
