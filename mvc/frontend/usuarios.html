@@ -188,8 +188,9 @@ $('editForm').addEventListener('submit',async e=>{
  e.preventDefault();if(!selectedId)return;const btn=$('saveEdit');btn.disabled=true;
  try{
   await mutate('/usuarios/'+selectedId,'PATCH',{nombre:$('editName').value.trim(),rol:$('editRole').value,activo:$('editActive').checked});
-  notice('editNotice','✓ Perfil actualizado.');await reload();
+  notice('editNotice','✓ Perfil actualizado.');
   if(selectedId===currentAdminId){const s=await session();if(!s.puede_administrar_usuarios){location.replace('./formulario.html');return;}}
+  await reload();
  }catch(err){notice('editNotice',err.message,true);}finally{btn.disabled=false;}
 });
 $('passwordForm').addEventListener('submit',async e=>{
