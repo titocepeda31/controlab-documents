@@ -76,7 +76,7 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
   if(!in_array(strtolower((string)$signatureColumn),["mediumblob","longblob"],true)){fwrite(STDERR,"informe_revisiones.firma_png requiere MEDIUMBLOB o LONGBLOB.\\n");exit(4);}
   $plaintextSignatures=(int)$pdo->query("SELECT COUNT(*) FROM informe_revisiones WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0 AND LEFT(firma_png,7)!=\"enc:v1:\"")->fetchColumn();
   if($plaintextSignatures>0){fwrite(STDERR,"Hay $plaintextSignatures firmas sin cifrar. Migración pendiente.\\n");exit(4);}
-  $plain=(int)$pdo->query("SELECT COUNT(*) FROM informe_datos WHERE datos NOT LIKE \"enc:v1:%\"")->fetchColumn();
+  $plain=(int)$pdo->query("SELECT COUNT(*) FROM informe_datos WHERE LEFT(datos,7)!=\"enc:v1:\" AND LEFT(datos,8)!=CONCAT(CHAR(34),\"enc:v1:\")")->fetchColumn();
   if($plain>0){fwrite(STDERR,"Hay $plain informes sin cifrar. Migrar con mantenimiento y respaldo antes de desplegar.\n");exit(4);}
 ' "$PRIVATE/config.php" || { echo 'ERROR: comprobación de migración fallida; no se desplegó.' >&2; exit 1; }
 
