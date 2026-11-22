@@ -14,10 +14,11 @@ final class Informe {
     public function all(array $user): array {
         $sql="SELECT i.id,i.usuario_id,i.numero_informe,i.fecha_informe,i.estado,e.razon_social,"
             ."COALESCE(r.estado,'borrador') AS revision_estado,r.motivo_devolucion,"
-            ."dest.empresa_id AS destinatario_empresa_id "
+            ."dest.empresa_id AS destinatario_empresa_id, ec.razon_social AS destinatario_empresa "
             ."FROM informes i JOIN empresas e ON e.id=i.empresa_id "
             ."LEFT JOIN informe_revisiones r ON r.informe_id=i.id "
-            ."LEFT JOIN informe_destinatarios dest ON dest.informe_id=i.id ";
+            ."LEFT JOIN informe_destinatarios dest ON dest.informe_id=i.id "
+            ."LEFT JOIN empresas ec ON ec.id=dest.empresa_id ";
         if ($user['rol']==='cliente') {
             // Nunca mostrar borradores, ni informes de otra empresa.
             $sql.="WHERE dest.empresa_id=? AND r.estado='aprobado' ORDER BY i.id DESC LIMIT 100";
@@ -28,11 +29,13 @@ final class Informe {
         return $this->db->connection()->query($sql.'ORDER BY i.id DESC LIMIT 100')->fetchAll();
     }
     public function find(int $id,array $user): array {
-        $sql='SELECT i.id,i.usuario_id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos '
-            .'FROM informes i JOIN informe_datos d ON d.informe_id=i.id ';
+        $sql='SELECT i.id,i.usuario_id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos,'
+            .'dest.empresa_id AS destinatario_empresa_id,ec.razon_social AS destinatario_empresa '
+            .'FROM informes i JOIN informe_datos d ON d.informe_id=i.id '
+            .'LEFT JOIN informe_destinatarios dest ON dest.informe_id=i.id '
+            .'LEFT JOIN empresas ec ON ec.id=dest.empresa_id ';
         if ($user['rol']==='cliente') {
-            $sql.="JOIN informe_destinatarios dest ON dest.informe_id=i.id "
-                ."JOIN informe_revisiones rev ON rev.informe_id=i.id AND rev.estado='aprobado' "
+            $sql.="JOIN informe_revisiones rev ON rev.informe_id=i.id AND rev.estado='aprobado' "
                 ."WHERE i.id=? AND dest.empresa_id=?";
             $params=[$id,$user['empresa_id']];
         } else {
