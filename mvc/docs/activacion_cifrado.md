@@ -49,6 +49,28 @@ La versión del cifrado está en la rama **`feature/cifrado-informes`**, separad
 
 Después de migrar, desplegar con el script existente de forma controlada. La protección del script impide instalar si detecta registros sin cifrar, clave ausente o columnas pequeñas. Comprobar en phpMyAdmin que **solamente el contenido técnico** comience por `enc:v1:`, no que las claves aparezcan en la base; no copiar textos descifrados en chats ni capturas.
 
+## Alternativa autorizada: descartar los 3 informes ficticios (2026-11-22)
+
+El usuario autorizó expresamente perder los tres informes de desarrollo y prescindir de respaldo. Esto **no aplica a informes reales ni otros entornos**.
+
+Desde phpMyAdmin, con personal fuera de la aplicación:
+1. Ejecutar `SELECT COUNT(*) AS total FROM informes;` y confirmar que siguen siendo exactamente tres.
+2. Si son los tres informes de prueba que se quieren eliminar, ejecutar dentro de transacción:
+```sql
+START TRANSACTION;
+DELETE FROM informe_revision_eventos;
+DELETE FROM informe_revisiones;
+DELETE FROM informe_envios;
+DELETE FROM informe_datos;
+DELETE FROM informes;
+COMMIT;
+```
+3. Confirmar `SELECT COUNT(*) FROM informe_datos;` y `SELECT COUNT(*) FROM informes;` (ambos deben ser cero); revisar también firmas anteriores en `informe_revisiones`.
+4. Evitar que existan **informes pendientes de sincronización en los navegadores**: eliminarlos desde la interfaz antes de reabrir el sitio o se podrían volver a insertar; no borrar borradores locales útiles por accidente.
+5. Después de verificar cero registros anteriores, realizar despliegue coordinado de la rama de cifrado del sistema actual. La clave `data_encryption_key` debe estar configurada. El código viejo no cifra: no volver a guardar con él.
+
+Esta opción elimina el contenido de las cinco tablas de informes, dejando intactos usuarios, permisos de revisión y empresas. **No elimina usuarios ni resetea el autoincremento**, por lo que los nuevos IDs pueden continuar desde 4 o más. Si surgiera un error SQL, detenerse; no desactivar controles de integridad ni repetir a ciegas.
+
 ## Requisitos antes del despliegue
 
 1. **No trabajar sobre los datos reales sin respaldo restaurable.** Respaldar la base de datos y los archivos privados; proteger el respaldo, que contendrá texto sin cifrar. Verificar que puede restaurarse.
