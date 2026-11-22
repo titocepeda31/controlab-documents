@@ -322,7 +322,19 @@ function confirmInline(button,message){
 }
 function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hidden=canEdit;$('appView').hidden=!canEdit;$('reviewsBtn').hidden=!authenticated||!canReview;if(!canEdit){showWorkspace(null);stopVoice();}updateConnectivity();}
 function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
-async function syncAuth(){const r=await session();authenticated=!!r.autenticado;offlineMode=false;canReview=authenticated&&!!r.puede_revisar;if(authenticated){setOwner(Number(r.usuario_id));await restoreDraft();}renderAuth();if(authenticated)void syncPending();return r;}
+async function syncAuth(){
+ const r=await session();authenticated=!!r.autenticado;offlineMode=false;canReview=authenticated&&!!r.puede_revisar;
+ if(authenticated){
+  setOwner(Number(r.usuario_id));
+  try{await restoreDraft();}catch(e){
+   dataReady=false;
+   $('draftState').textContent='⚠ Sesión iniciada, pero no se pudo recuperar el almacenamiento local: '+e.message;
+  }
+ }
+ renderAuth();
+ if(authenticated)void syncPending();
+ return r;
+}
 function updateConnectivity(){const online=navigator.onLine;const active=authenticated&&online;$('connectionDot').classList.toggle('offline',!active);$('connectionStatus').textContent=active?'Con conexión · sesión activa':(online?'Sin sesión validada · guardado local':'Sin conexión · guardado local');document.querySelector('.session-tag').textContent=active?'● Sesión activa':'● Modo local (sin autenticar)';$('syncBtn').disabled=!active||syncing;}
 async function offerOfflineAccess(){const uid=Number(localStorage.getItem('demo_last_user'));$('offlineEntry').hidden=!(Number.isSafeInteger(uid)&&uid>0);}
 $('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();});
@@ -401,10 +413,12 @@ function localDB(){
  if(!localDbPromise){
   localDbPromise=new Promise((resolve,reject)=>{
    const r=indexedDB.open(DB_NAME,STORE_VERSION);
+   let blocked=false;
    r.onupgradeneeded=()=>{const db=r.result;for(const name of ['drafts','pending','history','reports','keys'])if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:'key'});};
-   r.onsuccess=()=>resolve(r.result);
+   r.onblocked=()=>{blocked=true;reject(new Error('Otra pestaña mantiene abierto el almacenamiento anterior. Cierra las demás pestañas del formulario y vuelve a cargar.'));};
+   r.onsuccess=()=>{if(blocked){r.result.close();return;}r.result.onversionchange=()=>r.result.close();resolve(r.result);};
    r.onerror=()=>reject(r.error||new Error('No fue posible abrir el almacenamiento local'));
-  });
+  }).catch(e=>{localDbPromise=null;throw e;});
  }
  return localDbPromise;
 }
