@@ -6,6 +6,7 @@ use Demo\Core\Http;
 use Demo\Controllers\AuthController;
 use Demo\Controllers\EmpresaController;
 use Demo\Controllers\InformeController;
+use Demo\Controllers\LaboratoristaFirmaController;
 use Demo\Controllers\RevisionController;
 use Slim\Factory\AppFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -53,6 +54,7 @@ $auth = new AuthController($db);
 $empresas = new EmpresaController($db);
 $informes = new InformeController($db);
 $revisiones = new RevisionController($db);
+$firmasLaboratorista = new LaboratoristaFirmaController($db);
 
 $app = AppFactory::create();
 $app->setBasePath(rtrim($config['base_path'], '/'));
