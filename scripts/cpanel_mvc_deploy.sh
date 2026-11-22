@@ -30,6 +30,7 @@ for path in \
   mvc/backend/bootstrap.php \
   mvc/backend/routes/api.php \
   mvc/backend/src/Core/Database.php \
+  mvc/backend/src/Core/ReportCrypto.php \
   mvc/backend/src/Core/Http.php \
   mvc/backend/src/Models/Empresa.php \
   mvc/backend/src/Models/Informe.php \
@@ -64,6 +65,17 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
     $q->execute([$table]);
     if (!(int)$q->fetchColumn()) {fwrite(STDERR,"Falta la tabla $table. Ejecutar migraciones SQL antes de desplegar.\n");exit(2);}
   }
+  if (!extension_loaded("openssl")) {fwrite(STDERR,"OpenSSL no disponible.\n");exit(4);}
+  $key=base64_decode((string)($cfg["data_encryption_key"]??""),true);
+  if(!is_string($key)||strlen($key)!==32){fwrite(STDERR,"Falta data_encryption_key en configuración privada.\n");exit(4);}
+  $column=$pdo->query("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=\"informe_datos\" AND COLUMN_NAME=\"datos\"")->fetchColumn();
+  if(!in_array(strtolower((string)$column),["mediumtext","longtext"],true)){fwrite(STDERR,"informe_datos.datos requiere MEDIUMTEXT o LONGTEXT.\n");exit(4);}
+  $signatureColumn=$pdo->query("SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=\"informe_revisiones\" AND COLUMN_NAME=\"firma_png\"")->fetchColumn();
+  if(!in_array(strtolower((string)$signatureColumn),["mediumblob","longblob"],true)){fwrite(STDERR,"informe_revisiones.firma_png requiere MEDIUMBLOB o LONGBLOB.\\n");exit(4);}
+  $plaintextSignatures=(int)$pdo->query("SELECT COUNT(*) FROM informe_revisiones WHERE firma_png IS NOT NULL AND LENGTH(firma_png)>0 AND LEFT(firma_png,7)!=\"enc:v1:\"")->fetchColumn();
+  if($plaintextSignatures>0){fwrite(STDERR,"Hay $plaintextSignatures firmas sin cifrar. Migración pendiente.\\n");exit(4);}
+  $plain=(int)$pdo->query("SELECT COUNT(*) FROM informe_datos WHERE datos NOT LIKE \"enc:v1:%\"")->fetchColumn();
+  if($plain>0){fwrite(STDERR,"Hay $plain informes sin cifrar. Migrar con mantenimiento y respaldo antes de desplegar.\n");exit(4);}
 ' "$PRIVATE/config.php" || { echo 'ERROR: comprobación de migración fallida; no se desplegó.' >&2; exit 1; }
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)-$$"
@@ -74,7 +86,7 @@ chmod 0700 "$BASE/controlab-mvc-backups" "$BACKUP" "$BACKUP/private" "$BACKUP/pu
 # Solo archivos gestionados: no se toca config.php ni app.php.
 BACKEND_FILES=(
   bootstrap.php routes/api.php
-  src/Core/Database.php src/Core/Http.php
+  src/Core/Database.php src/Core/Http.php src/Core/ReportCrypto.php
   src/Models/Empresa.php src/Models/Informe.php src/Models/Revision.php src/Models/Usuario.php
   src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/RevisionController.php
   src/Middleware/Security.php

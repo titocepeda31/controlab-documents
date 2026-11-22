@@ -1,0 +1,38 @@
+name: Validar cifrado de informes
+on:
+  push:
+    branches:
+      - feature/cifrado-informes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seguridad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Comprobar sintaxis de PHP y bash
+        run: |
+          set -euo pipefail
+          find mvc/backend mvc/frontend -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          bash -n scripts/cpanel_mvc_deploy.sh
+      - name: Comprobar cifrado autenticado, manipulación y firma
+        run: php mvc/backend/tests/ReportCryptoTest.php
+      - name: Comprobar Javascript de navegador
+        run: |
+          set -euo pipefail
+          node -e "const fs=require('fs');const t=fs.readFileSync('mvc/frontend/formulario.html','utf8');const m=t.match(/<script>([\s\S]*?)<\/script>/);if(!m)process.exit(1);fs.writeFileSync('/tmp/controlab.js',m[1]);"
+          node --check /tmp/controlab.js
+          node --check mvc/frontend/sw.js
+      - name: Comprobar barreras de despliegue
+        run: |
+          set -euo pipefail
+          grep -Fq 'data_encryption_key' scripts/cpanel_mvc_deploy.sh
+          grep -Fq 'plaintextSignatures' scripts/cpanel_mvc_deploy.sh
+          grep -Fq 'reportCrypto()->encrypt' mvc/backend/src/Models/Informe.php
+          grep -Fq "encryptBytes" mvc/backend/src/Models/Revision.php
+          grep -Fq "encryptLegacyLocalData" mvc/frontend/formulario.html
+          grep -Fq "secureVersion:1" mvc/frontend/formulario.html

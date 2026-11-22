@@ -378,26 +378,86 @@ function fillRandomData(){
 $('demoBtn').addEventListener('click',fillRandomData);
 $('resetBtn').addEventListener('click',()=>{if(!confirmInline($('resetBtn'),'Se reemplazará el borrador actual. Los informes pendientes de sincronizar se conservarán.'))return;lastSavedSignature=null;lastServerId=null;editingReportId=null;$('saveBtn').textContent='Guardar informe (con o sin conexión)';setData({fechaRegistro:today()});goStep(0);showNotice($('saveResult'),'');});
 function updateReview(){const d=getData();const fields=[['N° informe','nInforme'],['Muestra','muestra'],['Contratista','contratista'],['Mandante','mandante'],['Fecha de ensayo','fechaEnsayo'],['Sector / tramo','sector'],['CBR (%)','cbr'],['Clasificación USCS','usc'],['Responsable','responsable']];$('reviewMeta').replaceChildren();fields.forEach(([label,key])=>{const node=document.createElement('div');const small=document.createElement('small');const strong=document.createElement('strong');small.textContent=label;strong.textContent=d[key]||'—';node.append(small,strong);$('reviewMeta').append(node);});$('reviewNotes').textContent=d.observaciones||'Sin observaciones.';const issues=[];if(!d.contratista)issues.push('Completa Contratista.');if(!/^\d{4}-\d{2}-\d{2}$/.test(d.fechaEnsayo||d.fechaRegistro||''))issues.push('Completa Fecha de ensayo o Fecha de registro.');$('formWarnings').hidden=!issues.length;$('formWarnings').textContent=issues.join(' ');}
-// IndexedDB mantiene borradores, historial descargado y envíos pendientes por usuario.
+// IndexedDB cifrado: borradores, cola de sincronización, historial y copias de informes.
+// La clave AES-GCM es no exportable y se conserva en el almacenamiento protegido del
+// navegador por usuario. Protege contra la lectura directa de los registros del disco,
+// pero NO sustituye el bloqueo del dispositivo ni protege contra malware/XSS en la web.
 const DB_NAME='demo_mecanica_suelo_offline_v1';
-const STORE_VERSION=1;
+const STORE_VERSION=2;
 let localDbPromise=null;
+const localCryptoKeyPromises=new Map();
 function localDB(){
- if(!('indexedDB' in window))return Promise.reject(new Error('Este navegador no admite almacenamiento local IndexedDB.'));
+ if(!('indexedDB' in window))return Promise.reject(new Error('Este navegador no admite IndexedDB.'));
+ if(!window.isSecureContext||!globalThis.crypto?.subtle)return Promise.reject(new Error('Se requiere HTTPS y Web Crypto para guardar información cifrada.'));
  if(!localDbPromise){
   localDbPromise=new Promise((resolve,reject)=>{
    const r=indexedDB.open(DB_NAME,STORE_VERSION);
-   r.onupgradeneeded=()=>{const db=r.result;for(const name of ['drafts','pending','history','reports'])if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:'key'});};
+   r.onupgradeneeded=()=>{const db=r.result;for(const name of ['drafts','pending','history','reports','keys'])if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:'key'});};
    r.onsuccess=()=>resolve(r.result);
    r.onerror=()=>reject(r.error||new Error('No fue posible abrir el almacenamiento local'));
   });
  }
  return localDbPromise;
 }
-async function storageGet(store,key){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly');const r=tx.objectStore(store).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
-async function storagePut(store,value){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(value);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
-async function storageDel(store,key){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
-async function storageAll(store){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly');const r=tx.objectStore(store).getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error);});}
+async function rawStorageGet(store,key){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly');const r=tx.objectStore(store).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
+async function rawStorageAll(store){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly');const r=tx.objectStore(store).getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error);});}
+async function rawStoragePut(store,value){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(value);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+function localBytesToBase64(bytes){let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(binary);}
+function localBase64ToBytes(value){const binary=atob(value);return Uint8Array.from(binary,c=>c.charCodeAt(0));}
+function localOwnerId(value){
+ const id=Number(value.uid??String(value.key||'').split(':')[0]);
+ if(!Number.isSafeInteger(id)||id<1)throw new Error('El registro local no indica un usuario válido.');
+ return id;
+}
+async function localCryptoKey(uid){
+ if(!localCryptoKeyPromises.has(uid)){
+  localCryptoKeyPromises.set(uid,(async()=>{
+   const existing=await rawStorageGet('keys',String(uid));
+   if(existing?.cryptoKey)return existing.cryptoKey;
+   const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+   await rawStoragePut('keys',{key:String(uid),cryptoKey:key});
+   return key;
+  })());
+ }
+ try{return await localCryptoKeyPromises.get(uid);}catch(e){localCryptoKeyPromises.delete(uid);throw e;}
+}
+async function storagePut(store,value){
+ if(!['drafts','pending','history','reports'].includes(store))throw new Error('Almacenamiento desconocido');
+ const uid=localOwnerId(value);const key=await localCryptoKey(uid);const iv=crypto.getRandomValues(new Uint8Array(12));
+ const json=new TextEncoder().encode(JSON.stringify(value));
+ const aad=new TextEncoder().encode('controlab:local:v1:'+store+':'+String(value.key)+':'+uid);
+ const bytes=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:aad},key,json);
+ await rawStoragePut(store,{key:value.key,uid,secureVersion:1,iv:localBytesToBase64(iv),ciphertext:localBytesToBase64(new Uint8Array(bytes))});
+}
+async function storageUnwrap(store,item){
+ if(!item)return null;
+ if(item.secureVersion!==1){
+  if(item.secureVersion!=null)throw new Error('Versión de cifrado local no reconocida. No se modificó el registro.');
+  // Migración: jamás devolver a la aplicación un registro legado sin re-cifrarlo.
+  await storagePut(store,item);
+  return item;
+ }
+ const uid=localOwnerId(item);const key=await localCryptoKey(uid);
+ const iv=localBase64ToBytes(item.iv);const bytes=localBase64ToBytes(item.ciphertext);
+ const aad=new TextEncoder().encode('controlab:local:v1:'+store+':'+String(item.key)+':'+uid);
+ try{
+  const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv,additionalData:aad},key,bytes);
+  const result=JSON.parse(new TextDecoder().decode(raw));
+  if(result.key!==item.key||localOwnerId(result)!==uid)throw new Error('Datos locales inconsistentes');
+  return result;
+ }catch(e){throw new Error('No se pudo verificar el cifrado local; no se borraron los datos.');}
+}
+async function storageGet(store,key){return storageUnwrap(store,await rawStorageGet(store,key));}
+async function storageAll(store){const rows=await rawStorageAll(store);return Promise.all(rows.filter(item=>currentUid&&Number(item.uid??String(item.key||'').split(':')[0])===currentUid).map(item=>storageUnwrap(store,item)));}
+async function storageDel(store,key){const db=await localDB();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
+async function encryptLegacyLocalData(){
+ // Cifrar también registros anteriores que todavía no haya abierto un usuario.
+ for(const store of ['drafts','pending','history','reports']){
+  for(const entry of await rawStorageAll(store)){
+   if(entry.secureVersion==null)await storagePut(store,entry);
+  }
+ }
+}
 function ownerKey(suffix){if(!currentUid)throw new Error('No hay usuario local identificado.');return currentUid+':'+suffix;}
 function signature(data){return JSON.stringify(data);}
 function queueUUID(){if(crypto.randomUUID)return crypto.randomUUID();const a=crypto.getRandomValues(new Uint8Array(16));a[6]=(a[6]&15)|64;a[8]=(a[8]&63)|128;const h=Array.from(a,x=>x.toString(16).padStart(2,'0')).join('');return [h.slice(0,8),h.slice(8,12),h.slice(12,16),h.slice(16,20),h.slice(20)].join('-');}
@@ -661,7 +721,7 @@ $('printBtn').addEventListener('click',()=>{printOverride=null;fillPrint();windo
 window.addEventListener('afterprint',()=>{printOverride=null;});
 window.addEventListener('beforeprint',()=>{if(!printOverride)fillPrint();});
 async function init(){
- try{await localDB();}catch(e){showNotice($('loginError'),'Este navegador no permite guardar datos sin conexión: '+e.message,true);}
+ try{await localDB();await encryptLegacyLocalData();}catch(e){showNotice($('loginError'),'No fue posible cifrar los borradores anteriores en este equipo: '+e.message,true);}
  if('serviceWorker' in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
  try{await syncAuth();$('offlineEntry').hidden=true;}catch(e){authenticated=false;renderAuth();await offerOfflineAccess();showNotice($('loginError'),navigator.onLine?'No fue posible consultar la sesión: '+e.message:'No hay conexión al servidor. Puedes entrar en modo local si ya usaste este equipo.',!(!navigator.onLine));}
  updateConnectivity();

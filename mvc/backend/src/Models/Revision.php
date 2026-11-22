@@ -35,7 +35,8 @@ final class Revision {
         $r['integridad_verificada']=$r['estado']==='aprobado' && is_string($r['hash_datos'])
             && hash_equals($r['hash_datos'], hash('sha256',$rawData));
         if ($r['integridad_verificada'] && is_string($signature) && $signature!=='') {
-            $r['firma_imagen']='data:image/png;base64,'.base64_encode($signature);
+            $bytes=$this->db->reportCrypto()->decryptBytes($reportId,$signature,'firma');
+            $r['firma_imagen']='data:image/png;base64,'.base64_encode($bytes);
         }
         return $r;
     }
@@ -104,11 +105,12 @@ final class Revision {
             $q=$pdo->prepare('SELECT estado FROM informe_revisiones WHERE informe_id=? FOR UPDATE');
             $q->execute([$reportId]);
             if ($q->fetchColumn()!=='pendiente') throw new RuntimeException('El informe no está pendiente de revisión',409);
-            $hash=hash('sha256',$data);
+            $plaintext=$this->db->reportCrypto()->decrypt($reportId,$data);
+            $hash=hash('sha256',$plaintext);
             $q=$pdo->prepare('UPDATE informe_revisiones SET estado=\'aprobado\',revisor_id=?,fecha_revision=UTC_TIMESTAMP(),motivo_devolucion=NULL,hash_datos=?,firma_png=? WHERE informe_id=?');
             $q->bindValue(1,$userId,PDO::PARAM_INT);
             $q->bindValue(2,$hash);
-            $q->bindValue(3,$png,PDO::PARAM_LOB);
+            $q->bindValue(3,$this->db->reportCrypto()->encryptBytes($reportId,$png,'firma'),PDO::PARAM_LOB);
             $q->bindValue(4,$reportId,PDO::PARAM_INT);
             $q->execute();
             $q=$pdo->prepare("INSERT INTO informe_revision_eventos (informe_id,usuario_id,accion,hash_datos) VALUES (?,?,'aprobar',?)");
