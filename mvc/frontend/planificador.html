@@ -351,6 +351,38 @@ async function openDetail(id){
   $('detailSection').scrollIntoView({behavior:'smooth',block:'start'});
  }catch(e){notice('loadNotice',e.message,true);}
 }
+function fillCompanies(){
+ const select=$('empresaCatalogo');select.replaceChildren();
+ const first=el('option','','Seleccionar empresa');first.value='';select.append(first);
+ for(const company of companies){const option=el('option','',company.razon_social);option.value=String(company.id);select.append(option);}
+}
+function fillWorks(companyId='',chosenId=''){
+ const select=$('obraCatalogo');select.replaceChildren();
+ const first=el('option','','Seleccionar obra');first.value='';select.append(first);
+ for(const work of works.filter(w=>Number(w.activo)===1&&String(w.empresa_id)===String(companyId))){
+  const option=el('option','',work.nombre+' · '+work.comuna);option.value=String(work.id);select.append(option);
+ }
+ select.value=chosenId;
+}
+function applyWork(){
+ const work=works.find(w=>String(w.id)===$('obraCatalogo').value);
+ if(!work)return;
+ $('cliente').value=work.empresa;$('obra').value=work.nombre;
+ $('destino').value=work.direccion;$('comuna').value=work.comuna;
+}
+$('empresaCatalogo').addEventListener('change',()=>{fillWorks($('empresaCatalogo').value);});
+$('obraCatalogo').addEventListener('change',applyWork);
+function fillFieldCheckboxes(selectedIds=[]){
+ const root=$('fieldChoices');root.replaceChildren();const selectedSet=new Set(selectedIds.map(Number));
+ if(!fieldStaff.length){root.append(el('div','empty','Todavía no hay personal de terreno. Regístralo en Catálogos.'));return;}
+ for(const worker of fieldStaff){
+  const label=el('label','team-checkbox'),checkbox=document.createElement('input');
+  checkbox.type='checkbox';checkbox.name='personal_terreno_ids';checkbox.value=String(worker.id);
+  checkbox.checked=selectedSet.has(Number(worker.id));
+  const txt=el('span');txt.append(el('strong','',worker.nombre),el('small','',worker.cargo+' · sin usuario'));
+  label.append(checkbox,txt);root.append(label);
+ }
+}
 function fillTeamCheckboxes(selectedIds=[]){
  const root=$('teamChoices');root.replaceChildren();const selectedSet=new Set(selectedIds.map(Number));
  if(!staff.length){root.append(el('div','empty','Aún no hay laboratoristas o digitadores activos. Crea sus usuarios desde Administración.'));return;}
@@ -368,6 +400,10 @@ function openForm(record=null){
  $('formTitle').textContent=record?'Editar OT '+record.numero_ot:'Nueva orden de trabajo';
  $('saveBtn').textContent=record?'Guardar cambios':'Crear orden de trabajo';
  $('otForm').reset();
+ fillCompanies();
+ const linked=record?.obra_id?works.find(w=>Number(w.id)===Number(record.obra_id)):null;
+ $('empresaCatalogo').value=linked?String(linked.empresa_id):'';
+ fillWorks($('empresaCatalogo').value,linked?String(linked.id):'');
  for(const key of ['numero_ot','cliente','obra','actividad','destino','comuna','estado','prioridad','observaciones']){
   if(record&&record[key]!==undefined)$(key).value=record[key]||'';
  }
@@ -378,6 +414,7 @@ function openForm(record=null){
   $('estado').value='planificada';$('prioridad').value='normal';
  }
  fillTeamCheckboxes(record?record.personal.map(p=>p.id):[]);
+ fillFieldCheckboxes(record?(record.personal_terreno||[]).map(p=>p.id):[]);
  notice('saveNotice','');$('formSection').hidden=false;
  $('formSection').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -385,6 +422,8 @@ function formPayload(){
  const data={};
  for(const name of ['numero_ot','cliente','obra','actividad','destino','comuna','inicio','fin','estado','prioridad','observaciones'])data[name]=$(name).value.trim();
  data.personal=Array.from($('teamChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
+ data.personal_terreno_ids=Array.from($('fieldChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
+ data.obra_id=$('obraCatalogo').value?Number($('obraCatalogo').value):null;
  if(editingId!==null)data.version=editingVersion;
  return data;
 }
@@ -393,6 +432,7 @@ $('otForm').addEventListener('submit',async e=>{
  const btn=$('saveBtn');btn.disabled=true;notice('saveNotice','Guardando planificación…');
  try{
   const payload=formPayload();
+   if(editingId===null&&!payload.obra_id)throw new Error('Selecciona una obra registrada antes de crear la OT. Puedes agregarla en Empresas · Obras · Personal.');
   const saved=await mutate(editingId===null?'/ot':'/ot/'+editingId,editingId===null?'POST':'PUT',payload);
   $('formSection').hidden=true;clearDetails();
   // Cambia al mes de la OT si se guardó en otro período.
@@ -425,10 +465,22 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
   if(!s.autenticado)throw new Error('Inicia sesión en Controlab para ver tus órdenes de trabajo.');
   viewerId=Number(s.usuario_id);manager=['administrador','administrativo'].includes(s.rol);
   $('usersLink').hidden=s.rol!=='administrador';
+   $('catalogLink').hidden=!manager;
   $('newBtn').hidden=!manager;$('teamTab').hidden=!manager;$('personFilter').hidden=!manager;
   if(manager){
-   const people=await request('/ot/equipo');staff=people.equipo||[];
-   for(const person of staff){const opt=document.createElement('option');opt.value=String(person.id);opt.textContent=person.nombre+' · '+person.rol;$('personFilter').append(opt);}
+   const [people,catalogCompanies,catalogWorks]=await Promise.all([
+      request('/ot/equipo'),request('/catalogo/empresas'),request('/catalogo/obras')
+   ]);
+   staff=people.equipo||[];fieldStaff=people.personal_terreno||[];
+   companies=catalogCompanies.empresas||[];works=catalogWorks.obras||[];
+   for(const person of staff){
+      const opt=document.createElement('option');opt.value='u-'+person.id;
+      opt.textContent=person.nombre+' · '+person.rol;$('personFilter').append(opt);
+   }
+   for(const worker of fieldStaff){
+      const opt=document.createElement('option');opt.value='t-'+worker.id;
+      opt.textContent=worker.nombre+' · '+worker.cargo+' (sin usuario)';$('personFilter').append(opt);
+   }
   }
   selected=dateKey(new Date());$('teamDay').value=selected;sessionReady=true;$('content').hidden=false;
   await load();
