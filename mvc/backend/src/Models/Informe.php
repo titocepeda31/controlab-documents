@@ -10,7 +10,8 @@ use Throwable;
 final class Informe {
     private Empresa $empresa;
     private Revision $revision;
-    public function __construct(private Database $db) { $this->empresa = new Empresa($db); $this->revision = new Revision($db); }
+    private LaboratoristaFirma $firmaLaboratorista;
+    public function __construct(private Database $db) { $this->empresa = new Empresa($db); $this->revision = new Revision($db); $this->firmaLaboratorista = new LaboratoristaFirma($db); }
     public function all(): array {
         return $this->db->connection()->query("SELECT i.id,i.usuario_id,i.numero_informe,i.fecha_informe,i.estado,e.razon_social,COALESCE(r.estado,'borrador') AS revision_estado,r.motivo_devolucion FROM informes i JOIN empresas e ON e.id=i.empresa_id LEFT JOIN informe_revisiones r ON r.informe_id=i.id ORDER BY i.id DESC LIMIT 100")->fetchAll();
     }
@@ -22,6 +23,7 @@ final class Informe {
         $raw=$this->db->reportCrypto()->decrypt($id,(string)$row['datos']);
         $row['datos']=json_decode($raw,true) ?? [];
         $row['revision']=$this->revision->get($id,$raw);
+        $row['firma_laboratorista']=$this->firmaLaboratorista->getForUser((int)$row['usuario_id']);
         $row['eventos_revision']=$this->revision->events($id);
         return $row;
     }
