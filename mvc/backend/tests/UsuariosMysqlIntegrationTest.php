@@ -43,7 +43,7 @@ $pdo->prepare('INSERT INTO usuario_perfiles (usuario_id,nombre,rol) VALUES (?,?,
     ->execute([$admin,'Administrador inicial','administrador']);
 
 $model=new Usuario($db);
-check($model->findActiveByEmail('admin@example.test')['id']===$admin,'Login inicial no funciona');
+check((int)$model->findActiveByEmail('admin@example.test')['id']===$admin,'Login inicial no funciona');
 $lab=$model->create(['nombre'=>'Laboratorista Uno','email'=>'lab@example.test','rol'=>'laboratorista','clave'=>'ClaveLaboratorio2026!']);
 $digit=$model->create(['nombre'=>'Digitador Uno','email'=>'digit@example.test','rol'=>'digitador','clave'=>'ClaveDigitador2026!']);
 $office=$model->create(['nombre'=>'Oficina Uno','email'=>'oficina@example.test','rol'=>'administrativo','clave'=>'ClaveOficina2026!']);
