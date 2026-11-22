@@ -138,8 +138,8 @@ final class OrdenTrabajo {
         if($last<$start||$last->diff($start)->days>100)throw new InvalidArgumentException('Consulta un período de hasta 100 días');
         $max=$last->modify('+1 day')->format('Y-m-d').' 00:00:00';
         $params=[$max,$from.' 00:00:00'];
-        $sql="SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.version,v.obra_id ".
-             "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id WHERE o.inicio < ? AND o.fin > ?";
+        $sql="SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.version,v.obra_id,g.latitud,g.longitud ".
+             "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id LEFT JOIN obra_ubicaciones g ON g.obra_id=v.obra_id WHERE o.inicio < ? AND o.fin > ?";
         if(!self::manager($viewer)){
             $sql.=" AND EXISTS (SELECT 1 FROM ot_asignaciones a WHERE a.ot_id=o.id AND a.usuario_id=?)";
             $params[]=(int)$viewer['id'];
@@ -153,8 +153,8 @@ final class OrdenTrabajo {
 
     public function find(int $id,array $viewer): array {
         $q=$this->db->connection()->prepare(
-            "SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.observaciones,o.version,o.creado_por,o.actualizado_el,v.obra_id ".
-            "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id WHERE o.id=? LIMIT 1"
+            "SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.observaciones,o.version,o.creado_por,o.actualizado_el,v.obra_id,g.latitud,g.longitud ".
+            "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id LEFT JOIN obra_ubicaciones g ON g.obra_id=v.obra_id WHERE o.id=? LIMIT 1"
         );
         $q->execute([$id]);$item=$q->fetch(PDO::FETCH_ASSOC);
         if(!$item)throw new RuntimeException('Orden de trabajo no encontrada',404);
