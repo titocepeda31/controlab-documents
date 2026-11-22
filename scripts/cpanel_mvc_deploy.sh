@@ -67,7 +67,9 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
     $q->execute([$table]);
     if (!(int)$q->fetchColumn()) {fwrite(STDERR,"Falta la tabla $table. Ejecutar migraciones SQL antes de desplegar.\n");exit(2);}
   }
-  $admins=$pdo->query("SELECT COUNT(*) FROM usuario_accesos a JOIN usuarios u ON u.id=a.usuario_id WHERE a.rol='administrador' AND u.activo=1")->fetchColumn();
+  $checkAdmin=$pdo->prepare("SELECT COUNT(*) FROM usuario_accesos a JOIN usuarios u ON u.id=a.usuario_id WHERE a.rol=? AND u.activo=1");
+  $checkAdmin->execute(["administrador"]);
+  $admins=$checkAdmin->fetchColumn();
   if(!(int)$admins){fwrite(STDERR,"No hay administrador autorizado. Ejecutar SQL de activación antes de desplegar.\n");exit(3);}
 ' "$PRIVATE/config.php" || { echo 'ERROR: comprobación de migración fallida; no se desplegó.' >&2; exit 1; }
 
