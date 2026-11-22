@@ -32,7 +32,7 @@ También revisar en **Estructura** el tipo de `informe_datos.datos` y `informe_r
 ### Paso 2: elegir la ruta
 
 - **Si informes_sin_cifrar = 0 y firmas_sin_cifrar = 0:** no hay registros legados pendientes; después de ampliar columnas y verificar la clave se puede desplegar la rama de cifrado sin ejecutar el migrador.
-- **Si hay registros existentes que se quieren conservar:** usar **Trabajos de cron** de cPanel para ejecutar una sola vez el migrador mediante PHP CLI; esto **no es SSH**. Se programa durante una ventana de mantenimiento y se elimina la tarea al terminar. Primero ejecutar `--dry-run` y comprobar resultados; luego `--apply --maintenance-confirmed --backup-confirmed`, con respaldos probados. Utilizar la ruta real del ejecutable PHP que soporte el hosting y el clon correcto del repositorio.
+- **Si hay registros existentes que se quieren conservar:** usar **Trabajos de cron** de cPanel para ejecutar una sola vez el migrador mediante PHP CLI; esto **no es SSH**. Se programa durante una ventana de mantenimiento y se elimina la tarea al terminar. Primero ejecutar `--dry-run` y comprobar resultados; luego `--apply --maintenance-confirmed --backup-confirmed`, con respaldos probados. **Solo si los datos son ficticios y su pérdida es aceptable**, la alternativa explícita es `--apply --maintenance-confirmed --dev-no-backup-accept-loss`, que permite proceder sin respaldo. Esta opción no recupera información ante fallos. Utilizar la ruta real del ejecutable PHP que soporte el hosting y el clon correcto del repositorio.
 - **Si los informes de demostración no se necesitan:** solo el responsable puede autorizar expresamente que se descarten. No sugerir `TRUNCATE`/borrado sin confirmar relaciones, integridad de tablas y respaldo.
 
 Ejemplo de **comando de Cron para revisión**, sujeto a confirmar ruta PHP y que el clon use `feature/cifrado-informes`:
@@ -77,6 +77,14 @@ Si la revisión no muestra anomalías, el responsable confirma respaldo probado 
 ```bash
 php mvc/backend/scripts/encrypt_existing_reports.php /home/maderas7/demo-informes/config.php --apply --maintenance-confirmed --backup-confirmed
 ```
+**Para un entorno exclusivamente de desarrollo, sin respaldo y aceptando perder los 3 informes si algo falla**, sustituir el comando anterior por:
+
+```bash
+php mvc/backend/scripts/encrypt_existing_reports.php /home/maderas7/demo-informes/config.php --apply --maintenance-confirmed --dev-no-backup-accept-loss
+```
+
+No ejecutar mientras alguien guarda informes. Si el sitio sigue con el código antiguo una vez cifrados, no podrá abrir los registros hasta que se despliegue la rama compatible.
+
 El script es idempotente, verifica hashes de informes aprobados y autenticación de contenido, cifra resultados y firmas, y falla ante contenido roto. **No es un comando a ejecutar mientras los trabajadores siguen usando el sistema antiguo.**
 
 **Inmediatamente después**, desplegar versión compatible con cifrado en el cPanel, antes de reabrir el servicio. El script `scripts/cpanel_mvc_deploy.sh` bloquea el despliegue si falta la clave, no hay OpenSSL, las columnas son pequeñas o aún quedan resultados/firmas sin cifrar. **No desplegar solo el frontend o solo el backend.**
