@@ -405,7 +405,7 @@ $('loginForm').addEventListener('submit',async e=>{
  finally{btn.disabled=false;}
 });
 $('togglePassword').addEventListener('click',()=>{const el=$('loginPassword');el.type=el.type==='password'?'text':'password';$('togglePassword').textContent=el.type==='password'?'Mostrar':'Ocultar';});
-$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;currentSignatureData=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){feedback('No fue posible cerrar sesión: '+e.message,true);}});
+$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;currentSignatureData=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;currentSignatureData=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){feedback('No fue posible cerrar sesión: '+e.message,true);}});
 function getData(){const data={};$('reportForm').querySelectorAll('[name]').forEach(el=>{data[el.name]=el.value.trim();});return data;}
 function setData(data){$('reportForm').querySelectorAll('[name]').forEach(el=>{el.value=data[el.name]===undefined?'':String(data[el.name]);});updateReview();scheduleDraft();}
 function goStep(n){
@@ -733,17 +733,20 @@ function renderProfileFirma(){
  else $('savedFirmaImg').removeAttribute('src');
 }
 async function loadProfileFirma(){
- if(!currentUid)return;
+ const uid=currentUid;if(!uid)return;
+ const cacheKey=uid+':firmaPerfil';
  if(authenticated&&navigator.onLine){
   const r=await apiRequest('/mi-firma');
+  if(currentUid!==uid)return; // Evitar mezclar firmas al cambiar de usuario.
   currentSignatureData=r.registrada&&typeof r.firma_imagen==='string'?r.firma_imagen:null;
-  if(currentSignatureData)await storagePut('history',{key:ownerKey('firmaPerfil'),firma_imagen:currentSignatureData});
-  else await storageDel('history',ownerKey('firmaPerfil'));
+  if(currentSignatureData)await storagePut('history',{key:cacheKey,firma_imagen:currentSignatureData});
+  else await storageDel('history',cacheKey);
  }else{
-  const cached=await storageGet('history',ownerKey('firmaPerfil'));
+  const cached=await storageGet('history',cacheKey);
+  if(currentUid!==uid)return;
   currentSignatureData=cached?.firma_imagen||null;
  }
- renderProfileFirma();
+ if(currentUid===uid)renderProfileFirma();
 }
 $('profileFirmaBtn').addEventListener('click',async()=>{
  showWorkspace('profileFirmaScreen');clearProfileDrawing();$('profileFirmaFile').value='';
