@@ -5,6 +5,8 @@ namespace Demo\Middleware;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
 use RuntimeException;
+use Demo\Core\Database;
+use Demo\Models\Usuario;
 
 /**
  * Proteccion de endpoints privados por sesion y CSRF.
@@ -13,11 +15,34 @@ use RuntimeException;
  */
 final class Security
 {
-    public static function auth(): void
-    {
-        if (empty($_SESSION['uid'])) {
-            throw new RuntimeException('Acceso no autorizado', 401);
+    private static ?Database $database=null;
+
+    public static function configure(Database $db): void { self::$database=$db; }
+
+    /** Revalida estado, perfil y versión de sesión contra MySQL en cada solicitud. */
+    public static function sessionUser(): ?array {
+        $uid=(int)($_SESSION['uid']??0);
+        $sv=(int)($_SESSION['session_version']??0);
+        if($uid<1||$sv<1)return null;
+        if(self::$database===null)throw new RuntimeException('Seguridad sin configurar');
+        $current=(new Usuario(self::$database))->findActiveById($uid);
+        if(!$current||$sv!==(int)$current['version_credenciales']){
+            unset($_SESSION['uid'],$_SESSION['session_version']);
+            return null;
         }
+        return $current;
+    }
+
+    public static function auth(): array {
+        $user=self::sessionUser();
+        if(!$user)throw new RuntimeException('Inicia sesión nuevamente',401);
+        return $user;
+    }
+
+    public static function requireRole(string ...$roles): array {
+        $user=self::auth();
+        if(!in_array($user['rol'],$roles,true))throw new RuntimeException('Tu perfil no tiene permiso para esta acción',403);
+        return $user;
     }
 
     public static function csrf(Request $request): void

@@ -25,7 +25,9 @@ jobs:
           find mvc/backend mvc/frontend -type f -name '*.php' -print0 | xargs -0 -n1 php -l
           bash -n scripts/cpanel_mvc_deploy.sh
       - name: Comprobar cifrado autenticado, manipulación y firma
-        run: php mvc/backend/tests/ReportCryptoTest.php
+        run: |
+          php mvc/backend/tests/ReportCryptoTest.php
+          php mvc/backend/tests/UsuariosTest.php
       - name: Comprobar Javascript de navegador
         run: |
           set -euo pipefail
@@ -35,6 +37,8 @@ jobs:
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('mvc/frontend/manifest.json','utf8'));if(!m.start_url.includes('/demo/formulario.html')||!m.icons.length||!fs.existsSync('mvc/frontend/icon.svg'))process.exit(1);"
           node mvc/frontend/tests/offline-sw.test.cjs
           node mvc/frontend/tests/menu-firma.test.cjs
+          node mvc/frontend/tests/usuarios.test.cjs
+          node --check /tmp/controlab-usuarios.js
       - name: Comprobar barreras de despliegue
         run: |
           set -euo pipefail
@@ -44,3 +48,35 @@ jobs:
           grep -Fq "encryptBytes" mvc/backend/src/Models/Revision.php
           grep -Fq "encryptLegacyLocalData" mvc/frontend/formulario.html
           grep -Fq "secureVersion:1" mvc/frontend/formulario.html
+
+  usuarios_mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: test_password
+          MARIADB_DATABASE: controlab_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar cliente PDO MySQL
+        run: |
+          if ! php -m | grep -iq '^pdo_mysql$'; then
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y php-mysql
+          fi
+      - name: Validar perfiles y sesiones en MariaDB real
+        env:
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_NAME: controlab_test
+          TEST_DB_USER: root
+          TEST_DB_PASS: test_password
+        run: php mvc/backend/tests/UsuariosMysqlIntegrationTest.php
