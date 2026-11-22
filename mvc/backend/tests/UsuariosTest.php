@@ -2,7 +2,6 @@
 declare(strict_types=1);
 require __DIR__ . '/../src/Models/Usuario.php';
 use Demo\Models\Usuario;
-use InvalidArgumentException;
 
 function shouldFail(callable $action,string $label): void {
     try{$action();}catch(InvalidArgumentException $e){return;}
