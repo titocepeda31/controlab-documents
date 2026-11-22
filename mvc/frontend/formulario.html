@@ -377,7 +377,7 @@ function confirmInline(button,message){
  return false;
 }
 function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hidden=canEdit;$('appView').hidden=!canEdit;$('reviewsBtn').hidden=!authenticated||!canReview;if(!canEdit){showWorkspace(null);stopVoice();}updateConnectivity();}
-function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
+function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');if(currentUid!==uid)currentSignatureData=null;currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
 async function syncAuth(){
  const r=await session();authenticated=!!r.autenticado;offlineMode=false;canReview=authenticated&&!!r.puede_revisar;
  if(authenticated){
@@ -388,12 +388,12 @@ async function syncAuth(){
   }
  }
  renderAuth();
- if(authenticated)void syncPending();
+ if(authenticated){void syncPending();void loadProfileFirma().catch(()=>{});}
  return r;
 }
 function updateConnectivity(){const online=navigator.onLine;const active=authenticated&&online;$('connectionDot').classList.toggle('offline',!active);$('connectionStatus').textContent=active?'Con conexión · sesión activa':(online?'Sin sesión validada · guardado local':'Sin conexión · guardado local');document.querySelector('.session-tag').textContent=active?'● Sesión activa':'● Modo local (sin autenticar)';$('syncBtn').disabled=!active||syncing;}
 async function offerOfflineAccess(){const uid=Number(localStorage.getItem('demo_last_user'));$('offlineEntry').hidden=!(Number.isSafeInteger(uid)&&uid>0);}
-$('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();});
+$('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();await loadProfileFirma().catch(()=>{});});
 
 $('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('loginBtn');btn.disabled=true;showNotice($('loginError'),'Verificando...');
@@ -405,7 +405,7 @@ $('loginForm').addEventListener('submit',async e=>{
  finally{btn.disabled=false;}
 });
 $('togglePassword').addEventListener('click',()=>{const el=$('loginPassword');el.type=el.type==='password'?'text':'password';$('togglePassword').textContent=el.type==='password'?'Mostrar':'Ocultar';});
-$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){feedback('No fue posible cerrar sesión: '+e.message,true);}});
+$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;currentSignatureData=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){feedback('No fue posible cerrar sesión: '+e.message,true);}});
 function getData(){const data={};$('reportForm').querySelectorAll('[name]').forEach(el=>{data[el.name]=el.value.trim();});return data;}
 function setData(data){$('reportForm').querySelectorAll('[name]').forEach(el=>{el.value=data[el.name]===undefined?'':String(data[el.name]);});updateReview();scheduleDraft();}
 function goStep(n){
@@ -764,12 +764,20 @@ $('returnReport').addEventListener('click',async()=>{
 async function printStoredReport(id,button){
  button.disabled=true;
  try{
-  const r=await apiRequest('/informes/'+id);printOverride={datos:r.datos,revision:r.revision};fillPrint();
+  const r=await apiRequest('/informes/'+id);printOverride={datos:r.datos,revision:r.revision,firma_laboratorista:r.firma_laboratorista};fillPrint();
   // Evita abrir el diálogo de impresión antes de que se dibuje la firma PNG.
-  const signatureImage=$('printRevision').querySelector('img');
-  if(signatureImage&&signatureImage.decode){try{await signatureImage.decode();}catch(e){throw new Error('No se pudo cargar la firma visual.');}}
+  for(const signatureImage of $('printSheet').querySelectorAll('img')){
+   if(signatureImage.decode){try{await signatureImage.decode();}catch(e){throw new Error('No se pudo cargar la firma visual.');}}
+  }
   window.print();
  }catch(e){printOverride=null;feedback('No fue posible imprimir el registro: '+e.message,true);}finally{button.disabled=false;}
+}
+function renderPrintFirmaLaboratorista(imagen){
+ const root=$('printLaboratorista');root.replaceChildren();
+ if(!imagen)return;
+ root.append(node('strong','FIRMA VISUAL DEL LABORATORISTA'));
+ const img=document.createElement('img');img.src=imagen;img.alt='Firma visual del perfil del laboratorista';root.append(img);
+ root.append(node('small','Firma de perfil reutilizable · documento de prueba, sin aprobación electrónica.'));
 }
 function renderPrintReview(revision){
  const root=$('printRevision');root.replaceChildren();
@@ -794,6 +802,7 @@ function fillPrint(){const d=printOverride?.datos||getData();$('printGeneral').r
  $('printSieves').replaceChildren();tamices.forEach((s,i)=>{const tr=document.createElement('tr');[s,d['retenido_'+i]||'—',d['pasa_'+i]||'—'].forEach(v=>tr.append(node('td',v)));$('printSieves').append(tr);});
  $('printMetrics').replaceChildren();for(const [title,key] of [['DCH','dch'],['% W Proctor','humedadProctor'],['DCS','dcs'],['Método','metodo'],['CBR (%)','cbr'],['LL','ll'],['LP','lp'],['IP','ip'],['Chancado (%)','chancado'],['Desgaste (%)','desgaste'],['Humedad (%)','humedad']])$('printMetrics').append(node('div',title+': '+(d[key]||'—')));
  $('printClasses').replaceChildren();$('printClasses').append(node('div','AASHTO: '+(d.aashto||'—')),node('div','USCS: '+(d.usc||'—')));$('printObservations').textContent=d.observaciones||'—';$('printResponsible').textContent='Responsable: '+(d.responsable||'—');$('printDate').textContent='Fecha de registro: '+(d.fechaRegistro||'—');
+ renderPrintFirmaLaboratorista(printOverride?printOverride.firma_laboratorista:currentSignatureData);
  renderPrintReview(printOverride?.revision||null);
 }
 $('printBtn').addEventListener('click',()=>{printOverride=null;fillPrint();window.print();});
