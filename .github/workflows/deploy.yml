@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   test-ftps:
+    environment: FTPS_HOST
     name: Probar transferencia a cPanel
     runs-on: ubuntu-latest
     timeout-minutes: 10
