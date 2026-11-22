@@ -1,5 +1,5 @@
 /* Aplicación sin conexión: cachea SOLO la interfaz estática; jamás sesiones, API, reportes o credenciales. */
-const CACHE='demo-mecanica-suelo-v12';
+const CACHE='demo-mecanica-suelo-v13';
 const ROOT=new URL('./',self.registration.scope).pathname;
 const SHELL=new URL('formulario.html',self.registration.scope).pathname;
 const MANIFEST=new URL('manifest.json',self.registration.scope).pathname;
