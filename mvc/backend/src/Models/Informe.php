@@ -20,13 +20,17 @@ final class Informe {
             ."LEFT JOIN informe_destinatarios dest ON dest.informe_id=i.id "
             ."LEFT JOIN empresas ec ON ec.id=dest.empresa_id ";
         if ($user['rol']==='cliente') {
-            // Nunca mostrar borradores, ni informes de otra empresa.
+            // Cliente: aprobados de su empresa y expresamente compartidos.
             $sql.="WHERE dest.empresa_id=? AND r.estado='aprobado' ORDER BY i.id DESC LIMIT 100";
             $q=$this->db->connection()->prepare($sql);
             $q->execute([$user['empresa_id']]);
             return $q->fetchAll();
         }
-        return $this->db->connection()->query($sql.'ORDER BY i.id DESC LIMIT 100')->fetchAll();
+        if ($user['rol']==='digitalizador') {
+            // Digitador: prepara envíos, nunca ve ni modifica borradores.
+            $sql.="WHERE r.estado='aprobado' ORDER BY i.id DESC LIMIT 100";
+        } else $sql.='ORDER BY i.id DESC LIMIT 100';
+        return $this->db->connection()->query($sql)->fetchAll();
     }
     public function find(int $id,array $user): array {
         $sql='SELECT i.id,i.usuario_id,i.empresa_id,i.numero_informe,i.tipo_informe,i.fecha_informe,d.datos,'
@@ -38,6 +42,9 @@ final class Informe {
             $sql.="JOIN informe_revisiones rev ON rev.informe_id=i.id AND rev.estado='aprobado' "
                 ."WHERE i.id=? AND dest.empresa_id=?";
             $params=[$id,$user['empresa_id']];
+        } else if ($user['rol']==='digitalizador') {
+            $sql.="JOIN informe_revisiones rev ON rev.informe_id=i.id AND rev.estado='aprobado' WHERE i.id=?";
+            $params=[$id];
         } else {
             $sql.='WHERE i.id=?';
             $params=[$id];
@@ -50,7 +57,7 @@ final class Informe {
         $row['datos']=json_decode($raw,true) ?? [];
         $row['revision']=$this->revision->get($id,$raw);
         // Si alguien modificó los datos después de aprobar, el cliente no debe verlo.
-        if($user['rol']==='cliente' && empty($row['revision']['integridad_verificada'])){
+        if(in_array($user['rol'],['cliente','digitalizador'],true) && empty($row['revision']['integridad_verificada'])){
             throw new RuntimeException('Informe no disponible',404);
         }
         // Auditoría interna no se expone a cuentas de cliente.
