@@ -54,6 +54,30 @@ Para cada empresa y obra:
 4. Conciliar historial y detectar huecos, distinguiendo «número no encontrado» de «informe pendiente».
 5. Más adelante, crear OT dentro del sistema y reemplazar el Excel solo cuando las personas encargadas aprueben el proceso.
 
+## Hallazgo operativo: bloques de correlativos e impresión de OD
+
+**Flujo actual confirmado por el usuario (2026-11-22):**
+- Se consulta el Excel por **empresa** y se filtra por **obra**.
+- Se agregan correlativos manualmente, uno tras otro (1, 2, 3, ...). Hay pedidos de grandes cantidades, por ejemplo **50 correlativos**.
+- **Cada correlativo genera una OD impresa** y la documentación física asociada: el papel sigue siendo parte del control.
+- Deben esperar que otra persona desocupe el Excel antes de numerar; si trabajan simultáneamente **se pisan los números**.
+- El usuario llamó al documento físico **OD**; no expandir esta sigla ni asumir que es la misma OT hasta confirmar el procedimiento real y ver la plantilla.
+- Se mantienen **dos entidades distintas**: OT (orden de trabajo actualmente creada en Excel) y correlativo de informe por obra. El nombre OD no se debe equiparar automáticamente a ninguna de ellas.
+
+**Requerimiento propuesto, por confirmar antes de implementar:**
+1. Seleccionar empresa y obra existentes; ver último correlativo asignado, rangos reservados y disponibilidad.
+2. Pedir la **cantidad** (por ejemplo 50). Una **transacción MySQL** con bloqueo de la secuencia de ESA obra asigna todo el rango en una operación indivisible; crear registros para todos los números y confirmar juntos.
+3. Proteger con **índice único por obra y número** (y año/serie solo si se confirma reinicio). Evitar carrera simultánea mediante fila de secuencia bloqueada `SELECT ... FOR UPDATE`, transacción, validación del contador y rollback íntegro si ocurre un error. **No calcular solamente MAX()+1** en paralelo. Otros usuarios pueden trabajar al mismo tiempo sin reservar el mismo número. Las obras distintas mantienen contadores independientes.
+4. Registrar auditoría del lote: quién solicitó, cuándo, empresa, obra, correlativo inicial/final, número de documentos solicitados, emisión/reimpresiones y motivo de anulaciones.
+5. Generar las **OD con el mismo formato que se imprime actualmente**, una para cada correlativo, idealmente como PDF multipágina para impresión masiva. No sustituir ni eliminar papel sin confirmar procedimiento interno.
+6. Etapas sugeridas del correlativo: **reservado/asignado**, **OD impresa**, **utilizado**, **anulado**; el estado de **informe listo** y **enviado** es independiente. Una reimpresión debe conservar el número y registrar la acción; nunca crear correlativo nuevo accidentalmente.
+7. Permitir control por obra: total asignado, lote y números específicos, impresos, utilizados, anulados, pendientes de completar, listos y enviados; marcar faltantes **por investigar**, sin equipararlos automáticamente a informes no realizados.
+8. Migrar desde el Excel actual con reconciliación: conservar numeraciones ya existentes y evitar reusar números históricos o reservados en papel.
+
+**Diseño de UI sugerido**: Empresa → Obra → «Generar correlativos» → Cantidad → Previsualizar rango → Confirmar reserva → «Imprimir OD del lote» → Historial y seguimiento; todo en páginas, sin ventanas modales.
+
+**Preguntas a verificar después con muestras reales:** qué significa OD, relación exacta OD/OT/informe, cuándo se considera oficialmente consumido el correlativo, si la numeración se reinicia anualmente, quién tiene permiso para reservar lotes, cómo se controlan OD impresas no utilizadas, y si se necesita imprimir una OD individual por número o un formato compuesto.
+
 ## Navegación (sin modales)
 - **Empresas:** CRUD y obras asociadas a cada empresa.
 - **Obras:** ficha, listado de OT y tablero de correlativos de informes de esa obra, dirección verificable.
@@ -62,7 +86,7 @@ Para cada empresa y obra:
 - **Mi agenda:** pantalla simplificada para cada laboratorista con OT, fecha, hora, ubicación, tipo de servicio y compañeros/equipos asignados. **No mostrar cliente ni datos comerciales** si su trabajo no los requiere.
 - **Terreno:** marcar inicio y cierre de visita, capturar lecturas/datos e incidencias; fotos solo de apoyo y según autorización.
 - **Informes y entregas:** identificar cada informe por **obra + correlativo**, conectarlo al trabajo de la OT y dejar traza de quién generó y envió el documento.
-- **Control de correlativos:** señalar saltos numéricos y estado de cada correlativo por obra.
+- **Control de correlativos:** asignar bloques atómicamente por empresa/obra, asociar OD impresa a cada número, controlar reimpresiones y señalar saltos numéricos y estados por obra.
 
 ## Flujo
 Correo recibido -> recepción y validación manual -> Empresa y obra existentes o nuevas -> OT creada en Excel (o registrada/importada) con servicio(s) -> planificar visita(s) y asignar personas/equipos -> equipo visualiza 'Mi agenda' -> ejecutar en terreno -> registrar datos -> elaboración/validación de informe según tipo -> entrega al cliente autorizado.
