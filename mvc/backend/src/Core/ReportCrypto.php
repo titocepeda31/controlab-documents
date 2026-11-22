@@ -26,16 +26,28 @@ final class ReportCrypto {
         $this->key = $key;
     }
 
+    /** Los informes cifrados se almacenan como un valor JSON string válido.
+     * Esto respeta CHECK(json_valid(datos)) en MariaDB (columna JSON alias LONGTEXT).
+     * Se aceptan también registros enc:v1: sin comillas de versiones anteriores.
+     * Las firmas se almacenan por separado como bytes en MEDIUMBLOB.
+     */
     public static function isEncrypted(string $stored): bool {
-        return str_starts_with($stored, self::PREFIX);
+        if (str_starts_with($stored, self::PREFIX)) return true;
+        if (!str_starts_with($stored, '"')) return false;
+        $decoded=json_decode($stored,true);
+        return is_string($decoded) && str_starts_with($decoded,self::PREFIX);
     }
 
     public function encrypt(int $reportId, string $json): string {
         json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-        return $this->encryptBytes($reportId,$json,'datos');
+        $ciphertext=$this->encryptBytes($reportId,$json,'datos');
+        return json_encode($ciphertext, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
     }
 
     public function decrypt(int $reportId, string $stored, bool $allowLegacy=false): string {
+        if (!str_starts_with($stored,self::PREFIX) && self::isEncrypted($stored)) {
+            $stored=json_decode($stored,true,512,JSON_THROW_ON_ERROR);
+        }
         $plain=$this->decryptBytes($reportId,$stored,'datos',$allowLegacy);
         json_decode($plain, true, 512, JSON_THROW_ON_ERROR);
         return $plain;
