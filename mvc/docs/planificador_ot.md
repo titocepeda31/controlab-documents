@@ -88,7 +88,7 @@ El usuario define este orden funcional: **registrar necesidad → planificar tra
 - Fecha solicitada y fecha/hora programada, personal responsable y equipos previstos.
 - **Actividades por línea**: tipo de servicio elegible desde catálogo editable, cantidad y unidad (p. ej. 4 puntos de densidad, 2 calicatas, 3 testigos). No asumir que una actividad de terreno produce un único informe.
 - **Cantidad de informes estimada o solicitada**, separada de la cantidad de ensayos. Un informe podría recoger varios resultados, o una actividad requerir varios documentos; pendiente de confirmar reglas reales.
-- **Identificación de puntos/muestras** opcional, como S1, S2, S3, sin atribuirles significado automático. La nomenclatura «S1», «S2», «NS3» que recuerda el usuario no ha sido validada. Puede aludir a puntos de muestreo, sondajes, muestras o nomenclatura interna. No codificarla como una clase de ensayo ni una obligación de tener S3.
+- **S1, S2 y S3 corresponden a información que aparece en los informes**, según aclaración expresa del usuario; **no son categorías ni cantidades del planificador y no deben vincularse a calicatas** sin evidencia. Su significado exacto se definirá cuando se revise una plantilla real del informe. No exigir S3 por defecto.
 - Estado: solicitud recibida, por programar, programada, OT emitida, en terreno, finalizada y lista para informes. Cada cambio registra autor y fecha.
 - OT emitida solo cuando la planificación tenga lo mínimo confirmado y el coordinador la autorice. Una solicitud puede pasar por varias programaciones; no confundir la fecha de solicitud con la ejecución.
 - Al generar OT: usar la numeración del laboratorio (hoy Excel) y permitir imprimirla conforme a su formato existente. No sobrescribir ni repetir números.
@@ -110,13 +110,13 @@ El usuario define este orden funcional: **registrar necesidad → planificar tra
 - Obra: Camino Norte
 - Fecha: por definir con coordinación
 - Trabajo 1: Densidad en terreno, 5 mediciones solicitadas; 5 programadas; 0 realizadas
-- Trabajo 2: Calicatas, 2 puntos solicitados: etiquetas S1 y S2 **solo como identificadores de ejemplo**
+- Trabajo 2: Calicatas, 2 unidades solicitadas (solo ejemplo). Sin asignar códigos S1/S2/S3, ya que pertenecen al formato de los informes.
 - Informes solicitados: por confirmar con solicitante
 - Técnico: sin asignar; equipo: sin asignar
 - Estado: pendiente de programación
 - OT: **sin generar todavía**; número de informe: **sin asignar todavía**
 
-Este flujo evita confundir el número de la OT, la cantidad de mediciones, las etiquetas S1/S2 y los correlativos de informe.
+Este flujo evita confundir el número de la OT, las cantidades de ensayos y los correlativos de informe. Las etiquetas S1/S2/S3 se definen posteriormente dentro de cada formato de informe.
 
 ## Navegación (sin modales)
 - **Empresas:** CRUD y obras asociadas a cada empresa.
@@ -157,7 +157,7 @@ Correo recibido -> Empresa y obra existentes o nuevas -> registrar servicios y c
 - ¿Quién asigna el correlativo de informe dentro de cada obra, se reinicia por año, y cómo se reserva/anula un número?
 - ¿Una OT puede generar varios informes, o un informe relacionarse con varias OT?
 - ¿Quién recibe correo y decide las fechas o asigna personal?
-- ¿Qué significa S1, S2 o NS3 dentro de las planillas y OT de este laboratorio? Solicitar ejemplo real; no asignar significado de norma externa.
+- ¿Qué significan S1, S2 y S3 dentro del formato real de los **informes** de este laboratorio? Solicitar plantilla real; no asumir que sean puntos de calicata, clases de ensayo ni referencias de OT.
 - ¿Quién establece cuántos informes corresponden a cada cantidad de densidades, calicatas o testigos?
 - ¿Cuándo necesita una OT más de una visita o más de un equipo?
 - Catálogo real de servicios, nombres técnicos internos y requerimientos de equipos.
