@@ -33,7 +33,7 @@ final class UsuarioController {
         $eid=filter_var($body['empresa_id']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]) ?: null;
         if(mb_strlen($name)<2 || mb_strlen($name)>160)throw new InvalidArgumentException('Nombre de 2 a 160 caracteres obligatorio');
         if(!filter_var($email,FILTER_VALIDATE_EMAIL) || strlen($email)>180)throw new InvalidArgumentException('Correo inválido');
-        if(!in_array($role,['administrador','responsable','digitalizador','cliente'],true))throw new InvalidArgumentException('Perfil no permitido');
+        if(!in_array($role,['administrador','laboratorista','digitalizador','cliente'],true))throw new InvalidArgumentException('Perfil no permitido');
         if($role==='cliente' && !$eid)throw new InvalidArgumentException('Debes asociar la empresa del cliente');
         if($role!=='cliente')$eid=null;
         if($eid){
@@ -61,7 +61,7 @@ final class UsuarioController {
             $q->execute([$email,$hash]);$id=(int)$pdo->lastInsertId();
             $q=$pdo->prepare('INSERT INTO usuario_accesos (usuario_id,nombre,rol,empresa_id) VALUES (?,?,?,?)');
             $q->execute([$id,$name,$role,$eid]);
-            if(in_array($role,['administrador','responsable'],true)){
+            if(in_array($role,['administrador','laboratorista'],true)){
                 $q=$pdo->prepare('INSERT INTO informe_revisores(usuario_id,habilitado) VALUES (?,1) ON DUPLICATE KEY UPDATE habilitado=1');
                 $q->execute([$id]);
             }
@@ -95,7 +95,7 @@ final class UsuarioController {
             $q=$pdo->prepare('UPDATE usuarios SET activo=? WHERE id=?');$q->execute([$active,$id]);
             $q=$pdo->prepare('UPDATE usuario_accesos SET nombre=?,rol=?,empresa_id=? WHERE usuario_id=?');
             $q->execute([$name,$role,$eid,$id]);
-            $canReview=$active && in_array($role,['administrador','responsable'],true);
+            $canReview=$active && in_array($role,['administrador','laboratorista'],true);
             $q=$pdo->prepare('INSERT INTO informe_revisores(usuario_id,habilitado) VALUES (?,?) ON DUPLICATE KEY UPDATE habilitado=VALUES(habilitado)');
             $q->execute([$id,(int)$canReview]);
             $pdo->commit();
