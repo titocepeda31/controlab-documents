@@ -16,8 +16,19 @@ final class AuthController {
     private Revision $revision;
     public function __construct(Database $db) { $this->users=new Usuario($db); $this->revision=new Revision($db); }
     public function session(Request $request, Response $response): Response {
-        $uid=(int)($_SESSION['uid']??0);
-        return Http::json($response,['autenticado'=>$uid>0,'csrf'=>$_SESSION['csrf'],'usuario_id'=>$uid>0?$uid:null,'puede_revisar'=>$uid>0 && $this->revision->canReview($uid)]);
+        $user=Security::sessionUser();
+        $uid=$user?(int)$user['id']:0;
+        $role=$user['rol']??null;
+        return Http::json($response,[
+            'autenticado'=>$uid>0,
+            'csrf'=>$_SESSION['csrf'],
+            'usuario_id'=>$uid>0?$uid:null,
+            'nombre'=>$user['nombre']??null,
+            'rol'=>$role,
+            'puede_administrar_usuarios'=>$role==='administrador',
+            'puede_firmar_perfil'=>$role==='laboratorista',
+            'puede_revisar'=>$uid>0 && $role!=='digitador' && $this->revision->canReview($uid)
+        ]);
     }
     public function login(Request $request, Response $response): Response {
         Security::csrf($request);
@@ -29,8 +40,9 @@ final class AuthController {
         }
         session_regenerate_id(true);
         $_SESSION['uid']=(int)$user['id'];
+        $_SESSION['session_version']=(int)$user['version_credenciales'];
         $_SESSION['csrf']=bin2hex(random_bytes(24));
-        return Http::json($response,['ok'=>true]);
+        return Http::json($response,['ok'=>true,'rol'=>$user['rol']]);
     }
     public function logout(Request $request, Response $response): Response {
         Security::csrf($request);
