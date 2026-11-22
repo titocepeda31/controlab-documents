@@ -39,6 +39,7 @@ h1{margin:0 0 7px;font-size:clamp(25px,5vw,35px)}h2{font-size:20px;margin:0 0 13
 .bad{border-color:#edb5bd}
 @media(max-width:650px){.header{padding:15px}.brand{font-size:14px}.panel{padding:16px}.grid{grid-template-columns:1fr}.user-actions{width:100%}.user-actions .btn{flex:1}.toolbar input{width:100%}}
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css">
 </head>
 <body>
 <header class="header"><div class="brand">CONTROL DE CALIDAD<small>Administración de usuarios · Forestal 3M</small></div></header>
@@ -215,6 +216,7 @@ $('passwordForm').addEventListener('submit',async e=>{
  }catch(e){$('denied').hidden=false;$('deniedText').textContent='No se pudo consultar el servidor: '+e.message;}
 })();
 </script>
-<script src="./navigation.js?v=9" defer></script>
+
+<script src="./tabler-shell.js?v=1" defer></script>
 </body>
 </html>
