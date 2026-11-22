@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS usuario_perfiles (
   usuario_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
   nombre VARCHAR(160) NOT NULL,
-  rol ENUM('administrador','laboratorista','digitador') NOT NULL,
+  rol ENUM('administrador','administrativo','laboratorista','digitador') NOT NULL,
   version_credenciales INT UNSIGNED NOT NULL DEFAULT 1,
   fecha_alta TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
