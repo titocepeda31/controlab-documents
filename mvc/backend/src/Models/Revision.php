@@ -15,7 +15,9 @@ final class Revision {
     public function canReview(int $userId): bool {
         if ($userId < 1) return false;
         $q=$this->db->connection()->prepare(
-            'SELECT 1 FROM informe_revisores r JOIN usuarios u ON u.id=r.usuario_id WHERE r.usuario_id=? AND r.habilitado=1 AND u.activo=1 LIMIT 1'
+            'SELECT 1 FROM informe_revisores r JOIN usuarios u ON u.id=r.usuario_id '.
+            'JOIN usuario_perfiles p ON p.usuario_id=u.id '.
+            "WHERE r.usuario_id=? AND r.habilitado=1 AND u.activo=1 AND p.rol IN ('administrador','laboratorista') LIMIT 1"
         );
         $q->execute([$userId]);
         return (bool)$q->fetchColumn();
