@@ -24,9 +24,13 @@ main{max-width:1240px;margin:auto;padding:27px 17px 70px}.intro{display:flex;ali
 <div class="card"><small>Obras activas</small><strong>36</strong><span>Ejemplo</span></div>
 <div class="card"><small>Servicios realizados</small><strong>317</strong><span>Unidades de servicio · ejemplo</span></div>
 <div class="card"><small>Informes enviados este mes</small><strong>86</strong><span>Entregas de informes · cifra ficticia</span></div>
-<div class="card"><small>Empresas con entrega restringida</small><strong>3</strong><span>Restricciones por revisar · cifra ficticia</span></div>
+<div class="card"><small>Empresas con informes retenidos</small><strong>3</strong><span>Por pagos pendientes · cifra ficticia</span></div>
 <div class="card"><small>Empresas con facturas vencidas</small><strong>5</strong><span>Sin implicar bloqueo automático · ficticio</span></div>
 <div class="card"><small>Informes pendientes de envío</small><strong>12</strong><span>Informes aún no entregados · ficticio</span></div>
+<div class="card"><small>Informes retenidos por pago</small><strong>8</strong><span>Entrega suspendida · cifra ficticia</span></div>
+<div class="card money"><small>Combustible del mes</small><strong>$740.000</strong><span>Gasto de flota · cifra ficticia</span></div>
+<div class="card"><small>Vehículos operativos</small><strong>4 de 5</strong><span>Disponibilidad · cifra ficticia</span></div>
+<div class="card"><small>Mantenciones próximas</small><strong>2</strong><span>Alertas preventivas · ficticio</span></div>
 </section>
 <div class="layout">
 <section class="panel"><h2>Órdenes de trabajo por semana</h2><p>Ejemplo de distribución mensual.</p><div class="bars" aria-label="Semana 1: 21, semana 2: 30, semana 3: 35, semana 4: 42 órdenes">
@@ -38,10 +42,25 @@ main{max-width:1240px;margin:auto;padding:27px 17px 70px}.intro{display:flex;ali
 <div class="entry"><div><strong>Estudio de suelo</strong><small>Obra Centro · Jueves 08:30</small></div><span class="pill">Programada</span></div>
 </div></section>
 </div>
+<section class="panel" style="margin-top:14px"><h2>Gestión de vehículos y terreno · ejemplo</h2>
+<p>Proyección del módulo de flota: combustible, kilometraje, mantenciones y rutas asociadas a órdenes de trabajo.</p>
+<div class="schedule">
+<div class="entry"><div><strong>Camioneta de terreno 01</strong><small>Última carga: $65.000 · 42.850 km (ficticio)</small></div><span class="pill">Operativa</span></div>
+<div class="entry"><div><strong>Camioneta de terreno 02</strong><small>Próxima mantención: 50.000 km · 49.600 km actuales (ficticio)</small></div><span class="pill" style="background:#fff5d9;color:#855e13">Mantención próxima</span></div>
+<div class="entry"><div><strong>Camioneta de terreno 03</strong><small>En mantención preventiva (ficticio)</small></div><span class="pill" style="background:#fff1e6;color:#8b4c12">No disponible</span></div>
+</div>
+<p style="margin-top:12px;font-size:12px">Ubicación de vehículos: funcionalidad futura. Requiere GPS o ubicación compartida con consentimiento, conectividad y controles de acceso. No se realiza seguimiento real.</p>
+</section>
+<section class="panel" style="margin-top:14px"><h2>Cobranza y alertas · ejemplo</h2>
+<div class="schedule">
+<div class="entry"><div><strong>Facturas vencidas</strong><small>5 empresas con saldos pendientes · dato ficticio</small></div><span class="pill" style="background:#fff5d9;color:#855e13">Revisar</span></div>
+<div class="entry"><div><strong>Recordatorios de cobranza</strong><small>Propuesta: correos automáticos según vencimiento y validación de pagos</small></div><span class="pill">Futuro módulo</span></div>
+</div><p style="margin-top:12px;font-size:12px">No se envían correos automáticamente desde este dashboard. Se requerirá módulo de facturas, pagos, políticas de cobranza y registro de envíos.</p>
+</section>
 <section class="panel" style="margin-top:14px"><h2>Control de entrega de informes · ejemplo</h2>
 <p>El bloqueo de entrega es independiente del estado activo/inactivo de la empresa. No hay restricciones reales implementadas en esta demostración.</p>
 <div class="schedule">
-<div class="entry"><div><strong>Constructora Ejemplo Norte</strong><small>Entrega de informes restringida · motivo pendiente de verificar</small></div><span class="pill" style="background:#fff1e6;color:#8b4c12">Restringida</span></div>
+<div class="entry"><div><strong>Constructora Ejemplo Norte</strong><small>Informes retenidos por pago pendiente · ejemplo</small></div><span class="pill" style="background:#fff1e6;color:#8b4c12">Retenidos</span></div>
 <div class="entry"><div><strong>Constructora Ejemplo Sur</strong><small>Factura vencida · entrega aún habilitada</small></div><span class="pill" style="background:#fff5d9;color:#855e13">Por revisar</span></div>
 </div><p style="margin-top:12px;font-size:12px">Nombres y estados inventados exclusivamente para la presentación.</p>
 </section>
