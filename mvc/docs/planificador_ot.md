@@ -22,7 +22,7 @@ Hoy se reciben solicitudes por correo, se generan las órdenes de trabajo (OT) e
 
 ## Dos numeraciones diferentes: OT e informe por obra
 
-**Lo confirmado en la conversación:** las OT se crean actualmente en Excel; cada obra tiene su propia secuencia de números de informe. La empresa constructora y el laboratorio necesitan saber qué números faltan dentro de una obra. La regla de reinicio por año, qué persona asigna el siguiente número, si puede reservarse/anularse y la relación exacta OT-informe todavía deben confirmarse.
+**Lo confirmado en la conversación:** las OT se crean actualmente en Excel; los números visibles en la primera columna de la foto del «Libro Informes de Ensayo» son los **correlativos**, y el personal filtra la planilla por **empresa y obra** para numerar dentro de ese contexto. Cada obra tiene su propia secuencia de números de informe. La empresa constructora y el laboratorio necesitan saber qué números faltan dentro de una obra. La regla de reinicio por año, qué persona asigna el siguiente número, si puede reservarse/anularse y la relación exacta OT-informe todavía deben confirmarse.
 
 - `ot.numero_ot`: identificador de orden de trabajo conservado desde Excel, con restricción de unicidad según la regla vigente del laboratorio (alcance por definir). **No es** el correlativo del informe.
 - `informe.obra_id`: referencia obligatoria a una obra cuando se implemente el nuevo módulo.
@@ -57,7 +57,7 @@ Para cada empresa y obra:
 ## Hallazgo operativo: bloques de correlativos y OT (Órdenes de Trabajo) impresas
 
 **Flujo actual confirmado por el usuario (2026-11-22):**
-- Se consulta el Excel por **empresa** y se filtra por **obra**.
+- Se consulta el Excel por **empresa** y se filtra por **obra**. Los números de la primera columna mostrada en la foto son precisamente los correlativos mencionados por el usuario; no es una numeración independiente por SERVIU.
 - Se agregan correlativos manualmente, uno tras otro (1, 2, 3, ...). Hay pedidos de grandes cantidades, por ejemplo **50 correlativos**.
 - **Cada correlativo queda asociado a documentación física, incluida una OT (Orden de Trabajo) impresa**, según la descripción actual del proceso. Hay que verificar con una muestra real si se emite exactamente una OT por correlativo o si una OT puede respaldar varios informes.
 - Deben esperar que otra persona desocupe el Excel antes de numerar; si trabajan simultáneamente **se pisan los números**.
