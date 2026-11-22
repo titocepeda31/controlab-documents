@@ -78,6 +78,46 @@ Para cada empresa y obra:
 
 **Preguntas a verificar después con muestras reales:** relación exacta entre OT y correlativos de informe, cuándo se considera oficialmente consumido el correlativo, si la numeración se reinicia anualmente, quién tiene permiso para reservar lotes, cómo se controlan OT impresas no utilizadas, y si se necesita imprimir una OT individual por correlativo o un formato compuesto.
 
+## Prioridad ratificada: planificar primero, emitir OT después, informes al final
+
+El usuario define este orden funcional: **registrar necesidad → planificar trabajo y cantidades → emitir/asignar número de OT → ejecutar → generar informes**. El módulo piloto de formularios de Roberto sigue separado. Actualmente las OT se numeran en Excel: su migración deberá respetar los números existentes y evitar cambios operativos hasta autorización.
+
+### Qué registra cada solicitud y planificación
+
+- Empresa y obra; lugar de ejecución, datos de contacto operativo, instrucciones para llegar.
+- Fecha solicitada y fecha/hora programada, personal responsable y equipos previstos.
+- **Actividades por línea**: tipo de servicio elegible desde catálogo editable, cantidad y unidad (p. ej. 4 puntos de densidad, 2 calicatas, 3 testigos). No asumir que una actividad de terreno produce un único informe.
+- **Cantidad de informes estimada o solicitada**, separada de la cantidad de ensayos. Un informe podría recoger varios resultados, o una actividad requerir varios documentos; pendiente de confirmar reglas reales.
+- **Identificación de puntos/muestras** opcional, como S1, S2, S3, sin atribuirles significado automático. La nomenclatura «S1», «S2», «NS3» que recuerda el usuario no ha sido validada. Puede aludir a puntos de muestreo, sondajes, muestras o nomenclatura interna. No codificarla como una clase de ensayo ni una obligación de tener S3.
+- Estado: solicitud recibida, por programar, programada, OT emitida, en terreno, finalizada y lista para informes. Cada cambio registra autor y fecha.
+- OT emitida solo cuando la planificación tenga lo mínimo confirmado y el coordinador la autorice. Una solicitud puede pasar por varias programaciones; no confundir la fecha de solicitud con la ejecución.
+- Al generar OT: usar la numeración del laboratorio (hoy Excel) y permitir imprimirla conforme a su formato existente. No sobrescribir ni repetir números.
+- Al volver de terreno: registrar las cantidades efectivamente realizadas, incidencias y puntos/muestras ejecutados. Diferenciar **solicitado**, **programado** y **realizado**.
+- Solo al final de este proceso: determinar los informes requeridos y asignar sus correlativos por obra con transacciones sin colisiones.
+
+### Modelo mínimo propuesto
+
+`empresas` 1:N `obras` 1:N `solicitudes` 1:N `solicitud_actividades`.
+`solicitudes` 1:N `visitas_programadas`, cada visita N:M `personal` y N:M `equipos`.
+`solicitudes` 0:1 o 1:N `ordenes_trabajo` por confirmar.
+`informes` se relacionan con obra + correlativo y opcionalmente con OT, actividad y muestra.
+
+**No crear automáticamente correlativos de informe simplemente porque se pidieron 50 densidades:** registrar primero el pedido; la política de documentos e informes se valida por tipo de servicio.
+
+### Ejemplo ficticio de ficha de planificación
+
+- Cliente: Constructora Ejemplo
+- Obra: Camino Norte
+- Fecha: por definir con coordinación
+- Trabajo 1: Densidad en terreno, 5 mediciones solicitadas; 5 programadas; 0 realizadas
+- Trabajo 2: Calicatas, 2 puntos solicitados: etiquetas S1 y S2 **solo como identificadores de ejemplo**
+- Informes solicitados: por confirmar con solicitante
+- Técnico: sin asignar; equipo: sin asignar
+- Estado: pendiente de programación
+- OT: **sin generar todavía**; número de informe: **sin asignar todavía**
+
+Este flujo evita confundir el número de la OT, la cantidad de mediciones, las etiquetas S1/S2 y los correlativos de informe.
+
 ## Navegación (sin modales)
 - **Empresas:** CRUD y obras asociadas a cada empresa.
 - **Obras:** ficha, listado de OT y tablero de correlativos de informes de esa obra, dirección verificable.
@@ -89,7 +129,7 @@ Para cada empresa y obra:
 - **Control de correlativos:** asignar bloques atómicamente por empresa/obra, registrar la OT impresa relacionada con cada número según la correspondencia real, controlar reimpresiones y señalar saltos numéricos y estados por obra.
 
 ## Flujo
-Correo recibido -> recepción y validación manual -> Empresa y obra existentes o nuevas -> OT creada en Excel (o registrada/importada) con servicio(s) -> planificar visita(s) y asignar personas/equipos -> equipo visualiza 'Mi agenda' -> ejecutar en terreno -> registrar datos -> elaboración/validación de informe según tipo -> entrega al cliente autorizado.
+Correo recibido -> Empresa y obra existentes o nuevas -> registrar servicios y cantidades solicitadas -> planificar visita(s), personas, equipos y calendario -> emitir OT con número controlado -> ejecutar en terreno -> registrar cantidades reales y muestras -> determinar cantidad de informes y sus correlativos por obra -> elaborar/validar informes -> entregar al cliente autorizado.
 
 ## Estados iniciales sugeridos
 - **OT:** recibida, por programar, programada, en ejecución, terminada, cerrada, anulada.
@@ -117,6 +157,8 @@ Correo recibido -> recepción y validación manual -> Empresa y obra existentes 
 - ¿Quién asigna el correlativo de informe dentro de cada obra, se reinicia por año, y cómo se reserva/anula un número?
 - ¿Una OT puede generar varios informes, o un informe relacionarse con varias OT?
 - ¿Quién recibe correo y decide las fechas o asigna personal?
+- ¿Qué significa S1, S2 o NS3 dentro de las planillas y OT de este laboratorio? Solicitar ejemplo real; no asignar significado de norma externa.
+- ¿Quién establece cuántos informes corresponden a cada cantidad de densidades, calicatas o testigos?
 - ¿Cuándo necesita una OT más de una visita o más de un equipo?
 - Catálogo real de servicios, nombres técnicos internos y requerimientos de equipos.
 - Si la agenda debe informar al trabajador por correo/WhatsApp (posterior).
