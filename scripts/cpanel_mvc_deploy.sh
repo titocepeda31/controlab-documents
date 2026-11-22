@@ -34,11 +34,13 @@ for path in \
   mvc/backend/src/Core/Http.php \
   mvc/backend/src/Models/Empresa.php \
   mvc/backend/src/Models/Informe.php \
+  mvc/backend/src/Models/LaboratoristaFirma.php \
   mvc/backend/src/Models/Revision.php \
   mvc/backend/src/Models/Usuario.php \
   mvc/backend/src/Controllers/AuthController.php \
   mvc/backend/src/Controllers/EmpresaController.php \
   mvc/backend/src/Controllers/InformeController.php \
+  mvc/backend/src/Controllers/LaboratoristaFirmaController.php \
   mvc/backend/src/Controllers/RevisionController.php \
   mvc/backend/src/Middleware/Security.php \
   mvc/frontend/index.php \
@@ -63,7 +65,7 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
   $cfg = require $argv[1];
   $pdo = new PDO("mysql:host=".$cfg["db_host"].";dbname=".$cfg["db_name"].";charset=utf8mb4", $cfg["db_user"], $cfg["db_pass"], [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
   $q=$pdo->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?");
-  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos"] as $table) {
+  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos","laboratorista_firmas"] as $table) {
     $q->execute([$table]);
     if (!(int)$q->fetchColumn()) {fwrite(STDERR,"Falta la tabla $table. Ejecutar migraciones SQL antes de desplegar.\n");exit(2);}
   }
@@ -89,8 +91,8 @@ chmod 0700 "$BASE/controlab-mvc-backups" "$BACKUP" "$BACKUP/private" "$BACKUP/pu
 BACKEND_FILES=(
   bootstrap.php routes/api.php
   src/Core/Database.php src/Core/Http.php src/Core/ReportCrypto.php
-  src/Models/Empresa.php src/Models/Informe.php src/Models/Revision.php src/Models/Usuario.php
-  src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/RevisionController.php
+  src/Models/Empresa.php src/Models/Informe.php src/Models/LaboratoristaFirma.php src/Models/Revision.php src/Models/Usuario.php
+  src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php
   src/Middleware/Security.php
 )
 FRONTEND_FILES=(index.php .htaccess formulario.html sw.js manifest.json icon.svg)
