@@ -87,7 +87,7 @@ p{margin:6px 0;color:var(--muted)}
 <header class="top"><div class="brand">CONTROL DE CALIDAD<small>Planificador de órdenes de trabajo</small></div>
  <nav class="top-links" aria-label="Navegación">
   <a href="./formulario.html">Informes</a>
-  <a href="./usuarios.html" id="usersLink" hidden>Usuarios</a>
+  <a href="./usuarios.html" id="usersLink" hidden>Usuarios</a><a href="./catalogos.html" id="catalogLink" hidden>Empresas · Obras · Personal</a>
  </nav>
 </header>
 <main>
@@ -149,6 +149,9 @@ p{margin:6px 0;color:var(--muted)}
    <form id="otForm" autocomplete="off">
     <div class="form-grid">
      <div class="field"><label for="numero_ot">Número de OT (opcional)</label><input id="numero_ot" name="numero_ot" maxlength="40" placeholder="Automático si queda vacío"></div>
+     <div class="field"><label for="empresaCatalogo">Empresa constructora</label><select id="empresaCatalogo"><option value="">Seleccionar empresa</option></select></div>
+     <div class="field"><label for="obraCatalogo">Obra de la empresa</label><select id="obraCatalogo"><option value="">Seleccionar obra</option></select></div>
+     <div class="field full"><span class="hint">Selecciona una obra para completar cliente, dirección y comuna. <a href="./catalogos.html">Gestionar empresas y obras</a></span></div>
      <div class="field"><label for="cliente">Cliente / contratista *</label><input id="cliente" name="cliente" maxlength="160" required placeholder="Nombre de empresa"></div>
      <div class="field"><label for="obra">Obra o proyecto *</label><input id="obra" name="obra" maxlength="180" required placeholder="Ej.: Camino forestal, sector 3"></div>
      <div class="field"><label for="actividad">Trabajo a realizar *</label><input id="actividad" name="actividad" maxlength="200" required placeholder="Ej.: Ensayo de densidad in situ"></div>
@@ -158,7 +161,8 @@ p{margin:6px 0;color:var(--muted)}
      <div class="field"><label for="fin">Fin programado *</label><input id="fin" name="fin" type="datetime-local" required></div>
      <div class="field"><label for="estado">Estado</label><select id="estado" name="estado"><option value="planificada">Planificada</option><option value="en_curso">En curso</option><option value="finalizada">Finalizada</option><option value="cancelada">Cancelada</option></select></div>
      <div class="field"><label for="prioridad">Prioridad</label><select id="prioridad" name="prioridad"><option value="normal">Normal</option><option value="urgente">Urgente</option></select></div>
-     <div class="field full"><label>Equipo asignado</label><div class="hint">Selecciona laboratoristas y digitadores. Si alguno ya tiene una OT en ese horario, se impedirá guardar hasta resolver el cruce.</div><div class="team-list" id="teamChoices"></div></div>
+     <div class="field full"><label>Personal de terreno (sin cuenta de usuario)</label><div class="hint">Muestreadores, conductores y ayudantes. <a href="./catalogos.html">Registrar trabajador</a>. Los horarios se verificarán automáticamente.</div><div class="team-list" id="fieldChoices"></div></div>
+     <div class="field full"><label>Usuarios del sistema que también participarán</label><div class="hint">Opcional: laboratoristas o digitadores que ingresan a Controlab.</div><div class="team-list" id="teamChoices"></div></div>
      <div class="field full"><label for="observaciones">Instrucciones y observaciones</label><textarea id="observaciones" name="observaciones" maxlength="5000" placeholder="Punto de encuentro, contacto, equipamiento necesario, instrucciones…"></textarea></div>
     </div>
     <div class="form-actions"><button class="btn primary" id="saveBtn" type="submit">Guardar OT</button><button class="btn" id="cancelForm" type="button">Cancelar</button></div>
@@ -173,7 +177,7 @@ const $=id=>document.getElementById(id);
 const API='./api';
 const weekdays=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const statusLabels={planificada:'Planificada',en_curso:'En curso',finalizada:'Finalizada',cancelada:'Cancelada'};
-let manager=false,viewerId=null,staff=[],jobs=[],view='calendar',selected=null,editingId=null,editingVersion=null,month=new Date(),sessionReady=false;
+let manager=false,viewerId=null,staff=[],fieldStaff=[],companies=[],works=[],jobs=[],view='calendar',selected=null,editingId=null,editingVersion=null,month=new Date(),sessionReady=false;
 month=new Date(month.getFullYear(),month.getMonth(),1);
 function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function monthLabel(d){return d.toLocaleDateString('es-CL',{month:'long',year:'numeric'});}
@@ -207,7 +211,12 @@ async function mutate(path,method,data){
  return request(path,{method,headers:{'Content-Type':'application/json','X-CSRF-Token':session.csrf},body:JSON.stringify({...data,csrf:session.csrf})});
 }
 function formatLocal(d,time){return dateKey(d)+'T'+time;}
-function activeJobs(){const status=$('stateFilter').value,person=$('personFilter').value;return jobs.filter(j=>(!status||j.estado===status)&&(!person||j.personal.some(p=>String(p.id)===person)));}
+function activeJobs(){
+ const status=$('stateFilter').value,person=$('personFilter').value;
+ return jobs.filter(j=>(!status||j.estado===status)&&(!person||
+  (person.startsWith('u-')&&j.personal.some(p=>'u-'+p.id===person))||
+  (person.startsWith('t-')&&(j.personal_terreno||[]).some(p=>'t-'+p.id===person))));
+}
 function jobsForDay(day){
  const [y,m,d]=day.split('-').map(Number);
  const next=new Date(y,m-1,d+1);
@@ -215,7 +224,10 @@ function jobsForDay(day){
  return activeJobs().filter(j=>j.inicio<tomorrow&&j.fin>start);
 }
 function fullLocation(job){return [job.destino,job.comuna].filter(Boolean).join(', ');}
-function teamLabel(job){return job.personal?.length?job.personal.map(p=>p.nombre).join(', '):'Sin equipo asignado';}
+function teamLabel(job){
+ const names=[...(job.personal||[]).map(p=>p.nombre),...(job.personal_terreno||[]).map(p=>p.nombre)];
+ return names.length?names.join(', '):'Sin equipo asignado';
+}
 function setView(next){
  view=next;
  for(const button of document.querySelectorAll('[data-view]')){const active=button.dataset.view===view;button.classList.toggle('active',active);button.setAttribute('aria-pressed',active?'true':'false');}
@@ -227,7 +239,7 @@ function renderStats(){
  $('totalCount').textContent=String(stats.length);
  $('plannedCount').textContent=String(stats.filter(j=>j.estado==='planificada').length);
  $('runningCount').textContent=String(stats.filter(j=>j.estado==='en_curso').length);
- $('unassignedCount').textContent=String(stats.filter(j=>!j.personal.length&&j.estado!=='cancelada').length);
+ $('unassignedCount').textContent=String(stats.filter(j=>!(j.personal?.length||j.personal_terreno?.length)&&j.estado!=='cancelada').length);
 }
 function renderCalendar(){
  const grid=$('calendarGrid');grid.replaceChildren();
@@ -277,11 +289,14 @@ function renderTeam(){
  const root=$('teamOverview');root.replaceChildren();
  const day=$('teamDay').value||dateKey(new Date());
  const found=$('teamFullMonth').checked?activeJobs():jobsForDay(day);
- for(const person of staff){
-  const personJobs=found.filter(j=>j.personal.some(p=>Number(p.id)===Number(person.id)));
-  if($('personFilter').value&&$('personFilter').value!==String(person.id))continue;
+ for(const person of [...staff.map(p=>({...p,kind:'u'})),...fieldStaff.map(p=>({...p,kind:'t'}))]){
+  const key=person.kind+'-'+person.id;
+  const personJobs=found.filter(j=>person.kind==='u'
+     ?j.personal.some(p=>Number(p.id)===Number(person.id))
+     :(j.personal_terreno||[]).some(p=>Number(p.id)===Number(person.id)));
+  if($('personFilter').value&&$('personFilter').value!==key)continue;
   const card=el('article','person-card');
-  const header=document.createElement('header');const title=el('div');title.append(el('h3','',person.nombre),el('p','',person.rol==='laboratorista'?'Laboratorista':'Digitador'));
+  const header=document.createElement('header');const title=el('div');title.append(el('h3','',person.nombre),el('p','',person.kind==='t'?person.cargo+' · sin usuario':(person.rol==='laboratorista'?'Laboratorista':'Digitador')));
   header.append(title,el('span','pill',personJobs.length+' trabajo(s)'));card.append(header);
   const assignments=el('div','person-jobs');
   if(personJobs.length===0)assignments.append(el('span','hint','Sin órdenes durante el período.'));
