@@ -25,7 +25,9 @@ jobs:
           find mvc/backend mvc/frontend -type f -name '*.php' -print0 | xargs -0 -n1 php -l
           bash -n scripts/cpanel_mvc_deploy.sh
       - name: Comprobar cifrado autenticado, manipulación y firma
-        run: php mvc/backend/tests/ReportCryptoTest.php
+        run: |
+          php mvc/backend/tests/ReportCryptoTest.php
+          php mvc/backend/tests/UsuariosTest.php
       - name: Comprobar Javascript de navegador
         run: |
           set -euo pipefail
@@ -35,6 +37,8 @@ jobs:
           node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('mvc/frontend/manifest.json','utf8'));if(!m.start_url.includes('/demo/formulario.html')||!m.icons.length||!fs.existsSync('mvc/frontend/icon.svg'))process.exit(1);"
           node mvc/frontend/tests/offline-sw.test.cjs
           node mvc/frontend/tests/menu-firma.test.cjs
+          node mvc/frontend/tests/usuarios.test.cjs
+          node --check /tmp/controlab-usuarios.js
       - name: Comprobar barreras de despliegue
         run: |
           set -euo pipefail
