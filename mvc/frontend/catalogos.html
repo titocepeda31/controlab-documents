@@ -38,7 +38,7 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
 .geo-controls input{max-width:100%;flex:1;min-width:200px;border:1px solid #bacbd5;border-radius:8px;padding:10px;min-height:42px}
 </style></head>
 <body>
-<header class="top"><div><strong>CONTROL DE CALIDAD</strong><small>Catálogos de operación · Forestal 3M</small></div><nav class="nav"><a href="./planificador.html">← Planificador</a><a href="./formulario.html">Informes</a></nav></header>
+<header class="top"><div><strong>CONTROL DE CALIDAD</strong><small>Catálogos de operación · Forestal 3M</small></div></header>
 <main>
  <span class="eyebrow">Administración operativa</span><h1>Empresas, obras, servicios y personal</h1>
  <p>Las constructoras tienen obras propias, cada una con su dirección y comuna. El personal de terreno se registra aquí sin crear contraseñas ni acceso al sistema.</p>
@@ -408,5 +408,5 @@ $('personalForm').addEventListener('submit',async e=>{
   if(activeModule&&Object.hasOwn(moduleNames,activeModule))tab(activeModule);
  }catch(e){$('app').hidden=true;$('accessError').hidden=false;$('accessText').textContent=e.message;}
 })();
-</script><script src="./navigation.js?v=1" defer></script>
+</script><script src="./navigation.js?v=4" defer></script>
 </body></html>
