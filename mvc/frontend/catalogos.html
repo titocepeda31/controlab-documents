@@ -160,8 +160,6 @@ if(Object.hasOwn(moduleNames,activeModule)){
  document.querySelector('h1').textContent=moduleNames[activeModule];
  document.title=moduleNames[activeModule]+' | Controlab';
  document.querySelector('main > p').textContent='Administración del módulo '+moduleNames[activeModule].toLowerCase()+'.';
- const nav=document.querySelector('header .nav');
- const home=document.createElement('a');home.href='./modulos.html';home.textContent='← Módulos';nav.prepend(home);
  tab(activeModule);
 }
 async function refresh(){
