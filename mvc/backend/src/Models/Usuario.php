@@ -10,7 +10,7 @@ use RuntimeException;
 use Throwable;
 
 final class Usuario {
-    public const ROLES = ['administrador','laboratorista','digitador'];
+    public const ROLES = ['administrador','administrativo','laboratorista','digitador'];
     public function __construct(private Database $db) {}
 
     public function findActiveByEmail(string $email): array|false {
