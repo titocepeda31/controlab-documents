@@ -200,6 +200,9 @@ final class OrdenTrabajo {
     public function create(array $input,int $actor): int {
         $data=self::validate($input);
         $pdo=$this->db->connection();
+        // READ COMMITTED: la consulta de choques ve lo que confirmó otra OT
+        // mientras esperábamos el bloqueo del mismo trabajador.
+        $pdo->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
         $pdo->beginTransaction();
         try{
             $q=$pdo->prepare(
@@ -232,6 +235,9 @@ final class OrdenTrabajo {
         $version=$input['version']??null;
         if(!is_int($version)||$version<1)throw new InvalidArgumentException('Actualiza la OT antes de guardar cambios');
         $pdo=$this->db->connection();
+        // READ COMMITTED: la consulta de choques ve lo que confirmó otra OT
+        // mientras esperábamos el bloqueo del mismo trabajador.
+        $pdo->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
         $pdo->beginTransaction();
         try{
             $q=$pdo->prepare('SELECT numero_ot,version FROM ot_ordenes WHERE id=? FOR UPDATE');
