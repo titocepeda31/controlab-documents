@@ -272,11 +272,20 @@ const steps=[
 ];
 function showNotice(el,text,error=false){el.textContent=text;el.classList.toggle('error',error);}
 async function apiRequest(path, opts={}){
- const resp=await fetch(API+path,{credentials:'same-origin',cache:'no-store',...opts});
- const raw=await resp.text(); let json;
- try{json=JSON.parse(raw);}catch(e){throw new Error('La API no devolvió JSON (HTTP '+resp.status+')');}
- if(!resp.ok)throw new Error(json.error||'Error HTTP '+resp.status);
- return json;
+ // Evita que el inicio de sesión quede indefinidamente en "Verificando..."
+ // si el servidor o el endpoint de sesión no responde.
+ const controller=new AbortController();
+ const limit=setTimeout(()=>controller.abort(),15000);
+ try{
+  const resp=await fetch(API+path,{credentials:'same-origin',cache:'no-store',...opts,signal:controller.signal});
+  const raw=await resp.text(); let json;
+  try{json=JSON.parse(raw);}catch(e){throw new Error('La API no devolvió JSON (HTTP '+resp.status+'). Revisa /demo/api/session');}
+  if(!resp.ok)throw new Error(json.error||'Error HTTP '+resp.status);
+  return json;
+ }catch(err){
+  if(controller.signal.aborted)throw new Error('El servidor no respondió en 15 segundos ('+path+'). Revisa /demo/api/session y el registro de errores de cPanel.');
+  throw err;
+ }finally{clearTimeout(limit);}
 }
 // POST evita recuperar de cache un token de otra sesión. Endpoint incluido en nuestro MVC.
 async function session(){return apiRequest('/session',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:'{}'});}
