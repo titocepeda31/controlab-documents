@@ -61,6 +61,13 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .session-tag{font-size:12px;border:1px solid #547180;color:#d2efe9;padding:6px 12px;border-radius:40px}
 .topbar .btn{min-height:36px;padding:7px 11px;font-size:12px}
+.menu-toggle{display:none;background:#204158;color:#fff;border:1px solid #527086;border-radius:10px;width:44px;height:44px;font-size:24px;align-items:center;justify-content:center;line-height:1}
+.profile-signature-preview{border:1px solid #d7e2e9;border-radius:12px;background:#fff;padding:12px;margin:12px 0;max-width:420px}
+.profile-signature-preview img{max-width:100%;max-height:105px;object-fit:contain}
+.profile-signature-file{display:block;width:100%;max-width:450px;border:1px solid #cfdae2;border-radius:10px;padding:11px;margin:11px 0}
+.print-lab-signature{padding:10px;border-top:1px solid #888;page-break-inside:avoid}
+.print-lab-signature img{display:block;object-fit:contain;max-width:220px;max-height:75px;margin:6px 0}
+
 .layout{max-width:1450px;margin:auto;padding:26px clamp(15px,3vw,40px) 60px;display:grid;grid-template-columns:245px minmax(0,1fr);gap:26px}
 .side{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:23px 13px;align-self:start;position:sticky;top:20px;box-shadow:0 5px 24px #17324a08}
 .side-head{padding:0 11px 18px;border-bottom:1px solid #e5ebef;margin-bottom:15px}
@@ -165,6 +172,20 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .offline-entry{margin-top:15px;border:1px solid #efdcab;padding:14px;background:#fff9e7;border-radius:12px;color:#755a24}
 .offline-entry p{font-size:13px;margin:7px 0}
 @media(max-width:790px){.connect-strip{align-items:flex-start}.sync-message{width:100%;margin-left:0}}
+@media(max-width:790px){
+ .topbar{position:relative;min-height:68px;flex-wrap:nowrap;gap:10px}
+ .topbar .logo{min-width:0;flex:1}
+ .topbar .logo span{line-height:1.2}
+ .menu-toggle{display:inline-flex;flex:none}
+ .topbar .top-actions{position:absolute;right:12px;top:calc(100% - 4px);width:min(285px,calc(100vw - 24px));z-index:30;display:flex;flex-direction:column;align-items:stretch;background:var(--navy);border:1px solid #496579;border-radius:12px;padding:12px;box-shadow:0 16px 36px #0c223b45}
+ .topbar .top-actions:not(.open){display:none}
+ .topbar .top-actions .btn{width:100%;justify-content:flex-start;min-height:43px;font-size:14px}
+ .connect-strip{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:9px 11px;align-items:center}
+ .connect-strip #connectionStatus{min-width:0}
+ .connect-strip #syncBtn{grid-column:1/3;width:100%}
+ .connect-strip #pendingBtn{grid-column:3;width:100%}
+ .connect-strip .sync-message{grid-column:1/-1;width:auto}
+}
 </style>
 </head>
 <body>
@@ -189,7 +210,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 <!-- CAPTURA MODERNA: NAVEGACION POR PANTALLAS -->
 <div class="app-view" id="appView" hidden>
- <div class="topbar"><div class="logo"><div class="logo-icon">RC</div><span>CONTROL DE CALIDAD<br><small style="color:#a8c9d1;font-weight:500">Mecánica de suelo</small></span></div><div class="top-actions"><span class="session-tag">● Sesión activa</span><button class="btn light" id="historyBtn" type="button">Historial</button><button class="btn light" id="reviewsBtn" type="button" hidden>Revisiones</button><button class="btn light" id="logoutBtn" type="button">Salir</button></div></div>
+ <div class="topbar"><div class="logo"><div class="logo-icon">RC</div><span>CONTROL DE CALIDAD<br><small style="color:#a8c9d1;font-weight:500">Mecánica de suelo</small></span></div><button class="menu-toggle" id="menuToggle" aria-label="Abrir menú principal" aria-controls="topActions" aria-expanded="false" type="button">☰</button><nav class="top-actions" id="topActions" aria-label="Menú principal"><span class="session-tag">● Sesión activa</span><button class="btn light" id="historyBtn" type="button">Historial</button><button class="btn light" id="reviewsBtn" type="button" hidden>Revisiones</button><button class="btn light" id="profileFirmaBtn" type="button">Mi firma</button><button class="btn light" id="logoutBtn" type="button">Salir</button></nav></div>
  <div class="connect-strip" id="editorConnection"><span class="status-dot" id="connectionDot"></span><strong id="connectionStatus">Comprobando conexión…</strong><span class="sync-pill" id="pendingCount">0 pendientes</span><button class="btn light" type="button" id="syncBtn">↻ Sincronizar</button><button class="btn light" type="button" id="pendingBtn">Ver pendientes</button><span class="sync-message" id="draftState" role="status" aria-live="polite">Borrador local preparado</span></div>
  <div class="layout" id="editorLayout">
   <aside class="side"><div class="side-head"><small>Espacio de trabajo</small><h3>Nuevo informe</h3></div>
@@ -251,12 +272,30 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 <div class="work-screen" id="pendingModal" hidden aria-labelledby="pendingTitle"><div class="work-card"><div class="work-head"><div><span class="eyebrow">Sincronización</span><h2 id="pendingTitle">Informes guardados en este equipo</h2></div><button class="btn light" type="button" id="closePending">← Volver al formulario</button></div><p class="history-subtitle">Cada informe pendiente permanece aquí hasta recibir confirmación de MySQL. Puedes reintentar sin duplicarlo.</p><div id="pendingList" role="status"></div><button class="btn primary" type="button" id="syncAllBtn" style="margin-top:14px">Sincronizar ahora</button></div></div>
 
+
+<div class="work-screen" id="profileFirmaScreen" hidden aria-labelledby="profileFirmaTitle"><div class="work-card">
+ <div class="work-head"><div><span class="eyebrow">Perfil · Forestal 3M</span><h2 id="profileFirmaTitle">Firma visual del laboratorista</h2></div><button class="btn light" type="button" id="closeProfileFirma">← Volver al formulario</button></div>
+ <p class="section-sub">Registra tu firma <strong>una sola vez</strong>. El sistema la mostrará en las copias de prueba de los informes registrados desde tu cuenta. No se utiliza como aprobación ni reemplaza una firma electrónica oficial.</p>
+ <div class="profile-signature-preview" id="savedFirmaBox" hidden><strong>Firma guardada en tu perfil</strong><img id="savedFirmaImg" alt="Firma visual guardada del laboratorista"><p class="history-subtitle">Puedes reemplazarla o eliminarla desde aquí.</p></div>
+ <p id="profileFirmaEmpty">Todavía no tienes una firma guardada.</p>
+ <label for="profileFirmaCanvas"><strong>Dibuja la firma una sola vez</strong></label>
+ <canvas class="signature-canvas" id="profileFirmaCanvas" width="760" height="240" aria-label="Dibuja la firma de tu perfil" role="img"></canvas>
+ <p class="history-subtitle">También puedes seleccionar una imagen PNG o JPG de tu firma.</p>
+ <label for="profileFirmaFile"><strong>Imagen de firma (opcional)</strong></label><input class="profile-signature-file" type="file" id="profileFirmaFile" accept="image/png,image/jpeg">
+ <div class="signature-actions">
+  <button class="btn light" id="clearProfileFirma" type="button">Limpiar dibujo</button>
+  <button class="btn primary" id="saveProfileFirma" type="button">Guardar en mi perfil</button>
+  <button class="btn danger" id="deleteProfileFirma" type="button" hidden>Eliminar firma guardada</button>
+ </div>
+ <div class="notice" id="profileFirmaResult" role="status" aria-live="polite"></div>
+</div></div>
+
 <!-- Diseño de impresión, separado de la interfaz de captura -->
 <section class="print-sheet" id="printSheet" aria-label="Formato de impresión">
  <div class="print-title"><h1>REGISTRO DE CALIDAD</h1><p><strong>Área Mecánica de Suelo</strong></p><p>Ensayos de muestras · Caminos Forestales Forestal Celco</p><p><strong>DOCUMENTO DE PRUEBA — NO ES INFORME TÉCNICO OFICIAL</strong></p></div>
  <div class="print-fields" id="printGeneral"></div>
  <div class="print-grid"><section><h2>1. GRANULOMETRÍA</h2><table><thead><tr><th>Tamiz</th><th>% Retenido</th><th>% Pasa</th></tr></thead><tbody id="printSieves"></tbody></table></section><section><h2>2. PROCTOR</h2><div class="print-metrics" id="printMetrics"></div></section></div>
- <h2>CLASIFICACIÓN Y OBSERVACIONES</h2><div class="print-metrics" id="printClasses"></div><p id="printObservations" class="print-notes"></p><div class="print-footer"><span id="printResponsible"></span><span id="printDate"></span></div><div class="print-review" id="printRevision"></div>
+ <h2>CLASIFICACIÓN Y OBSERVACIONES</h2><div class="print-metrics" id="printClasses"></div><p id="printObservations" class="print-notes"></p><div class="print-footer"><span id="printResponsible"></span><span id="printDate"></span></div><div class="print-lab-signature" id="printLaboratorista"></div><div class="print-review" id="printRevision"></div>
 </section>
 
 <script>
@@ -267,6 +306,7 @@ const tamices=['6″','4″','3″','2 ½″','2″','1 ½″','1″','¾″','�
 const antecedentKeys=['estructura','zona','predio','camino','sector','kmp','contratista','mandante','responsable'];
 let activeStep=0, authenticated=false, recognition=null, recording=false, offlineMode=false, currentUid=null, syncing=false, draftTimer=null, lastSavedSignature=null, lastServerId=null, availableHistory=[], dataReady=false;
 let canReview=false, reviewOnlyPending=false, editingReportId=null, reviewReportId=null, printOverride=null, signatureDrawn=false;
+let currentSignatureData=null, profileSignatureDrawn=false, profilePenDown=false;
 const steps=[
  {title:'Antecedentes de la muestra',desc:'Comienza con los datos de identificación del informe, la obra y las fechas.'},
  {title:'Resultados de los ensayos',desc:'Ingresa la granulometría y las mediciones técnicas, ordenadas por tipo de ensayo.'},
@@ -292,8 +332,21 @@ async function apiRequest(path, opts={}){
 }
 // POST evita recuperar de cache un token de otra sesión. Endpoint incluido en nuestro MVC.
 async function session(){return apiRequest('/session',{method:'POST',headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:'{}'});}
+function closeMainMenu(){
+ const nav=$('topActions');nav.classList.remove('open');
+ $('menuToggle').setAttribute('aria-expanded','false');
+ $('menuToggle').setAttribute('aria-label','Abrir menú principal');
+}
+$('menuToggle').addEventListener('click',()=>{
+ const opened=$('topActions').classList.toggle('open');
+ $('menuToggle').setAttribute('aria-expanded',opened?'true':'false');
+ $('menuToggle').setAttribute('aria-label',opened?'Cerrar menú principal':'Abrir menú principal');
+});
+document.addEventListener('click',event=>{if(!event.target.closest('.topbar'))closeMainMenu();});
+window.addEventListener('keydown',event=>{if(event.key==='Escape'){closeMainMenu();if(!$('profileFirmaScreen').hidden)showWorkspace(null);}});
 function showWorkspace(page=null){
- const pages=['historyModal','reviewModal','pendingModal'];
+ closeMainMenu();
+ const pages=['historyModal','reviewModal','pendingModal','profileFirmaScreen'];
  for(const id of pages)$(id).hidden=(id!==page);
  $('editorLayout').hidden=!!page;
  $('editorConnection').hidden=!!page;
@@ -324,7 +377,7 @@ function confirmInline(button,message){
  return false;
 }
 function renderAuth(){const canEdit=authenticated||offlineMode;$('loginView').hidden=canEdit;$('appView').hidden=!canEdit;$('reviewsBtn').hidden=!authenticated||!canReview;if(!canEdit){showWorkspace(null);stopVoice();}updateConnectivity();}
-function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
+function setOwner(uid){if(!Number.isSafeInteger(uid)||uid<1)throw new Error('El servidor no entregó la identificación del usuario. Debes actualizar AuthController.php.');if(currentUid!==uid)currentSignatureData=null;currentUid=uid;localStorage.setItem('demo_last_user',String(uid));}
 async function syncAuth(){
  const r=await session();authenticated=!!r.autenticado;offlineMode=false;canReview=authenticated&&!!r.puede_revisar;
  if(authenticated){
@@ -335,12 +388,12 @@ async function syncAuth(){
   }
  }
  renderAuth();
- if(authenticated)void syncPending();
+ if(authenticated){void syncPending();void loadProfileFirma().catch(()=>{});}
  return r;
 }
 function updateConnectivity(){const online=navigator.onLine;const active=authenticated&&online;$('connectionDot').classList.toggle('offline',!active);$('connectionStatus').textContent=active?'Con conexión · sesión activa':(online?'Sin sesión validada · guardado local':'Sin conexión · guardado local');document.querySelector('.session-tag').textContent=active?'● Sesión activa':'● Modo local (sin autenticar)';$('syncBtn').disabled=!active||syncing;}
 async function offerOfflineAccess(){const uid=Number(localStorage.getItem('demo_last_user'));$('offlineEntry').hidden=!(Number.isSafeInteger(uid)&&uid>0);}
-$('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();});
+$('offlineEnterBtn').addEventListener('click',async()=>{const uid=Number(localStorage.getItem('demo_last_user'));if(!Number.isSafeInteger(uid)||uid<1)return;currentUid=uid;authenticated=false;offlineMode=true;await restoreDraft();renderAuth();await refreshPending();await loadProfileFirma().catch(()=>{});});
 
 $('loginForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('loginBtn');btn.disabled=true;showNotice($('loginError'),'Verificando...');
@@ -352,7 +405,7 @@ $('loginForm').addEventListener('submit',async e=>{
  finally{btn.disabled=false;}
 });
 $('togglePassword').addEventListener('click',()=>{const el=$('loginPassword');el.type=el.type==='password'?'text':'password';$('togglePassword').textContent=el.type==='password'?'Mostrar':'Ocultar';});
-$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){feedback('No fue posible cerrar sesión: '+e.message,true);}});
+$('logoutBtn').addEventListener('click',async()=>{if(offlineMode&&!authenticated){offlineMode=false;currentUid=null;currentSignatureData=null;renderAuth();await offerOfflineAccess();return;}try{const s=await session();await apiRequest('/logout',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});authenticated=false;offlineMode=false;currentUid=null;currentSignatureData=null;canReview=false;reviewReportId=null;renderAuth();$('loginPassword').value='';}catch(e){feedback('No fue posible cerrar sesión: '+e.message,true);}});
 function getData(){const data={};$('reportForm').querySelectorAll('[name]').forEach(el=>{data[el.name]=el.value.trim();});return data;}
 function setData(data){$('reportForm').querySelectorAll('[name]').forEach(el=>{el.value=data[el.name]===undefined?'':String(data[el.name]);});updateReview();scheduleDraft();}
 function goStep(n){
@@ -663,6 +716,90 @@ async function saveCorrections(data){
  }catch(e){showNotice($('saveResult'),'No fue posible guardar correcciones: '+e.message,true);}finally{btn.disabled=false;}
 }
 
+// La firma visual es un atributo privado del perfil, separado de la aprobación de informes.
+const profileCanvas=$('profileFirmaCanvas'),profileContext=profileCanvas.getContext('2d');
+function profilePoint(e){const r=profileCanvas.getBoundingClientRect();return {x:(e.clientX-r.left)*profileCanvas.width/r.width,y:(e.clientY-r.top)*profileCanvas.height/r.height};}
+function clearProfileDrawing(){profileContext.clearRect(0,0,profileCanvas.width,profileCanvas.height);profileSignatureDrawn=false;profilePenDown=false;}
+profileCanvas.addEventListener('pointerdown',e=>{e.preventDefault();profileCanvas.setPointerCapture(e.pointerId);profilePenDown=true;const p=profilePoint(e);profileContext.beginPath();profileContext.moveTo(p.x,p.y);});
+profileCanvas.addEventListener('pointermove',e=>{if(!profilePenDown)return;e.preventDefault();const p=profilePoint(e);profileContext.strokeStyle='#172c3b';profileContext.lineWidth=3.5;profileContext.lineCap='round';profileContext.lineJoin='round';profileContext.lineTo(p.x,p.y);profileContext.stroke();profileSignatureDrawn=true;});
+profileCanvas.addEventListener('pointerup',()=>{profilePenDown=false;});
+profileCanvas.addEventListener('pointercancel',()=>{profilePenDown=false;});
+$('clearProfileFirma').addEventListener('click',()=>{clearProfileDrawing();$('profileFirmaFile').value='';});
+function renderProfileFirma(){
+ $('savedFirmaBox').hidden=!currentSignatureData;
+ $('profileFirmaEmpty').hidden=!!currentSignatureData;
+ $('deleteProfileFirma').hidden=!currentSignatureData;
+ if(currentSignatureData)$('savedFirmaImg').src=currentSignatureData;
+ else $('savedFirmaImg').removeAttribute('src');
+}
+async function loadProfileFirma(){
+ const uid=currentUid;if(!uid)return;
+ const cacheKey=uid+':firmaPerfil';
+ if(authenticated&&navigator.onLine){
+  const r=await apiRequest('/mi-firma');
+  if(currentUid!==uid)return; // Evitar mezclar firmas al cambiar de usuario.
+  currentSignatureData=r.registrada&&typeof r.firma_imagen==='string'?r.firma_imagen:null;
+  if(currentSignatureData)await storagePut('history',{key:cacheKey,firma_imagen:currentSignatureData});
+  else await storageDel('history',cacheKey);
+ }else{
+  const cached=await storageGet('history',cacheKey);
+  if(currentUid!==uid)return;
+  currentSignatureData=cached?.firma_imagen||null;
+ }
+ if(currentUid===uid)renderProfileFirma();
+}
+$('profileFirmaBtn').addEventListener('click',async()=>{
+ showWorkspace('profileFirmaScreen');clearProfileDrawing();$('profileFirmaFile').value='';
+ showNotice($('profileFirmaResult'),'');
+ try{await loadProfileFirma();if(!authenticated||!navigator.onLine)showNotice($('profileFirmaResult'),'Sin conexión: puedes ver la firma guardada en este teléfono, pero para actualizarla debes conectarte.');}
+ catch(e){showNotice($('profileFirmaResult'),'No se pudo cargar la firma del perfil: '+e.message,true);}
+});
+$('closeProfileFirma').addEventListener('click',()=>showWorkspace(null));
+async function fileToSignatureData(file){
+ if(!['image/png','image/jpeg'].includes(file.type))throw new Error('Elige una imagen PNG o JPG.');
+ if(file.size>2*1024*1024)throw new Error('El archivo supera 2 MB.');
+ const url=URL.createObjectURL(file);
+ try{
+  const img=new Image();
+  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('No se pudo leer la imagen.'));img.src=url;});
+  const canvas=document.createElement('canvas');canvas.width=760;canvas.height=240;
+  const context=canvas.getContext('2d');
+  context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);
+  const scale=Math.min(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight);
+  const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+  context.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+  return canvas.toDataURL('image/png');
+ }finally{URL.revokeObjectURL(url);}
+}
+async function mutateProfileFirma(method,firma=null){
+ if(!authenticated||!navigator.onLine)throw new Error('Conéctate e inicia sesión para cambiar la firma del perfil.');
+ const sessionInfo=await session();
+ if(!sessionInfo.autenticado)throw new Error('La sesión expiró.');
+ await apiRequest('/mi-firma',{method,headers:{'Content-Type':'application/json','X-CSRF-Token':sessionInfo.csrf},body:JSON.stringify({csrf:sessionInfo.csrf,...(firma?{firma}:{})})});
+ await loadProfileFirma();
+}
+$('saveProfileFirma').addEventListener('click',async()=>{
+ const button=$('saveProfileFirma');button.disabled=true;
+ try{
+  const file=$('profileFirmaFile').files[0];
+  if(!file&&!profileSignatureDrawn)throw new Error('Dibuja o selecciona una firma para guardarla.');
+  const firma=file?await fileToSignatureData(file):profileCanvas.toDataURL('image/png');
+  if(firma.length>350000)throw new Error('La imagen es demasiado grande. Selecciona una PNG o JPG más pequeña.');
+  await mutateProfileFirma('PUT',firma);
+  clearProfileDrawing();$('profileFirmaFile').value='';
+  showNotice($('profileFirmaResult'),'✓ Firma guardada en tu perfil. Se mostrará automáticamente en las copias de prueba, sin tener que firmar cada informe.');
+ }catch(e){showNotice($('profileFirmaResult'),'No se pudo guardar: '+e.message,true);}
+ finally{button.disabled=false;}
+});
+$('deleteProfileFirma').addEventListener('click',async()=>{
+ const button=$('deleteProfileFirma');
+ if(!confirmInline(button,'Se eliminará la firma de tu perfil y dejará de aparecer en las nuevas impresiones.'))return;
+ button.disabled=true;
+ try{await mutateProfileFirma('DELETE');clearProfileDrawing();showNotice($('profileFirmaResult'),'La firma del perfil fue eliminada.');}
+ catch(e){showNotice($('profileFirmaResult'),'No se pudo eliminar: '+e.message,true);}
+ finally{button.disabled=false;}
+});
+
 const signCanvas=$('signatureCanvas'),signContext=signCanvas.getContext('2d');
 let penDown=false,lastPoint=null;
 function signaturePoint(e){const r=signCanvas.getBoundingClientRect();return {x:(e.clientX-r.left)*signCanvas.width/r.width,y:(e.clientY-r.top)*signCanvas.height/r.height};}
@@ -711,12 +848,20 @@ $('returnReport').addEventListener('click',async()=>{
 async function printStoredReport(id,button){
  button.disabled=true;
  try{
-  const r=await apiRequest('/informes/'+id);printOverride={datos:r.datos,revision:r.revision};fillPrint();
+  const r=await apiRequest('/informes/'+id);printOverride={datos:r.datos,revision:r.revision,firma_laboratorista:r.firma_laboratorista};fillPrint();
   // Evita abrir el diálogo de impresión antes de que se dibuje la firma PNG.
-  const signatureImage=$('printRevision').querySelector('img');
-  if(signatureImage&&signatureImage.decode){try{await signatureImage.decode();}catch(e){throw new Error('No se pudo cargar la firma visual.');}}
+  for(const signatureImage of $('printSheet').querySelectorAll('img')){
+   if(signatureImage.decode){try{await signatureImage.decode();}catch(e){throw new Error('No se pudo cargar la firma visual.');}}
+  }
   window.print();
  }catch(e){printOverride=null;feedback('No fue posible imprimir el registro: '+e.message,true);}finally{button.disabled=false;}
+}
+function renderPrintFirmaLaboratorista(imagen){
+ const root=$('printLaboratorista');root.replaceChildren();
+ if(!imagen)return;
+ root.append(node('strong','FIRMA VISUAL DEL LABORATORISTA'));
+ const img=document.createElement('img');img.src=imagen;img.alt='Firma visual del perfil del laboratorista';root.append(img);
+ root.append(node('small','Firma de perfil reutilizable · documento de prueba, sin aprobación electrónica.'));
 }
 function renderPrintReview(revision){
  const root=$('printRevision');root.replaceChildren();
@@ -741,6 +886,7 @@ function fillPrint(){const d=printOverride?.datos||getData();$('printGeneral').r
  $('printSieves').replaceChildren();tamices.forEach((s,i)=>{const tr=document.createElement('tr');[s,d['retenido_'+i]||'—',d['pasa_'+i]||'—'].forEach(v=>tr.append(node('td',v)));$('printSieves').append(tr);});
  $('printMetrics').replaceChildren();for(const [title,key] of [['DCH','dch'],['% W Proctor','humedadProctor'],['DCS','dcs'],['Método','metodo'],['CBR (%)','cbr'],['LL','ll'],['LP','lp'],['IP','ip'],['Chancado (%)','chancado'],['Desgaste (%)','desgaste'],['Humedad (%)','humedad']])$('printMetrics').append(node('div',title+': '+(d[key]||'—')));
  $('printClasses').replaceChildren();$('printClasses').append(node('div','AASHTO: '+(d.aashto||'—')),node('div','USCS: '+(d.usc||'—')));$('printObservations').textContent=d.observaciones||'—';$('printResponsible').textContent='Responsable: '+(d.responsable||'—');$('printDate').textContent='Fecha de registro: '+(d.fechaRegistro||'—');
+ renderPrintFirmaLaboratorista(printOverride?printOverride.firma_laboratorista:currentSignatureData);
  renderPrintReview(printOverride?.revision||null);
 }
 $('printBtn').addEventListener('click',()=>{printOverride=null;fillPrint();window.print();});
