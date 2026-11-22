@@ -74,7 +74,7 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
   $cfg = require $argv[1];
   $pdo = new PDO("mysql:host=".$cfg["db_host"].";dbname=".$cfg["db_name"].";charset=utf8mb4", $cfg["db_user"], $cfg["db_pass"], [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
   $q=$pdo->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?");
-  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos","laboratorista_firmas","usuario_perfiles","ot_ordenes","ot_asignaciones","ot_eventos","obras","personal_terreno","ot_obra_vinculos","ot_personal_terreno","obra_ubicaciones","geo_busquedas_cache","geo_nominatim_limite"] as $table) {
+  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos","laboratorista_firmas","usuario_perfiles","ot_ordenes","ot_asignaciones","ot_eventos","obras","personal_terreno","ot_obra_vinculos","ot_personal_terreno","obra_ubicaciones","geo_busquedas_cache","geo_nominatim_limite","catalogo_servicios","ot_servicios"] as $table) {
     $q->execute([$table]);
     if (!(int)$q->fetchColumn()) {fwrite(STDERR,"Falta la tabla $table. Ejecutar migraciones SQL antes de desplegar.\n");exit(2);}
   }
