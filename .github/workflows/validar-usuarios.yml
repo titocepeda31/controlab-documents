@@ -18,6 +18,8 @@ jobs:
         run: |
           set -euo pipefail
           find mvc/backend mvc/frontend -type f -name '*.php' -print0 | xargs -0 -n 1 php -l
+      - name: Pruebas de cifrado autenticado
+        run: php mvc/backend/tests/ReportCryptoTest.php
       - name: Verificar JavaScript del formulario y service worker
         run: |
           set -euo pipefail
@@ -36,3 +38,5 @@ jobs:
           grep -Fq "canDispatch" mvc/backend/src/Core/Access.php
           grep -q "Access::admin" mvc/backend/src/Controllers/UsuarioController.php
           grep -q "No hay administrador autorizado" scripts/cpanel_mvc_deploy.sh
+          grep -q "data_encryption_key" scripts/cpanel_mvc_deploy.sh
+          grep -q "ReportCrypto" mvc/backend/src/Models/Informe.php || grep -q "reportCrypto" mvc/backend/src/Models/Informe.php
