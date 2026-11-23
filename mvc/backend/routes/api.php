@@ -27,6 +27,8 @@ $app->get('/api/catalogo/servicios',[$catalogoOperativoController,'servicios']);
 $app->post('/api/catalogo/servicios',[$catalogoOperativoController,'crearServicio']);
 $app->put('/api/catalogo/servicios/{id:[0-9]+}',[$catalogoOperativoController,'editarServicio']);
 $app->get('/api/ot',[$ordenTrabajoController,'index']);
+$app->get('/api/ot/vehiculos',[$ordenTrabajoController,'vehiculos']);
+$app->post('/api/ot/vehiculos',[$ordenTrabajoController,'crearVehiculo']);
 $app->get('/api/ot/equipo',[$ordenTrabajoController,'equipo']);
 $app->get('/api/ot/{id:[0-9]+}',[$ordenTrabajoController,'show']);
 $app->post('/api/ot',[$ordenTrabajoController,'create']);
