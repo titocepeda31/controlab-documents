@@ -19,6 +19,8 @@ final class CatalogoOperativoController {
 
     public function empresas(Request $request,Response $response): Response {
         Security::requireRole('administrador','administrativo');
+        $query=$request->getQueryParams();
+        if(isset($query['page'])||isset($query['per_page'])||isset($query['search'])||isset($query['empresa_id']))return Http::json($response,$this->catalogo->empresasPage($query));
         return Http::json($response,['empresas'=>$this->catalogo->empresas()]);
     }
     public function crearEmpresa(Request $request,Response $response): Response {
@@ -32,6 +34,8 @@ final class CatalogoOperativoController {
     }
     public function obras(Request $request,Response $response): Response {
         Security::requireRole('administrador','administrativo');
+        $query=$request->getQueryParams();
+        if(isset($query['page'])||isset($query['per_page'])||isset($query['search'])||isset($query['empresa_id']))return Http::json($response,$this->catalogo->obrasPage($query));
         return Http::json($response,['obras'=>$this->catalogo->obras()]);
     }
     public function crearObra(Request $request,Response $response): Response {
