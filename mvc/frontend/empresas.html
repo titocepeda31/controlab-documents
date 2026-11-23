@@ -36,6 +36,11 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
 .geo-results{display:grid;gap:7px;margin-top:10px}.geo-result{text-align:left;border:1px solid #cbdce3;border-radius:8px;background:#f5fafb;padding:9px;color:var(--text);cursor:pointer}
 .geo-controls{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0;align-items:center}
 .geo-controls input{max-width:100%;flex:1;min-width:200px;border:1px solid #bacbd5;border-radius:8px;padding:10px;min-height:42px}
+#app{display:grid;grid-template-columns:minmax(250px,340px) minmax(0,1fr);gap:18px;max-width:1350px;margin:auto;align-items:start}
+#app>.panel{min-width:0}#empresasList .record{cursor:pointer}#empresasList .record.selected{border-color:var(--accent);background:#eaf8f3}
+#empresasList .record>div{flex:1;min-width:0;overflow-wrap:anywhere}#empresasList .record small{display:none}
+dialog{width:min(720px,calc(100% - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--border);border-radius:14px;padding:22px;color:var(--text)}dialog::backdrop{background:#10283d88}dialog .grid{margin-top:15px}dialog .field input[type=checkbox]{width:auto;min-height:0}
+@media(max-width:1150px){#app{grid-template-columns:1fr}} 
 </style></head>
 <body>
 <header class="top"><div><strong>CONTROL DE CALIDAD</strong><small>Catálogos de operación · Forestal 3M</small></div></header>
@@ -52,7 +57,7 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
   </div>
   <section id="viewEmpresas" class="panel">
    <h2>Empresas constructoras</h2><p>El catálogo conserva las empresas ya usadas para emitir informes; no se duplican.</p>
-   <form id="empresaForm"><div class="grid">
+   <button class="btn primary" type="button" id="newCompany">+ Nueva empresa</button><div class="field" style="margin-top:12px"><label for="companySearch">Buscar constructora</label><input id="companySearch" type="search"></div><dialog id="companyDialog"><div class="section-title"><h2>Datos de la empresa</h2><button type="button" class="btn" id="closeCompany">Cerrar</button></div><form id="empresaForm"><div class="grid">
     <div class="field full"><label for="empresaNombre">Razón social *</label><input id="empresaNombre" maxlength="160" required></div>
     <div class="field"><label for="empresaComercial">Nombre comercial</label><input id="empresaComercial" maxlength="160"></div>
     <div class="field"><label for="empresaRut">RUT (opcional)</label><input id="empresaRut" maxlength="20"></div>
@@ -60,13 +65,13 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
     <div class="field"><label for="empresaTelefono">Teléfono</label><input id="empresaTelefono" type="tel" maxlength="40"></div>
     <div class="field"><label for="empresaEmail">Correo electrónico</label><input id="empresaEmail" type="email" maxlength="190"></div>
     <div class="field" id="empresaActiveWrap" hidden><label><input id="empresaActivo" type="checkbox" checked> Empresa activa</label></div>
-    </div><div class="actions"><button class="btn primary" id="guardarEmpresa" type="submit">Agregar empresa</button><button class="btn" type="button" id="cancelEmpresa" hidden>Cancelar edición</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form>
+    </div><div class="actions"><button class="btn primary" id="guardarEmpresa" type="submit">Agregar empresa</button><button class="btn" type="button" id="cancelEmpresa" hidden>Cancelar edición</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form></dialog>
    <div class="section-title" style="margin-top:25px"><h2>Empresas registradas</h2><span id="empresaCount" class="help"></span></div>
    <div class="card-list" id="empresasList"></div>
   </section>
   <section id="viewObras" class="panel" hidden>
    <h2>Obras por empresa</h2><p class="hint">La dirección y comuna se completarán automáticamente en una nueva OT al seleccionar su obra.</p>
-   <form id="obraForm">
+   <p id="selectedCompany"></p><button type="button" class="btn primary" id="newWork" disabled>+ Nueva obra</button><p id="saveFeedback" role="status"></p><dialog id="workDialog"><div class="section-title"><h2>Datos de la obra</h2><button type="button" class="btn" id="closeWork">Cerrar</button></div><form id="obraForm">
     <div class="grid">
      <div class="field"><label for="obraEmpresa">Constructora *</label><select id="obraEmpresa" required><option value="">Selecciona empresa</option></select></div>
      <div class="field"><label for="obraNombre">Nombre de la obra *</label><input id="obraNombre" maxlength="180" required placeholder="Ej.: Mejoramiento Ruta X"></div>
@@ -92,7 +97,9 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
       <p class="help">La ubicación actual se solicita solamente al pulsar «Cómo llegar» y aceptar el permiso del navegador. No se guarda ni se rastrea al trabajador.</p>
       <div id="geoNotice" class="notice" role="status" aria-live="polite"></div>
    </div>
-   <div class="section-title" style="margin-top:25px"><h2>Obras registradas</h2><span id="obraCount" class="help"></span></div><div class="card-list" id="obrasList"></div>
+   </dialog><div class="section-title" style="margin-top:25px"><h2>Obras por constructora</h2><span id="obraCount" class="help"></span></div>
+   <div class="field" style="margin:12px 0 16px"><label for="obraFiltroEmpresa">Seleccionar empresa para ver sus obras</label><select id="obraFiltroEmpresa"><option value="">Selecciona una constructora</option></select></div>
+   <div class="card-list" id="obrasList"></div>
   </section>
   <section id="viewServicios" class="panel" hidden>
    <h2>Catálogo de servicios</h2>
@@ -150,10 +157,10 @@ async function write(path,method,data){
 }
 function tab(name){
  for(const button of document.querySelectorAll('[data-tab]')){const active=button.dataset.tab===name;button.classList.toggle('active',active);button.setAttribute('aria-pressed',active?'true':'false');}
- for(const name2 of ['Empresas','Obras','Servicios','Personal'])$('view'+name2).hidden=name2.toLowerCase()!==name;
+ for(const name2 of ['Empresas','Obras','Servicios','Personal'])$('view'+name2).hidden=!['Empresas','Obras'].includes(name2);
 }
 for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>tab(b.dataset.tab));
-const moduleNames={empresas:'Empresas constructoras',obras:'Obras',servicios:'Servicios',personal:'Personal de terreno'};
+const moduleNames={empresas:'Empresas y obras',obras:'Obras',servicios:'Servicios',personal:'Personal de terreno'};
 const activeModule='empresas';
 if(Object.hasOwn(moduleNames,activeModule)){
  $('catalogTabs').hidden=true;
@@ -168,10 +175,14 @@ async function refresh(){
  companies=c.empresas||[];works=w.obras||[];people=p.personal||[];services=s.servicios||[];
  const failed=results.map((x,i)=>x.status==='rejected'?['empresas','obras','personal','servicios'][i]+': '+x.reason.message:null).filter(Boolean);
  if(failed.length){$('accessError').hidden=false;$('accessText').textContent='Algunos catálogos no pudieron cargarse: '+failed.join(' · ');}else $('accessError').hidden=true;
- renderCompanies();renderWorks();renderPeople();renderServices();renderOptions();
+ renderPeople();renderServices();renderOptions();renderCompanies();renderWorks();
 }
 function renderOptions(){
  const select=$('obraEmpresa'),keep=select.value;
+ const filter=$('obraFiltroEmpresa'),filterKeep=filter.value;
+ filter.replaceChildren();const initial=elem('option','','Selecciona una constructora');initial.value='';filter.append(initial);
+ for(const c of companies){const opt=elem('option','',c.razon_social);opt.value=String(c.id);filter.append(opt);}
+ filter.value=filterKeep;
  select.replaceChildren();const placeholder=elem('option','','Selecciona una constructora');placeholder.value='';select.append(placeholder);
  for(const company of companies.filter(c=>Number(c.activo)===1)){const option=elem('option','',company.razon_social);option.value=String(company.id);select.append(option);}
  select.value=keep;
@@ -179,23 +190,29 @@ function renderOptions(){
 function renderCompanies(){
  const root=$('empresasList');root.replaceChildren();$('empresaCount').textContent=companies.length+' empresas';
  if(!companies.length){root.append(elem('p','','Todavía no hay constructoras.'));return;}
- for(const c of companies){
+ for(const c of companies.filter(c=>[c.razon_social,c.rut,c.nombre_comercial].join(' ').toLowerCase().includes($('companySearch').value.toLowerCase()))){
   const card=elem('article','record');const meta=elem('div');meta.append(elem('strong','',c.razon_social),elem('small','',c.nombre_comercial||'Sin nombre comercial'),elem('small','',c.rut||'Sin RUT'),elem('small','',c.contacto||'Sin contacto'),elem('small','',c.telefono||'Sin teléfono'),elem('small','',c.email||'Sin correo'));meta.append(elem('span','status'+(Number(c.activo)?'':' off'),Number(c.activo)?'Activa':'Inactiva'));const edit=elem('button','btn','Editar');edit.type='button';edit.addEventListener('click',()=>editCompany(c.id));
-  const btn=elem('button','btn','Ver obras');btn.type='button';btn.addEventListener('click',()=>{tab('obras');$('obraEmpresa').value=String(c.id);$('viewObras').scrollIntoView({behavior:'smooth'});});
+  card.classList.toggle('selected',String(c.id)===$('obraFiltroEmpresa').value);const btn=elem('button','btn','Ver obras');btn.type='button';btn.addEventListener('click',()=>{resetWork();$('obraFiltroEmpresa').value=String(c.id);$('obraEmpresa').value=String(c.id);renderWorks();renderCompanies();});
   card.append(meta,edit,btn);root.append(card);
  }
 }
 function renderWorks(){
- const root=$('obrasList');root.replaceChildren();$('obraCount').textContent=works.length+' obras';
- if(!works.length){root.append(elem('p','','Aún no hay obras ingresadas.'));return;}
- for(const w of works){
+ const root=$('obrasList');root.replaceChildren();
+ const companyId=$('obraFiltroEmpresa').value;
+ const selected=companies.find(c=>String(c.id)===companyId);$('newWork').disabled=!selected||Number(selected.activo)!==1;$('selectedCompany').textContent=selected?[selected.razon_social,selected.rut,selected.contacto,selected.telefono,selected.email].filter(Boolean).join(' · '):'Selecciona una constructora';
+ if(!companyId){$('obraCount').textContent='';root.append(elem('p','','Selecciona una constructora para consultar sus obras.'));return;}
+ const filtered=works.filter(w=>String(w.empresa_id)===companyId);
+ $('obraCount').textContent=filtered.length+' obra(s) · '+(selected?.razon_social||'Constructora');
+ if(!filtered.length){root.append(elem('p','','Esta constructora todavía no tiene obras registradas.'));return;}
+ for(const w of filtered){
   const card=elem('article','record'),meta=elem('div');
-  meta.append(elem('strong','',w.nombre),elem('small','',w.empresa),elem('small','',w.direccion+' · '+w.comuna));
+  meta.append(elem('strong','',w.nombre),elem('small','',w.direccion+' · '+w.comuna));
   const status=elem('span','status'+(Number(w.activo)?'':' off'),Number(w.activo)?'Activa':'Inactiva');meta.append(status);
   const btn=elem('button','btn','Editar y ubicar');btn.type='button';btn.addEventListener('click',()=>editWork(w.id));
   card.append(meta,btn);root.append(card);
  }
 }
+$('obraFiltroEmpresa').addEventListener('change',()=>{resetWork();$('obraEmpresa').value=$('obraFiltroEmpresa').value;renderWorks();renderCompanies();});
 
 function renderServices(){
  const root=$('serviciosList');root.replaceChildren();$('servicioCount').textContent=services.length+' servicios';
@@ -246,11 +263,11 @@ function renderPeople(){
 }
 function editWork(id){
  const w=works.find(o=>Number(o.id)===Number(id));if(!w)return;
- tab('obras');editObra=id;
+ tab('obras');editObra=id;$('obraFiltroEmpresa').value=String(w.empresa_id);renderWorks();
  $('obraEmpresa').value=String(w.empresa_id);$('obraNombre').value=w.nombre;$('obraDireccion').value=w.direccion;
  $('obraComuna').value=w.comuna;$('obraActivo').checked=Number(w.activo)===1;
  $('obraActiveWrap').hidden=false;$('cancelObra').hidden=false;$('guardarObra').textContent='Guardar cambios';
- notice('obraNotice','');$('viewObras').scrollIntoView({behavior:'smooth'});
+ notice('obraNotice','');$('workDialog').showModal();
  $('mapPanel').hidden=false;$('geoSearch').value=[w.direccion,w.comuna].filter(Boolean).join(', ');
  $('geoResults').replaceChildren();geoChoice=null;
  if(window.L){
@@ -364,7 +381,7 @@ function editCompany(id){
  $('empresaTelefono').value=c.telefono||'';$('empresaEmail').value=c.email||'';
  $('empresaActivo').checked=Number(c.activo)===1;$('empresaActiveWrap').hidden=false;
  $('guardarEmpresa').textContent='Guardar cambios';$('cancelEmpresa').hidden=false;
- $('empresaForm').scrollIntoView({behavior:'smooth',block:'start'});
+ $('companyDialog').showModal();
 }
 function resetCompany(){editEmpresa=null;$('empresaForm').reset();$('empresaActiveWrap').hidden=true;$('guardarEmpresa').textContent='Agregar empresa';$('cancelEmpresa').hidden=true;}
 $('cancelEmpresa').addEventListener('click',resetCompany);
@@ -376,7 +393,7 @@ $('empresaForm').addEventListener('submit',async e=>{
   const data={razon_social:$('empresaNombre').value.trim(),nombre_comercial:$('empresaComercial').value.trim(),rut:$('empresaRut').value.trim(),contacto:$('empresaContacto').value.trim(),telefono:$('empresaTelefono').value.trim(),email:$('empresaEmail').value.trim()};
   if(editEmpresa!==null)data.activo=$('empresaActivo').checked;
   await write(editEmpresa===null?'/catalogo/empresas':'/catalogo/empresas/'+editEmpresa,editEmpresa===null?'POST':'PUT',data);
-  resetCompany();await refresh();notice('empresaNotice','✓ Empresa guardada correctamente.');
+  resetCompany();$('companyDialog').close();await refresh();$('saveFeedback').textContent='Empresa guardada correctamente.';
  }catch(e){notice('empresaNotice',e.message,true);}finally{btn.disabled=false;}
 });
 $('obraForm').addEventListener('submit',async e=>{
@@ -386,8 +403,8 @@ $('obraForm').addEventListener('submit',async e=>{
    direccion:$('obraDireccion').value.trim(),comuna:$('obraComuna').value.trim()};
   if(editObra!==null)data.activo=$('obraActivo').checked;
   await write(editObra===null?'/catalogo/obras':'/catalogo/obras/'+editObra,editObra===null?'POST':'PUT',data);
-  const savedId=editObra;
-  resetWork();await refresh();notice('obraNotice','✓ Obra guardada correctamente.');
+  const savedId=editObra,selectedCompany=String(data.empresa_id);
+  resetWork();$('workDialog').close();await refresh();$('saveFeedback').textContent='Obra guardada correctamente.';$('obraFiltroEmpresa').value=selectedCompany;renderWorks();renderCompanies();$('obraEmpresa').value=selectedCompany;notice('obraNotice','✓ Obra guardada correctamente.');
   if(savedId===null)notice('obraNotice','✓ Obra registrada. Selecciónala en el listado para ubicarla en el mapa.');
  }catch(e){notice('obraNotice',e.message,true);}finally{btn.disabled=false;}
 });
@@ -400,6 +417,13 @@ $('personalForm').addEventListener('submit',async e=>{
   resetWorker();await refresh();notice('personalNotice','✓ Trabajador guardado sin crear cuenta ni contraseña.');
  }catch(e){notice('personalNotice',e.message,true);}finally{btn.disabled=false;}
 });
+$('companySearch').addEventListener('input',renderCompanies);
+$('newCompany').addEventListener('click',()=>{resetCompany();notice('empresaNotice','');$('companyDialog').showModal();});
+$('newWork').addEventListener('click',()=>{resetWork();$('obraEmpresa').value=$('obraFiltroEmpresa').value;notice('obraNotice','');$('workDialog').showModal();});
+$('closeCompany').addEventListener('click',()=>$('companyDialog').close());
+$('closeWork').addEventListener('click',()=>$('workDialog').close());
+$('cancelEmpresa').addEventListener('click',()=>$('companyDialog').close());
+$('cancelObra').addEventListener('click',()=>$('workDialog').close());
 (async()=>{
  try{
   const s=await session();if(!s.autenticado||!['administrador','administrativo'].includes(s.rol))
