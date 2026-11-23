@@ -47,7 +47,7 @@ for path in \
   mvc/backend/src/Controllers/OrdenTrabajoController.php \
   mvc/backend/src/Controllers/CatalogoOperativoController.php \
   mvc/backend/src/Controllers/LaboratoristaFirmaController.php \
-  mvc/backend/src/Controllers/RevisionController.php \
+  mvc/backend/src/Controllers/RevisionController.php src/Controllers/CorreoController.php \
   mvc/backend/src/Middleware/Security.php \
   mvc/frontend/index.php \
   mvc/frontend/.htaccess \
