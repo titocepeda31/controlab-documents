@@ -656,7 +656,7 @@ async function openHistory(onlyPending=false){
    $('historySource').textContent='Informes de MySQL · los 12 más recientes se guardan también para reutilizarlos sin internet.';
    void cacheRecentReports(availableHistory.slice(0,12));
   }else{$('historySource').textContent='Sin conexión: mostrando únicamente el historial descargado en este equipo.';}
-  $('mailDemoPanel').hidden=!['administrador','administrativo'].includes(currentRole);
+  $('mailDemoPanel').hidden=!canManageCatalogs;
   renderHistory();
  }catch(e){if(availableHistory.length){$('historySource').textContent='Historial local (sin acceso al servidor).';renderHistory();}else $('historyList').textContent='No fue posible cargar el historial: '+e.message;}
 }
@@ -671,7 +671,7 @@ function renderHistory(){const search=$('historySearch').value.trim().toLocaleLo
  if(!matches.length){list.textContent=search?'No se encontraron informes con esa búsqueda.':(reviewOnlyPending?'No hay informes pendientes de revisión entre los 100 más recientes.':'Todavía no hay informes anteriores.');return;}
  for(const info of matches.slice(0,50)){
   const item=document.createElement('div');item.className='history-item';
-  if(authenticated&&['administrador','administrativo'].includes(currentRole)){const check=document.createElement('input');check.type='checkbox';check.checked=mailSelected.has(Number(info.id));check.setAttribute('aria-label','Seleccionar informe '+info.id+' para correo');check.addEventListener('change',()=>{if(check.checked)mailSelected.add(Number(info.id));else mailSelected.delete(Number(info.id));});item.append(check);}
+  if(authenticated&&canManageCatalogs){const check=document.createElement('input');check.type='checkbox';check.checked=mailSelected.has(Number(info.id));check.setAttribute('aria-label','Seleccionar informe '+info.id+' para correo');check.addEventListener('change',()=>{if(check.checked)mailSelected.add(Number(info.id));else mailSelected.delete(Number(info.id));});item.append(check);}
   const desc=document.createElement('div');desc.append(node('strong',(info.numero_informe||'Sin número')+' · ID '+info.id),node('small',(info.razon_social||'')+' · '+(info.fecha_informe||'')));
   const state=info.revision_estado||'borrador';const tag=node('span',reviewLabel(state));tag.className='review-tag '+state;desc.append(tag);
   if(state==='devuelto'&&info.motivo_devolucion)desc.append(node('small','Motivo: '+info.motivo_devolucion));
