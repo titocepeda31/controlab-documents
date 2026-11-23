@@ -39,8 +39,11 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
 #app{display:grid;grid-template-columns:minmax(250px,340px) minmax(0,1fr);gap:18px;max-width:1350px;margin:auto;align-items:start}
 #app>.panel{min-width:0}#empresasList .record{cursor:pointer}#empresasList .record.selected{border-color:var(--accent);background:#eaf8f3}
 #empresasList .record>div{flex:1;min-width:0;overflow-wrap:anywhere}#empresasList .record small{display:none}
-dialog{width:min(720px,calc(100% - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--border);border-radius:14px;padding:22px;color:var(--text)}dialog::backdrop{background:#10283d88}dialog .grid{margin-top:15px}dialog .field input[type=checkbox]{width:auto;min-height:0}
+.inline-editor{width:100%;max-width:720px;margin:16px auto;border:1px solid var(--border);border-radius:12px;padding:18px;color:var(--text);background:white}.inline-editor .grid{margin-top:15px}.inline-editor .field input[type=checkbox]{width:auto;min-height:0}
 @media(max-width:1150px){#app{grid-template-columns:1fr}} 
+#app.editing{grid-template-columns:minmax(0,1fr);max-width:900px}
+#app.editing:has(#companyDialog:not([hidden])) #viewObras,#app.editing:has(#workDialog:not([hidden])) #viewEmpresas{display:none}
+#app.editing #empresasList,#app.editing #obrasList,#app.editing #newCompany,#app.editing #newWork,#app.editing #companySearch,#app.editing #obraFiltroEmpresa{display:none}
 </style></head>
 <body>
 <header class="top"><div><strong>CONTROL DE CALIDAD</strong><small>Catálogos de operación · Forestal 3M</small></div></header>
@@ -57,7 +60,7 @@ dialog{width:min(720px,calc(100% - 24px));max-height:90dvh;overflow:auto;border:
   </div>
   <section id="viewEmpresas" class="panel">
    <h2>Empresas constructoras</h2><p>El catálogo conserva las empresas ya usadas para emitir informes; no se duplican.</p>
-   <button class="btn primary" type="button" id="newCompany">+ Nueva empresa</button><div class="field" style="margin-top:12px"><label for="companySearch">Buscar constructora</label><input id="companySearch" type="search"></div><dialog id="companyDialog"><div class="section-title"><h2>Datos de la empresa</h2><button type="button" class="btn" id="closeCompany">Cerrar</button></div><form id="empresaForm"><div class="grid">
+   <button class="btn primary" type="button" id="newCompany">+ Nueva empresa</button><div class="field" style="margin-top:12px"><label for="companySearch">Buscar constructora</label><input id="companySearch" type="search"></div><section class="inline-editor" id="companyDialog" hidden><div class="section-title"><h2>Datos de la empresa</h2><button type="button" class="btn" id="closeCompany">Cerrar</button></div><form id="empresaForm"><div class="grid">
     <div class="field full"><label for="empresaNombre">Razón social *</label><input id="empresaNombre" maxlength="160" required></div>
     <div class="field"><label for="empresaComercial">Nombre comercial</label><input id="empresaComercial" maxlength="160"></div>
     <div class="field"><label for="empresaRut">RUT (opcional)</label><input id="empresaRut" maxlength="20"></div>
@@ -65,13 +68,13 @@ dialog{width:min(720px,calc(100% - 24px));max-height:90dvh;overflow:auto;border:
     <div class="field"><label for="empresaTelefono">Teléfono</label><input id="empresaTelefono" type="tel" maxlength="40"></div>
     <div class="field"><label for="empresaEmail">Correo electrónico</label><input id="empresaEmail" type="email" maxlength="190"></div>
     <div class="field" id="empresaActiveWrap" hidden><label><input id="empresaActivo" type="checkbox" checked> Empresa activa</label></div>
-    </div><div class="actions"><button class="btn primary" id="guardarEmpresa" type="submit">Agregar empresa</button><button class="btn" type="button" id="cancelEmpresa" hidden>Cancelar edición</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form></dialog>
+    </div><div class="actions"><button class="btn primary" id="guardarEmpresa" type="submit">Agregar empresa</button><button class="btn" type="button" id="cancelEmpresa" hidden>Cancelar edición</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form></section>
    <div class="section-title" style="margin-top:25px"><h2>Empresas registradas</h2><span id="empresaCount" class="help"></span></div>
    <div class="card-list" id="empresasList"></div>
   </section>
   <section id="viewObras" class="panel" hidden>
    <h2>Obras por empresa</h2><p class="hint">La dirección y comuna se completarán automáticamente en una nueva OT al seleccionar su obra.</p>
-   <p id="selectedCompany"></p><button type="button" class="btn primary" id="newWork" disabled>+ Nueva obra</button><p id="saveFeedback" role="status"></p><dialog id="workDialog"><div class="section-title"><h2>Datos de la obra</h2><button type="button" class="btn" id="closeWork">Cerrar</button></div><form id="obraForm">
+   <p id="selectedCompany"></p><button type="button" class="btn primary" id="newWork" disabled>+ Nueva obra</button><p id="saveFeedback" role="status"></p><section class="inline-editor" id="workDialog" hidden><div class="section-title"><h2>Datos de la obra</h2><button type="button" class="btn" id="closeWork">Cerrar</button></div><form id="obraForm">
     <div class="grid">
      <div class="field"><label for="obraEmpresa">Constructora *</label><select id="obraEmpresa" required><option value="">Selecciona empresa</option></select></div>
      <div class="field"><label for="obraNombre">Nombre de la obra *</label><input id="obraNombre" maxlength="180" required placeholder="Ej.: Mejoramiento Ruta X"></div>
@@ -97,7 +100,7 @@ dialog{width:min(720px,calc(100% - 24px));max-height:90dvh;overflow:auto;border:
       <p class="help">La ubicación actual se solicita solamente al pulsar «Cómo llegar» y aceptar el permiso del navegador. No se guarda ni se rastrea al trabajador.</p>
       <div id="geoNotice" class="notice" role="status" aria-live="polite"></div>
    </div>
-   </dialog><div class="section-title" style="margin-top:25px"><h2>Obras por constructora</h2><span id="obraCount" class="help"></span></div>
+   </section><div class="section-title" style="margin-top:25px"><h2>Obras por constructora</h2><span id="obraCount" class="help"></span></div>
    <div class="field" style="margin:12px 0 16px"><label for="obraFiltroEmpresa">Seleccionar empresa para ver sus obras</label><select id="obraFiltroEmpresa"><option value="">Selecciona una constructora</option></select></div>
    <div class="card-list" id="obrasList"></div>
   </section>
@@ -137,6 +140,13 @@ const $=id=>document.getElementById(id);
 const API='./api';
 let companies=[],works=[],people=[],services=[],editEmpresa=null,editObra=null,editPerson=null,editServicio=null;
 let obraMap=null,marker=null,geoChoice=null,geoSource='mapa_manual';
+function openEditor(id){
+ const editor=$(id);editor.hidden=false;
+ const other=id==='companyDialog'?'workDialog':'companyDialog';$(other).hidden=true;
+ $('app').classList.add('editing');
+ editor.scrollIntoView({block:'start',behavior:'smooth'});
+}
+function closeEditor(id){$(id).hidden=true;$('app').classList.remove('editing');}
 function elem(tag,cls='',value=''){const n=document.createElement(tag);n.className=cls;n.textContent=value;return n;}
 function notice(id,value,isError=false){const e=$(id);e.textContent=value;e.className=value?'notice'+(isError?' error':''):'notice';}
 async function request(path,options={}){
@@ -267,7 +277,7 @@ function editWork(id){
  $('obraEmpresa').value=String(w.empresa_id);$('obraNombre').value=w.nombre;$('obraDireccion').value=w.direccion;
  $('obraComuna').value=w.comuna;$('obraActivo').checked=Number(w.activo)===1;
  $('obraActiveWrap').hidden=false;$('cancelObra').hidden=false;$('guardarObra').textContent='Guardar cambios';
- notice('obraNotice','');$('workDialog').showModal();
+ notice('obraNotice','');openEditor('workDialog');
  $('mapPanel').hidden=false;$('geoSearch').value=[w.direccion,w.comuna].filter(Boolean).join(', ');
  $('geoResults').replaceChildren();geoChoice=null;
  if(window.L){
@@ -381,7 +391,7 @@ function editCompany(id){
  $('empresaTelefono').value=c.telefono||'';$('empresaEmail').value=c.email||'';
  $('empresaActivo').checked=Number(c.activo)===1;$('empresaActiveWrap').hidden=false;
  $('guardarEmpresa').textContent='Guardar cambios';$('cancelEmpresa').hidden=false;
- $('companyDialog').showModal();
+ openEditor('companyDialog');
 }
 function resetCompany(){editEmpresa=null;$('empresaForm').reset();$('empresaActiveWrap').hidden=true;$('guardarEmpresa').textContent='Agregar empresa';$('cancelEmpresa').hidden=true;}
 $('cancelEmpresa').addEventListener('click',resetCompany);
@@ -393,7 +403,7 @@ $('empresaForm').addEventListener('submit',async e=>{
   const data={razon_social:$('empresaNombre').value.trim(),nombre_comercial:$('empresaComercial').value.trim(),rut:$('empresaRut').value.trim(),contacto:$('empresaContacto').value.trim(),telefono:$('empresaTelefono').value.trim(),email:$('empresaEmail').value.trim()};
   if(editEmpresa!==null)data.activo=$('empresaActivo').checked;
   await write(editEmpresa===null?'/catalogo/empresas':'/catalogo/empresas/'+editEmpresa,editEmpresa===null?'POST':'PUT',data);
-  resetCompany();$('companyDialog').close();await refresh();$('saveFeedback').textContent='Empresa guardada correctamente.';
+  resetCompany();closeEditor('companyDialog');await refresh();$('saveFeedback').textContent='Empresa guardada correctamente.';
  }catch(e){notice('empresaNotice',e.message,true);}finally{btn.disabled=false;}
 });
 $('obraForm').addEventListener('submit',async e=>{
@@ -404,7 +414,7 @@ $('obraForm').addEventListener('submit',async e=>{
   if(editObra!==null)data.activo=$('obraActivo').checked;
   await write(editObra===null?'/catalogo/obras':'/catalogo/obras/'+editObra,editObra===null?'POST':'PUT',data);
   const savedId=editObra,selectedCompany=String(data.empresa_id);
-  resetWork();$('workDialog').close();await refresh();$('saveFeedback').textContent='Obra guardada correctamente.';$('obraFiltroEmpresa').value=selectedCompany;renderWorks();renderCompanies();$('obraEmpresa').value=selectedCompany;notice('obraNotice','✓ Obra guardada correctamente.');
+  resetWork();closeEditor('workDialog');await refresh();$('saveFeedback').textContent='Obra guardada correctamente.';$('obraFiltroEmpresa').value=selectedCompany;renderWorks();renderCompanies();$('obraEmpresa').value=selectedCompany;notice('obraNotice','✓ Obra guardada correctamente.');
   if(savedId===null)notice('obraNotice','✓ Obra registrada. Selecciónala en el listado para ubicarla en el mapa.');
  }catch(e){notice('obraNotice',e.message,true);}finally{btn.disabled=false;}
 });
@@ -418,12 +428,12 @@ $('personalForm').addEventListener('submit',async e=>{
  }catch(e){notice('personalNotice',e.message,true);}finally{btn.disabled=false;}
 });
 $('companySearch').addEventListener('input',renderCompanies);
-$('newCompany').addEventListener('click',()=>{resetCompany();notice('empresaNotice','');$('companyDialog').showModal();});
-$('newWork').addEventListener('click',()=>{resetWork();$('obraEmpresa').value=$('obraFiltroEmpresa').value;notice('obraNotice','');$('workDialog').showModal();});
-$('closeCompany').addEventListener('click',()=>$('companyDialog').close());
-$('closeWork').addEventListener('click',()=>$('workDialog').close());
-$('cancelEmpresa').addEventListener('click',()=>$('companyDialog').close());
-$('cancelObra').addEventListener('click',()=>$('workDialog').close());
+$('newCompany').addEventListener('click',()=>{resetCompany();notice('empresaNotice','');openEditor('companyDialog');});
+$('newWork').addEventListener('click',()=>{resetWork();$('obraEmpresa').value=$('obraFiltroEmpresa').value;notice('obraNotice','');openEditor('workDialog');});
+$('closeCompany').addEventListener('click',()=>closeEditor('companyDialog'));
+$('closeWork').addEventListener('click',()=>closeEditor('workDialog'));
+$('cancelEmpresa').addEventListener('click',()=>closeEditor('companyDialog'));
+$('cancelObra').addEventListener('click',()=>closeEditor('workDialog'));
 (async()=>{
  try{
   const s=await session();if(!s.autenticado||!['administrador','administrativo'].includes(s.rol))
