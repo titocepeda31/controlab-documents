@@ -129,7 +129,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .inline-action-hint{flex:1 0 100%;background:#fff8e6;border:1px solid #f1dca2;border-radius:9px;color:#745718;padding:10px 12px;font-size:13px;margin:4px 0}
 .action-feedback{max-width:1330px;margin:16px auto 0;padding:12px 17px;border:1px solid #9bd5c5;background:#e8f7f1;color:#126451;border-radius:12px;font-size:14px}
 .action-feedback.error{background:#fff0f0;color:#a52335;border-color:#f3b7bb}
-.history-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #dfebef;border-radius:12px;padding:15px;margin-top:11px;flex-wrap:wrap}
+.history-item{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:12px;border:1px solid #dfebef;border-radius:12px;padding:15px;margin-top:11px;min-width:0;max-width:100%;overflow:hidden}
+.history-item:has(>input[type=checkbox]){grid-template-columns:24px minmax(0,1fr)}
+.history-item>input[type=checkbox]{grid-column:1;grid-row:1;margin:3px 0}
+.history-item>.history-desc{grid-column:1;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:normal}
+.history-item:has(>input[type=checkbox])>.history-desc{grid-column:2}
+.history-item>.history-buttons{grid-column:1/-1;min-width:0;max-width:100%}
+.history-item>.history-desc strong,.history-item>.history-desc small{display:block;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:540px){.history-item{padding:12px}.history-buttons .btn{max-width:100%;white-space:normal;text-align:center}}
 .history-item strong{font-size:15px}
 .history-item small{color:#678095;display:block;margin-top:5px}
 .history-buttons{display:flex;flex-wrap:wrap;gap:6px}
@@ -672,7 +679,7 @@ function renderHistory(){const search=$('historySearch').value.trim().toLocaleLo
  for(const info of matches.slice(0,50)){
   const item=document.createElement('div');item.className='history-item';
   if(authenticated&&canManageCatalogs){const check=document.createElement('input');check.type='checkbox';check.checked=mailSelected.has(Number(info.id));check.setAttribute('aria-label','Seleccionar informe '+info.id+' para correo');check.addEventListener('change',()=>{if(check.checked)mailSelected.add(Number(info.id));else mailSelected.delete(Number(info.id));});item.append(check);}
-  const desc=document.createElement('div');desc.append(node('strong',(info.numero_informe||'Sin número')+' · ID '+info.id),node('small',(info.razon_social||'')+' · '+(info.fecha_informe||'')));
+  const desc=document.createElement('div');desc.className='history-desc';desc.append(node('strong',(info.numero_informe||'Sin número')+' · ID '+info.id),node('small',(info.razon_social||'')+' · '+(info.fecha_informe||'')));
   const state=info.revision_estado||'borrador';const tag=node('span',reviewLabel(state));tag.className='review-tag '+state;desc.append(tag);
   if(state==='devuelto'&&info.motivo_devolucion)desc.append(node('small','Motivo: '+info.motivo_devolucion));
   const actions=document.createElement('div');actions.className='history-buttons';
