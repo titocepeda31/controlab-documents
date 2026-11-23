@@ -47,3 +47,5 @@ $app->post('/api/informes/{id:[0-9]+}/duplicar',[$informes,'duplicate']);
 $app->post('/api/informes/{id:[0-9]+}/solicitar-revision',[$revisiones,'request']);
 $app->post('/api/informes/{id:[0-9]+}/aprobar',[$revisiones,'approve']);
 $app->post('/api/informes/{id:[0-9]+}/devolver',[$revisiones,'returnForChanges']);
+
+$app->post('/api/correo-demo/enviar',[$correoController,'send']);
