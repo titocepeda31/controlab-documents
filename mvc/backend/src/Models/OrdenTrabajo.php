@@ -95,6 +95,10 @@ final class OrdenTrabajo {
         if($obraId===null||$obraId==='')$data['obra_id']=null;
         elseif((is_int($obraId)||is_string($obraId)&&ctype_digit($obraId))&&(int)$obraId>0)$data['obra_id']=(int)$obraId;
         else throw new InvalidArgumentException('Obra seleccionada inválida');
+        $vehicle=$input['vehiculo_id']??null;
+        if($vehicle===null||$vehicle==='')$data['vehiculo_id']=null;
+        elseif((is_int($vehicle)||is_string($vehicle)&&ctype_digit($vehicle))&&(int)$vehicle>0)$data['vehiculo_id']=(int)$vehicle;
+        else throw new InvalidArgumentException('Vehículo inválido');
         $data['servicios']=null;
         if(array_key_exists('servicios',$input)){
             if(!is_array($input['servicios'])||count($input['servicios'])>60)
@@ -130,6 +134,25 @@ final class OrdenTrabajo {
         $data['comuna']=$obra['comuna'];
     }
 
+    public function vehicles(): array {
+        return $this->db->connection()->query('SELECT id,patente,descripcion,activo FROM catalogo_vehiculos ORDER BY patente')->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function addVehicle(array $input): int {
+        $plate=strtoupper(trim((string)($input['patente']??'')));
+        if(!preg_match('/^[A-Z0-9-]{4,12}$/D',$plate))throw new InvalidArgumentException('Patente inválida (4 a 12 caracteres)');
+        $description=self::field($input,'descripcion',120,false);
+        $q=$this->db->connection()->prepare('INSERT INTO catalogo_vehiculos (patente,descripcion) VALUES (?,?)');
+        try{$q->execute([$plate,$description]);}catch(PDOException $e){if($e->getCode()==='23000')throw new RuntimeException('Esta patente ya existe',409);throw $e;}
+        return (int)$this->db->connection()->lastInsertId();
+    }
+    private function saveVehicle(PDO $pdo,int $otId,?int $vehicleId): void {
+        $q=$pdo->prepare('DELETE FROM ot_vehiculos WHERE ot_id=?');$q->execute([$otId]);
+        if($vehicleId===null)return;
+        $q=$pdo->prepare('SELECT id FROM catalogo_vehiculos WHERE id=? AND activo=1');
+        $q->execute([$vehicleId]);
+        if(!$q->fetchColumn())throw new InvalidArgumentException('Camioneta inexistente o inactiva');
+        $q=$pdo->prepare('INSERT INTO ot_vehiculos (ot_id,vehiculo_id) VALUES (?,?)');$q->execute([$otId,$vehicleId]);
+    }
     private function saveObraLink(PDO $pdo,int $otId,?int $obraId): void {
         if($obraId===null){
             $q=$pdo->prepare('DELETE FROM ot_obra_vinculos WHERE ot_id=?');
@@ -160,8 +183,8 @@ final class OrdenTrabajo {
         if($last<$start||$last->diff($start)->days>100)throw new InvalidArgumentException('Consulta un período de hasta 100 días');
         $max=$last->modify('+1 day')->format('Y-m-d').' 00:00:00';
         $params=[$max,$from.' 00:00:00'];
-        $sql="SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.version,v.obra_id,g.latitud,g.longitud ".
-             "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id LEFT JOIN obra_ubicaciones g ON g.obra_id=v.obra_id WHERE o.inicio < ? AND o.fin > ?";
+        $sql="SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.version,v.obra_id,g.latitud,g.longitud,ov.vehiculo_id,cv.patente ".
+             "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id LEFT JOIN obra_ubicaciones g ON g.obra_id=v.obra_id LEFT JOIN ot_vehiculos ov ON ov.ot_id=o.id LEFT JOIN catalogo_vehiculos cv ON cv.id=ov.vehiculo_id WHERE o.inicio < ? AND o.fin > ?";
         if(!self::manager($viewer)){
             $sql.=" AND EXISTS (SELECT 1 FROM ot_asignaciones a WHERE a.ot_id=o.id AND a.usuario_id=?)";
             $params[]=(int)$viewer['id'];
@@ -368,6 +391,7 @@ final class OrdenTrabajo {
             $this->saveAssignments($pdo,$id,$data['personal'],$data['inicio'],$data['fin'],$data['estado']);
             $this->saveFieldAssignments($pdo,$id,$data['personal_terreno_ids'],$data['inicio'],$data['fin'],$data['estado']);
             $this->saveObraLink($pdo,$id,$data['obra_id']);
+            $this->saveVehicle($pdo,$id,$data['vehiculo_id']);
             $this->saveServicios($pdo,$id,$data['servicios']);
             $q=$pdo->prepare("INSERT INTO ot_eventos (ot_id,usuario_id,accion,resumen) VALUES (?,?,'crear',?)");
             $q->execute([$id,$actor,'OT creada con '.count($data['personal']).' persona(s)']);
