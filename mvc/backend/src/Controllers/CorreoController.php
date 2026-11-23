@@ -2,12 +2,12 @@
 declare(strict_types=1);
 namespace Demo\Controllers;
 
-use Demo\Core\\Database;
-use Demo\Core\\Http;
-use Demo\Middleware\\Security;
-use Demo\Models\\Informe;
-use Psr\Http\\Message\\ServerRequestInterface as Request;
-use Psr\Http\\Message\\ResponseInterface as Response;
+use Demo\Core\Database;
+use Demo\Core\Http;
+use Demo\Middleware\Security;
+use Demo\Models\Informe;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
 use RuntimeException;
 use InvalidArgumentException;
 
