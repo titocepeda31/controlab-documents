@@ -126,11 +126,12 @@ p{margin:6px 0;color:var(--muted)}
    </div>
   </div>
   <section class="panel" id="routePanel">
-   <div class="bar"><div><h2>Ruta de órdenes de trabajo</h2><p>Recorrido por carretera de las OT del día seleccionado, en orden de horario. Filtra por trabajador para ver su ruta.</p></div><button class="btn primary" id="routeCalculate" type="button">Calcular ruta y kilómetros</button></div>
-   <div class="filters"><label for="routeDay">Día</label><input type="date" id="routeDay"><label><input type="checkbox" id="routeUseLocation"> Iniciar desde mi ubicación actual</label></div>
+   <div class="bar"><div><h2>Ruta por patente</h2><p>Selecciona una camioneta y una fecha para ver sus órdenes y recorrido por carretera.</p></div><button class="btn primary" id="routeCalculate" type="button">Calcular ruta y kilómetros</button></div>
+   <div class="filters"><label for="routeVehicle">Patente</label><select id="routeVehicle" aria-label="Seleccionar patente"><option value="">Selecciona una camioneta</option></select><label for="routeDay">Día</label><input type="date" id="routeDay"><label><input type="checkbox" id="routeUseLocation"> Iniciar desde mi ubicación actual</label></div>
    <p id="routeStatus" role="status" aria-live="polite">Selecciona un día y calcula el recorrido.</p>
    <div id="routeMap" hidden style="height:340px;border:1px solid #d7e3ea;border-radius:10px;margin-top:12px"></div>
    <div id="routeStops"></div>
+   <div class="assignment-list" id="routeTable" aria-label="Órdenes asignadas a la camioneta"></div>
   </section>
   <section class="panel">
    <div class="month-head">
@@ -184,6 +185,7 @@ p{margin:6px 0;color:var(--muted)}
      <div class="field"><label for="inicio">Inicio programado *</label><input id="inicio" name="inicio" type="datetime-local" required></div>
      <div class="field"><label for="fin">Fin programado *</label><input id="fin" name="fin" type="datetime-local" required></div>
      <div class="field"><label for="estado">Estado</label><select id="estado" name="estado"><option value="planificada">Planificada</option><option value="en_curso">En curso</option><option value="finalizada">Finalizada</option><option value="cancelada">Cancelada</option></select></div>
+     <div class="field"><label for="vehiculo_id">Camioneta (patente)</label><select id="vehiculo_id"><option value="">Sin asignar</option></select><button type="button" class="btn" id="newVehicleBtn" style="margin-top:6px">+ Registrar patente</button><small id="vehicleHint" class="hint">Asigna una camioneta para visualizar su ruta.</small></div>
      <div class="field"><label for="prioridad">Prioridad</label><select id="prioridad" name="prioridad"><option value="normal">Normal</option><option value="urgente">Urgente</option></select></div>
      <div class="field full"><label>Personal de terreno (sin cuenta de usuario)</label><div class="hint">Muestreadores, conductores y ayudantes. <a href="./personal.html">Registrar trabajador</a>. Los horarios se verificarán automáticamente.</div><div class="team-list" id="fieldChoices"></div></div>
      <div class="field full"><label>Usuarios del sistema que también participarán</label><div class="hint">Opcional: laboratoristas o digitadores que ingresan a Controlab.</div><div class="team-list" id="teamChoices"></div></div>
@@ -201,7 +203,7 @@ const $=id=>document.getElementById(id);
 const API='./api';
 const weekdays=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const statusLabels={planificada:'Planificada',en_curso:'En curso',finalizada:'Finalizada',cancelada:'Cancelada'};
-let manager=false,viewerId=null,staff=[],fieldStaff=[],companies=[],works=[],services=[],jobs=[],view='calendar',selected=null,editingId=null,editingVersion=null,month=new Date(),sessionReady=false;
+let manager=false,viewerId=null,staff=[],fieldStaff=[],companies=[],works=[],services=[],vehicles=[],jobs=[],view='calendar',selected=null,editingId=null,editingVersion=null,month=new Date(),sessionReady=false;
 month=new Date(month.getFullYear(),month.getMonth(),1);
 function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function monthLabel(d){return d.toLocaleDateString('es-CL',{month:'long',year:'numeric'});}
@@ -318,7 +320,12 @@ async function calculateDayRoute(){
  const status=$('routeStatus'),map=$('routeMap'),stops=$('routeStops');
  status.textContent='Calculando recorrido…';stops.replaceChildren();map.hidden=true;
  const day=$('routeDay').value||selected||dateKey(new Date());
- const dayJobs=jobsForDay(day).filter(j=>j.estado!=='cancelada').sort((a,b)=>a.inicio.localeCompare(b.inicio));
+ const vehicleId=Number($('routeVehicle').value);
+ const table=$('routeTable');table.replaceChildren();
+ if(!vehicleId){status.textContent='Selecciona una patente para consultar su ruta y las OT asignadas.';return;}
+ const dayJobs=jobsForDay(day).filter(j=>j.estado!=='cancelada'&&Number(j.vehiculo_id)===vehicleId).sort((a,b)=>a.inicio.localeCompare(b.inicio));
+ for(const job of dayJobs)table.append(actionCard(job));
+ if(!dayJobs.length){status.textContent='No hay OT asignadas a esta camioneta en la fecha seleccionada.';return;}
  const points=[],missing=[];
  for(const job of dayJobs){
   const work=works.find(w=>Number(w.id)===Number(job.obra_id));
@@ -359,6 +366,7 @@ async function calculateDayRoute(){
 }
 $('routeCalculate').addEventListener('click',()=>void calculateDayRoute());
 $('routeDay').addEventListener('change',()=>void calculateDayRoute());
+$('routeVehicle').addEventListener('change',()=>void calculateDayRoute());
 $('routeUseLocation').addEventListener('change',()=>void calculateDayRoute());
 function renderDay(){
  const day=selected||dateKey(new Date());
@@ -440,6 +448,7 @@ async function openDetail(id){
   fieldLine(body,'Destino',fullLocation(j));
   fieldLine(body,'Horario',dateTimeLabel(j.inicio)+' a '+dateTimeLabel(j.fin));
   fieldLine(body,'Equipo',teamLabel(j));
+  fieldLine(body,'Camioneta',j.patente||'Sin asignar');
   fieldLine(body,'Estado',statusLabels[j.estado]||j.estado);
   fieldLine(body,'Prioridad',j.prioridad==='urgente'?'Urgente':'Normal');
   if(j.observaciones)fieldLine(body,'Instrucciones',j.observaciones);
@@ -614,6 +623,7 @@ function openForm(record=null){
   $('inicio').value=formatLocal(target,'09:00');$('fin').value=formatLocal(target,'13:00');
   $('estado').value='planificada';$('prioridad').value='normal';
  }
+ $('vehiculo_id').value=record?.vehiculo_id?String(record.vehiculo_id):'';
  fillTeamCheckboxes(record?record.personal.map(p=>p.id):[]);
  fillFieldCheckboxes(record?(record.personal_terreno||[]).map(p=>p.id):[]);
  notice('saveNotice','');$('formSection').hidden=false;
@@ -625,6 +635,7 @@ function formPayload(){
  data.personal=Array.from($('teamChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
  data.personal_terreno_ids=Array.from($('fieldChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
  data.obra_id=$('obraCatalogo').value?Number($('obraCatalogo').value):null;
+ data.vehiculo_id=$('vehiculo_id').value?Number($('vehiculo_id').value):null;
  data.servicios=getOtServicios();
  if(!data.servicios.length)throw new Error('Agrega al menos un servicio a realizar.');
  const names=data.servicios.map(item=>{
@@ -655,6 +666,21 @@ $('otForm').addEventListener('submit',async e=>{
  }catch(err){notice('saveNotice','No fue posible guardar: '+err.message,true);}
  finally{btn.disabled=false;}
 });
+function refreshVehicles(){
+ const prev=$('routeVehicle').value,form=$('vehiculo_id').value;
+ for(const id of ['routeVehicle','vehiculo_id']){
+  const select=$(id);select.replaceChildren();
+  const option=document.createElement('option');option.value='';option.textContent=id==='routeVehicle'?'Selecciona una camioneta':'Sin asignar';select.append(option);
+  for(const v of vehicles.filter(v=>Number(v.activo)===1)){const opt=document.createElement('option');opt.value=String(v.id);opt.textContent=v.patente+(v.descripcion?' · '+v.descripcion:'');select.append(opt);}
+ }
+ $('routeVehicle').value=prev;$('vehiculo_id').value=form;
+}
+$('newVehicleBtn').addEventListener('click',async()=>{
+ const patente=prompt('Patente de la camioneta (sin espacios):');if(!patente)return;
+ const descripcion=prompt('Descripción opcional (ej.: Camioneta blanca)')||'';
+ try{const created=await mutate('/ot/vehiculos','POST',{patente,descripcion});vehicles=(await request('/ot/vehiculos')).vehiculos||[];refreshVehicles();$('vehiculo_id').value=String(created.id);notice('saveNotice','Camioneta registrada. Guarda la OT para asignarla.');}
+ catch(e){notice('saveNotice',e.message,true);}
+});
 $('newBtn').addEventListener('click',()=>openForm());
 $('closeForm').addEventListener('click',()=>{$('formSection').hidden=true;});
 $('cancelForm').addEventListener('click',()=>{$('formSection').hidden=true;});
@@ -678,11 +704,11 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
    for(const id of ['catalogLink','worksLink','servicesLink','staffLink'])$(id).hidden=!manager;
   $('newBtn').hidden=!manager;$('teamTab').hidden=!manager;$('personFilter').hidden=!manager;
   if(manager){
-   const [people,catalogCompanies,catalogWorks,catalogServices]=await Promise.all([
-      request('/ot/equipo'),request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/servicios')
+   const [people,catalogCompanies,catalogWorks,catalogServices,catalogVehicles]=await Promise.all([
+      request('/ot/equipo'),request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/servicios'),request('/ot/vehiculos')
    ]);
    staff=people.equipo||[];fieldStaff=people.personal_terreno||[];
-   companies=catalogCompanies.empresas||[];works=catalogWorks.obras||[];services=catalogServices.servicios||[];
+   companies=catalogCompanies.empresas||[];works=catalogWorks.obras||[];services=catalogServices.servicios||[];vehicles=catalogVehicles.vehiculos||[];refreshVehicles();
    for(const person of staff){
       const opt=document.createElement('option');opt.value='u-'+person.id;
       opt.textContent=person.nombre+' · '+person.rol;$('personFilter').append(opt);
