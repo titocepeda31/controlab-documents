@@ -256,7 +256,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 </div>
 
 <div id="actionFeedback" class="action-feedback" role="status" aria-live="polite" hidden></div>
-<div class="work-screen" id="historyModal" hidden aria-labelledby="historyTitle"><div class="work-card"><div class="work-head"><div><span class="eyebrow">Informes registrados</span><h2 id="historyTitle">Historial reciente</h2></div><button class="btn light" type="button" id="closeHistory">← Volver al formulario</button></div><p style="color:#667f90;font-size:13px">Busca por número de informe o empresa. «Solo antecedentes» deja los resultados de ensayo en blanco. Copiar el informe completo conserva los resultados, pero borra el número, la muestra y las fechas de ensayo para que ingreses datos nuevos.</p><input id="historySearch" class="history-search" type="search" placeholder="Buscar empresa, informe o fecha..." aria-label="Buscar informes anteriores"><p id="historySource" class="history-subtitle"></p><div id="historyList" role="status"></div></div></div>
+<div class="work-screen" id="historyModal" hidden aria-labelledby="historyTitle"><div class="work-card"><div class="work-head"><div><span class="eyebrow">Informes registrados</span><h2 id="historyTitle">Historial reciente</h2></div><button class="btn light" type="button" id="closeHistory">← Volver al formulario</button></div><p style="color:#667f90;font-size:13px">Busca por número de informe o empresa. «Solo antecedentes» deja los resultados de ensayo en blanco. Copiar el informe completo conserva los resultados, pero borra el número, la muestra y las fechas de ensayo para que ingreses datos nuevos.</p><input id="historySearch" class="history-search" type="search" placeholder="Buscar empresa, informe o fecha..." aria-label="Buscar informes anteriores"><p id="historySource" class="history-subtitle"></p><div id="historyList" role="status"></div><section id="mailDemoPanel" style="margin-top:16px;padding:12px;border:1px solid #dce4ea;border-radius:10px"><strong>Enviar informes de demostración</strong><p class="history-subtitle">Selecciona hasta 10 informes. Solo se permite el destinatario autorizado configurado en el servidor. Se adjuntarán PDF provisionales, no certificados oficiales.</p><label for="mailDemoTo">Destinatario autorizado</label><input id="mailDemoTo" type="email" autocomplete="off" placeholder="correo@ejemplo.com" style="width:100%;margin:6px 0 10px;padding:9px"><button id="mailDemoSend" class="btn primary" type="button">Enviar seleccionados con PDF adjunto</button><p id="mailDemoStatus" role="status" aria-live="polite"></p></section></div></div>
 
 <div class="work-screen" id="reviewModal" hidden aria-labelledby="reviewTitle"><div class="work-card">
  <div class="work-head"><div><span class="eyebrow">Control interno · documento provisional</span><h2 id="reviewTitle">Revisión y firma</h2></div><button class="btn light" type="button" id="closeReview">← Volver al historial</button></div>
@@ -630,6 +630,20 @@ $('planificadorBtn').addEventListener('click',()=>{if(authenticated)location.hre
 $('catalogosBtn').addEventListener('click',()=>{if(authenticated&&canManageCatalogs)location.href='./modulos.html';});
 $('reuseQuickBtn').addEventListener('click',()=>openHistory(false));
 $('historySearch').addEventListener('input',renderHistory);
+$('mailDemoSend').addEventListener('click',async()=>{
+ const button=$('mailDemoSend'),status=$('mailDemoStatus'),ids=[...mailSelected];
+ if(!ids.length||ids.length>10){status.textContent='Selecciona entre 1 y 10 informes.';return;}
+ const to=$('mailDemoTo').value.trim();
+ if(!to){status.textContent='Ingresa el destinatario autorizado.';return;}
+ if(!confirm('¿Enviar '+ids.length+' PDF provisionales a '+to+'?'))return;
+ button.disabled=true;status.textContent='Enviando por Gmail...';
+ try{
+  const s=await session();if(!s.autenticado)throw new Error('Sesión vencida');
+  const result=await apiRequest('/correo-demo/enviar',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf,destinatario:to,informes:ids})});
+  status.textContent='SMTP aceptó el envío de '+result.adjuntos+' archivos adjuntos.';
+  mailSelected.clear();renderHistory();
+ }catch(e){status.textContent='No se pudo enviar: '+e.message;}finally{button.disabled=false;}
+});
 async function openHistory(onlyPending=false){
  reviewOnlyPending=onlyPending; $('historyTitle').textContent=onlyPending?'Pendientes de revisión':'Historial reciente';
  showWorkspace('historyModal');feedback('');$('historyList').textContent='Buscando informes anteriores…';$('historySearch').value='';
@@ -642,6 +656,7 @@ async function openHistory(onlyPending=false){
    $('historySource').textContent='Informes de MySQL · los 12 más recientes se guardan también para reutilizarlos sin internet.';
    void cacheRecentReports(availableHistory.slice(0,12));
   }else{$('historySource').textContent='Sin conexión: mostrando únicamente el historial descargado en este equipo.';}
+  $('mailDemoPanel').hidden=!['administrador','administrativo'].includes(currentRole);
   renderHistory();
  }catch(e){if(availableHistory.length){$('historySource').textContent='Historial local (sin acceso al servidor).';renderHistory();}else $('historyList').textContent='No fue posible cargar el historial: '+e.message;}
 }
@@ -651,10 +666,12 @@ async function cacheRecentReports(list){
   try{const key=ownerKey('informe:'+info.id);const cached=await storageGet('reports',key);if(cached)continue;const full=await apiRequest('/informes/'+info.id);await storagePut('reports',{key,datos:full.datos,fecha:new Date().toISOString()});}catch(e){break;}
  }
 }
+const mailSelected=new Set();
 function renderHistory(){const search=$('historySearch').value.trim().toLocaleLowerCase('es-CL');const list=$('historyList');list.replaceChildren();const matches=availableHistory.filter(i=>(!reviewOnlyPending||i.revision_estado==='pendiente')&&[i.numero_informe,i.razon_social,i.fecha_informe,String(i.id)].join(' ').toLocaleLowerCase('es-CL').includes(search));
  if(!matches.length){list.textContent=search?'No se encontraron informes con esa búsqueda.':(reviewOnlyPending?'No hay informes pendientes de revisión entre los 100 más recientes.':'Todavía no hay informes anteriores.');return;}
  for(const info of matches.slice(0,50)){
   const item=document.createElement('div');item.className='history-item';
+  if(authenticated&&['administrador','administrativo'].includes(currentRole)){const check=document.createElement('input');check.type='checkbox';check.checked=mailSelected.has(Number(info.id));check.setAttribute('aria-label','Seleccionar informe '+info.id+' para correo');check.addEventListener('change',()=>{if(check.checked)mailSelected.add(Number(info.id));else mailSelected.delete(Number(info.id));});item.append(check);}
   const desc=document.createElement('div');desc.append(node('strong',(info.numero_informe||'Sin número')+' · ID '+info.id),node('small',(info.razon_social||'')+' · '+(info.fecha_informe||'')));
   const state=info.revision_estado||'borrador';const tag=node('span',reviewLabel(state));tag.className='review-tag '+state;desc.append(tag);
   if(state==='devuelto'&&info.motivo_devolucion)desc.append(node('small','Motivo: '+info.motivo_devolucion));
@@ -919,7 +936,7 @@ init();goStep(0);
 <style>
 /* Historial compacto: filas de gestión en escritorio y móvil. */
 #historyList{display:grid;gap:0;border:1px solid #dce4ea;border-radius:10px;overflow:hidden;background:#fff}
-#historyList .history-item{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2fr);align-items:center;gap:10px;padding:9px 12px;margin:0;border:0;border-bottom:1px solid #e5ebef;border-radius:0;box-shadow:none}
+#historyList .history-item{display:grid;grid-template-columns:auto minmax(180px,1fr) minmax(0,2fr);align-items:center;gap:10px;padding:9px 12px;margin:0;border:0;border-bottom:1px solid #e5ebef;border-radius:0;box-shadow:none}
 #historyList .history-item:last-child{border-bottom:0}
 #historyList .history-item>div:first-child{min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
 #historyList .history-item>div:first-child strong{font-size:13px}
@@ -927,7 +944,7 @@ init();goStep(0);
 #historyList .history-buttons{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}
 #historyList .history-buttons .btn{padding:5px 8px;min-height:30px;font-size:11px;margin:0}
 @media(max-width:750px){
-#historyList .history-item{grid-template-columns:minmax(0,1fr);gap:6px;padding:9px}
+#historyList .history-item{grid-template-columns:auto minmax(0,1fr);gap:6px;padding:9px}
 #historyList .history-buttons{justify-content:flex-start}
 #historyList .history-buttons .btn{flex:0 1 auto}
 #historyModal .work-card{padding:12px}
