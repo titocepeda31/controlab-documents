@@ -12,6 +12,7 @@ use Demo\Controllers\OrdenTrabajoController;
 use Demo\Controllers\CatalogoOperativoController;
 use Demo\Middleware\Security;
 use Demo\Controllers\RevisionController;
+use Demo\Controllers\CorreoController;
 use Slim\Factory\AppFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -63,6 +64,7 @@ $firmasLaboratorista = new LaboratoristaFirmaController($db);
 $usuariosController = new UsuariosController($db);
 $ordenTrabajoController = new OrdenTrabajoController($db);
 $catalogoOperativoController = new CatalogoOperativoController($db);
+$correoController = new CorreoController($db,$config,$private);
 
 $app = AppFactory::create();
 $app->setBasePath(rtrim($config['base_path'], '/'));
