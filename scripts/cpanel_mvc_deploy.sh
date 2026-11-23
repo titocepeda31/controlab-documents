@@ -47,7 +47,8 @@ for path in \
   mvc/backend/src/Controllers/OrdenTrabajoController.php \
   mvc/backend/src/Controllers/CatalogoOperativoController.php \
   mvc/backend/src/Controllers/LaboratoristaFirmaController.php \
-  mvc/backend/src/Controllers/RevisionController.php src/Controllers/CorreoController.php \
+  mvc/backend/src/Controllers/RevisionController.php \
+  mvc/backend/src/Controllers/CorreoController.php \
   mvc/backend/src/Middleware/Security.php \
   mvc/frontend/index.php \
   mvc/frontend/.htaccess \
@@ -111,7 +112,7 @@ BACKEND_FILES=(
   bootstrap.php routes/api.php
   src/Core/Database.php src/Core/Http.php src/Core/ReportCrypto.php
   src/Models/Empresa.php src/Models/Informe.php src/Models/LaboratoristaFirma.php src/Models/Revision.php src/Models/Usuario.php src/Models/OrdenTrabajo.php src/Models/CatalogoOperativo.php src/Models/MapaObras.php
-  src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/OrdenTrabajoController.php src/Controllers/CatalogoOperativoController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php
+  src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/OrdenTrabajoController.php src/Controllers/CatalogoOperativoController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php src/Controllers/CorreoController.php
   src/Middleware/Security.php
 )
 FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html planificador.html catalogos.html empresas.html obras.html servicios.html personal.html modulos.html dashboard.html tabler-preview.html tabler-shell.js sw.js manifest.json icon.svg)
