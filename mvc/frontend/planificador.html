@@ -125,6 +125,13 @@ p{margin:6px 0;color:var(--muted)}
     <button class="btn" type="button" id="reloadBtn">Actualizar</button>
    </div>
   </div>
+  <section class="panel" id="routePanel">
+   <div class="bar"><div><h2>Ruta de órdenes de trabajo</h2><p>Recorrido por carretera de las OT del día seleccionado, en orden de horario. Filtra por trabajador para ver su ruta.</p></div><button class="btn primary" id="routeCalculate" type="button">Calcular ruta y kilómetros</button></div>
+   <div class="filters"><label for="routeDay">Día</label><input type="date" id="routeDay"><label><input type="checkbox" id="routeUseLocation"> Iniciar desde mi ubicación actual</label></div>
+   <p id="routeStatus" role="status" aria-live="polite">Selecciona un día y calcula el recorrido.</p>
+   <div id="routeMap" hidden style="height:340px;border:1px solid #d7e3ea;border-radius:10px;margin-top:12px"></div>
+   <div id="routeStops"></div>
+  </section>
   <section class="panel">
    <div class="month-head">
     <div class="month-title" id="monthTitle">Calendario</div>
@@ -272,7 +279,7 @@ function renderCalendar(){
   const stack=el('div','dayitems');
   for(const job of dayJobs.slice(0,2)){const txt=el('div','dayitem'+(job.prioridad==='urgente'?' urgente':'')+(job.estado==='finalizada'||job.estado==='cancelada'?' terminada':''),job.numero_ot+' '+job.obra);stack.append(txt);}
   if(dayJobs.length>2)stack.append(el('span','more','+'+(dayJobs.length-2)+' OT'));
-  btn.append(stack);btn.addEventListener('click',()=>{selected=key;renderCalendar();renderDay();});
+  btn.append(stack);btn.addEventListener('click',()=>{selected=key;$('routeDay').value=key;renderCalendar();renderDay();});
   grid.append(btn);
  }
 }
@@ -288,6 +295,55 @@ function actionCard(job){
  const open=el('button','btn','Ver');open.type='button';open.setAttribute('aria-label','Ver detalles de OT '+job.numero_ot);open.addEventListener('click',()=>void openDetail(job.id));actions.append(open);
  item.append(data,actions);return item;
 }
+let routeMap=null,routeLayer=null,routeMarkers=[];
+async function calculateDayRoute(){
+ const status=$('routeStatus'),map=$('routeMap'),stops=$('routeStops');
+ status.textContent='Calculando recorrido…';stops.replaceChildren();map.hidden=true;
+ const day=$('routeDay').value||selected||dateKey(new Date());
+ const dayJobs=jobsForDay(day).filter(j=>j.estado!=='cancelada').sort((a,b)=>a.inicio.localeCompare(b.inicio));
+ const points=[],missing=[];
+ for(const job of dayJobs){
+  const work=works.find(w=>Number(w.id)===Number(job.obra_id));
+  const lat=Number(job.latitud??work?.latitud),lon=Number(job.longitud??work?.longitud);
+  if(Number.isFinite(lat)&&Number.isFinite(lon)&&lat>=-56&&lat<=-17&&lon>=-76&&lon<=-66&&lat!==0&&lon!==0)
+   points.push({lat,lon,label:'OT '+job.numero_ot+' · '+job.obra});
+  else missing.push('OT '+job.numero_ot);
+ }
+ if(missing.length){status.textContent='Faltan coordenadas en: '+missing.join(', ')+'. Completa las ubicaciones de las obras antes de calcular la ruta.';return;}
+ if(!points.length){status.textContent='No hay OT con coordenadas para este día y filtro.';return;}
+ if($('routeUseLocation').checked){
+  try{
+   const position=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{timeout:12000,enableHighAccuracy:false}));
+   points.unshift({lat:position.coords.latitude,lon:position.coords.longitude,label:'Ubicación actual'});
+  }catch(e){status.textContent='No se pudo obtener la ubicación de origen. Desmarca esa opción para calcular solo entre obras.';return;}
+ }
+ for(const [i,p] of points.entries())stops.append(el('p','',String(i+1)+'. '+p.label));
+ if(points.length<2){status.textContent='Solo hay un destino. Agrega otro o utiliza tu ubicación como origen.';return;}
+ if(points.length>25){status.textContent='Máximo 25 paradas por consulta.';return;}
+ try{
+  const coords=points.map(p=>p.lon+','+p.lat).join(';');
+  const url='https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson&steps=false';
+  const res=await fetch(url);if(!res.ok)throw new Error('Servicio de rutas no disponible');
+  const data=await res.json(),route=data.routes?.[0];
+  if(data.code!=='Ok'||!route)throw new Error('No se encontró una ruta por carretera');
+  status.textContent='Distancia total: '+(route.distance/1000).toFixed(1)+' km · Tiempo estimado de conducción: '+Math.round(route.duration/60)+' min. No incluye tiempo de ensayos ni tráfico. Servicio público de rutas.';
+  const segments=route.legs||[];
+  segments.forEach((leg,i)=>{if(points[i+1])stops.append(el('p','',points[i].label+' → '+points[i+1].label+': '+(leg.distance/1000).toFixed(1)+' km'));});
+  if(!window.L){
+   await new Promise((resolve,reject)=>{
+    const css=document.createElement('link');css.rel='stylesheet';css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.append(css);
+    const script=document.createElement('script');script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';script.onload=resolve;script.onerror=reject;document.head.append(script);
+   });
+  }
+  map.hidden=false;
+  if(!routeMap){routeMap=L.map(map);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(routeMap);}
+  if(routeLayer)routeMap.removeLayer(routeLayer);routeMarkers.forEach(m=>routeMap.removeLayer(m));routeMarkers=[];
+  routeLayer=L.geoJSON(route.geometry,{style:{color:'#087d70',weight:5}}).addTo(routeMap);
+  points.forEach((p,i)=>routeMarkers.push(L.marker([p.lat,p.lon]).bindPopup(String(i+1)+'. '+p.label).addTo(routeMap)));
+  setTimeout(()=>{routeMap.invalidateSize();routeMap.fitBounds(routeLayer.getBounds(),{padding:[20,20]});},100);
+ }catch(e){status.textContent='No fue posible calcular la ruta: '+e.message+'. Verifica la conexión y vuelve a intentar.';}
+}
+$('routeCalculate').addEventListener('click',()=>void calculateDayRoute());
 function renderDay(){
  const day=selected||dateKey(new Date());
  $('selectedDayTitle').textContent='Trabajos del '+dateLabel(day);
@@ -620,7 +676,7 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
       opt.textContent=worker.nombre+' · '+worker.cargo+' (sin usuario)';$('personFilter').append(opt);
    }
   }
-  selected=dateKey(new Date());$('teamDay').value=selected;sessionReady=true;$('content').hidden=false;
+  selected=dateKey(new Date());$('teamDay').value=selected;$('routeDay').value=selected;sessionReady=true;$('content').hidden=false;
   await load();
  }catch(e){$('content').hidden=true;$('authError').hidden=false;$('authErrorText').textContent=e.message;}
 })();
