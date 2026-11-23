@@ -1,7 +1,7 @@
 /* Controlab / Tabler shared application shell. Keeps existing module DOM and event bindings intact. */
 (()=>{'use strict';
 const page=location.pathname.split('/').pop()||'dashboard.html';
-const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard'],['planificador.html','Órdenes de trabajo','all','calendar-days'],['empresas.html','Empresas','manager','building-2'],['obras.html','Obras','manager','map-pin'],['servicios.html','Servicios','manager','clipboard-list'],['personal.html','Personal de terreno','manager','users'],['formulario.html','Informes (prototipo)','all','file-text'],['usuarios.html','Usuarios','admin','settings']];
+const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard'],['planificador.html','Órdenes de trabajo','all','calendar-days'],['empresas.html','Empresas y obras','manager','building-2'],['servicios.html','Servicios','manager','clipboard-list'],['personal.html','Personal de terreno','manager','users'],['formulario.html','Informes (prototipo)','all','file-text'],['usuarios.html','Usuarios','admin','settings']];
 const css=`
 html.cl-session-pending body{visibility:hidden}
 @media screen and (min-width:901px){body.cl-tabler-shell:has(#cl-shell-top:not([hidden])){height:100dvh;overflow:hidden;margin:0;padding:0}body.cl-tabler-shell #cl-shell-top{position:fixed;inset:0 0 auto 0;box-sizing:border-box;width:100%}body.cl-tabler-shell:has(#cl-shell-top:not([hidden])) > main,body.cl-tabler-shell:has(#cl-shell-top:not([hidden])) #appView > .layout{position:fixed!important;top:68px;left:250px;right:0;bottom:0;margin:0!important;width:auto!important;height:auto!important;overflow:auto!important;box-sizing:border-box}body.cl-tabler-shell #cl-shell-close{display:none}}
