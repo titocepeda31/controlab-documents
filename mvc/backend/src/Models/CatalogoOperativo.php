@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Demo\Models;
 
 use Demo\Core\Database;
+use Demo\Core\Paginator;
 use InvalidArgumentException;
 use PDO;
 use PDOException;
@@ -29,6 +30,18 @@ final class CatalogoOperativo {
         return $value;
     }
 
+    public function empresasPage(array $query): array {
+        $search=Paginator::search($query);$params=[];$from='FROM empresas e';
+        if($search!==''){$from.=' WHERE (e.razon_social LIKE ? OR e.nombre_comercial LIKE ? OR e.rut LIKE ?)';$params=array_fill(0,3,'%'.$search.'%');}
+        return Paginator::run($this->db->connection(),'SELECT e.id,e.razon_social,e.nombre_comercial,e.rut,e.contacto,e.telefono,e.email,e.activo,(SELECT COUNT(*) FROM obras o WHERE o.empresa_id=e.id) AS obras_count',$from,'e.razon_social,e.id',$params,$query);
+    }
+    public function obrasPage(array $query): array {
+        $from='FROM obras o JOIN empresas e ON e.id=o.empresa_id LEFT JOIN obra_ubicaciones g ON g.obra_id=o.id WHERE 1=1';$params=[];
+        if(isset($query['empresa_id'])){$from.=' AND o.empresa_id=?';$params[]=self::positiveId($query['empresa_id']);}
+        $search=Paginator::search($query);
+        if($search!==''){$from.=' AND (o.nombre LIKE ? OR o.direccion LIKE ? OR o.comuna LIKE ?)';array_push($params,...array_fill(0,3,'%'.$search.'%'));}
+        return Paginator::run($this->db->connection(),'SELECT o.id,o.empresa_id,e.razon_social AS empresa,o.nombre,o.direccion,o.comuna,o.activo,g.latitud,g.longitud',$from,'e.razon_social,o.nombre,o.id',$params,$query);
+    }
     public function empresas(): array {
         return $this->db->connection()->query(
             'SELECT id,razon_social,nombre_comercial,rut,contacto,telefono,email,activo FROM empresas ORDER BY razon_social LIMIT 500'
