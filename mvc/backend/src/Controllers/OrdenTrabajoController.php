@@ -23,6 +23,14 @@ final class OrdenTrabajoController {
         return Http::json($response,['ordenes'=>$this->ot->all($viewer,$from,$until)]);
     }
 
+    public function vehiculos(Request $request,Response $response): Response {
+        Security::requireRole('administrador','administrativo');
+        return Http::json($response,['vehiculos'=>$this->ot->vehicles()]);
+    }
+    public function crearVehiculo(Request $request,Response $response): Response {
+        Security::requireRole('administrador','administrativo');Security::csrf($request);
+        return Http::json($response,['id'=>$this->ot->addVehicle(Http::jsonBody($request)),'ok'=>true],201);
+    }
     public function equipo(Request $request,Response $response): Response {
         Security::requireRole('administrador','administrativo');
         return Http::json($response,['equipo'=>$this->ot->team(),'personal_terreno'=>$this->ot->fieldTeam()]);
