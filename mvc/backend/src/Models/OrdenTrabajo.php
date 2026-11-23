@@ -199,8 +199,8 @@ final class OrdenTrabajo {
 
     public function find(int $id,array $viewer): array {
         $q=$this->db->connection()->prepare(
-            "SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.observaciones,o.version,o.creado_por,o.actualizado_el,v.obra_id,g.latitud,g.longitud ".
-            "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id LEFT JOIN obra_ubicaciones g ON g.obra_id=v.obra_id WHERE o.id=? LIMIT 1"
+            "SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.observaciones,o.version,o.creado_por,o.actualizado_el,v.obra_id,g.latitud,g.longitud,ov.vehiculo_id,cv.patente ".
+            "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id LEFT JOIN obra_ubicaciones g ON g.obra_id=v.obra_id LEFT JOIN ot_vehiculos ov ON ov.ot_id=o.id LEFT JOIN catalogo_vehiculos cv ON cv.id=ov.vehiculo_id WHERE o.id=? LIMIT 1"
         );
         $q->execute([$id]);$item=$q->fetch(PDO::FETCH_ASSOC);
         if(!$item)throw new RuntimeException('Orden de trabajo no encontrada',404);
@@ -424,6 +424,7 @@ final class OrdenTrabajo {
             $this->saveAssignments($pdo,$id,$data['personal'],$data['inicio'],$data['fin'],$data['estado']);
             $this->saveFieldAssignments($pdo,$id,$data['personal_terreno_ids'],$data['inicio'],$data['fin'],$data['estado']);
             $this->saveObraLink($pdo,$id,$data['obra_id']);
+            $this->saveVehicle($pdo,$id,$data['vehiculo_id']);
             $q=$pdo->prepare(
                 'UPDATE ot_ordenes SET numero_ot=?,cliente=?,obra=?,destino=?,comuna=?,actividad=?,inicio=?,fin=?,estado=?,prioridad=?,observaciones=?,actualizado_por=?,version=version+1 WHERE id=?'
             );
