@@ -3,6 +3,10 @@
 const page=location.pathname.split('/').pop()||'dashboard.html';
 const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard'],['planificador.html','Órdenes de trabajo','all','calendar-days'],['empresas.html','Empresas','manager','building-2'],['obras.html','Obras','manager','map-pin'],['servicios.html','Servicios','manager','clipboard-list'],['personal.html','Personal de terreno','manager','users'],['formulario.html','Informes (prototipo)','all','file-text'],['usuarios.html','Usuarios','admin','settings']];
 const css=`
+html.cl-session-pending body{visibility:hidden}
+@media screen and (min-width:901px){body.cl-tabler-shell:has(#cl-shell-top:not([hidden])){height:100dvh;overflow:hidden;margin:0;padding:0}body.cl-tabler-shell #cl-shell-top{position:fixed;inset:0 0 auto 0;box-sizing:border-box;width:100%}body.cl-tabler-shell:has(#cl-shell-top:not([hidden])) > main,body.cl-tabler-shell:has(#cl-shell-top:not([hidden])) #appView > .layout{position:fixed!important;top:68px;left:250px;right:0;bottom:0;margin:0!important;width:auto!important;height:auto!important;overflow:auto!important;box-sizing:border-box}body.cl-tabler-shell #cl-shell-close{display:none}}
+@media print{#cl-shell-top,#cl-shell-sidebar,#cl-shell-backdrop{display:none!important}}
+
 #cl-shell-top{height:68px;min-height:68px;background:#10283d!important;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;position:relative;z-index:1002}
 #cl-shell-top .cl-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
 #cl-shell-top .cl-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#32b6a3;color:#073236;font-weight:800}
@@ -20,9 +24,11 @@ body.cl-tabler-shell #appView > .layout main,body.cl-tabler-shell .layout main{m
 body.cl-tabler-shell #appView > .topbar,body.cl-tabler-shell > header.top,body.cl-tabler-shell > header.header,body.cl-tabler-shell > header.topbar,body.cl-tabler-shell > header.cl-dashboard-header{display:none!important}
 body.cl-tabler-shell #sidebar,body.cl-tabler-shell #scrim,body.cl-tabler-shell #cl-nav-sidebar,body.cl-tabler-shell #cl-nav-toggle,body.cl-tabler-shell #cl-nav-scrim{display:none!important}
 body.cl-tabler-shell .main-area{margin-left:250px!important}
-body.cl-tabler-shell #cl-shell-top{display:flex!important}
+body.cl-tabler-shell #cl-shell-top:not([hidden]){display:flex!important}
 @media(max-width:900px){#cl-shell-toggle{display:inline-flex}#cl-shell-sidebar{top:0;width:min(300px,85vw);transform:translateX(-110%);transition:transform .18s ease;z-index:1101;box-shadow:10px 0 40px #132c3c20}#cl-shell-sidebar.open{transform:translateX(0)}#cl-shell-backdrop.open{display:block;position:fixed;inset:0;background:#0c223a75;z-index:1100}body.cl-tabler-shell > main,body.cl-tabler-shell > .app-view > main,body.cl-tabler-shell #appView > main,body.cl-tabler-shell .main-area,body.cl-tabler-shell #appView > .layout,body.cl-tabler-shell .layout{margin-left:0!important}}
 `;
+const isForm=page==='formulario.html';
+if(!isForm)document.documentElement.classList.add('cl-session-pending');
 const st=document.createElement('style');st.textContent=css;document.head.append(st);
 function init(){
  if(document.getElementById('cl-shell-top'))return;
@@ -32,6 +38,7 @@ function init(){
  for(const [href,title,role] of modules){const a=document.createElement('a');a.href='./'+href;a.textContent=title;a.dataset.role=role;if(page===href){a.classList.add('active');a.setAttribute('aria-current','page')}if(role!=='all')a.hidden=true;nav.append(a);}
  sidebar.append(nav);
  if(page==='formulario.html'){const actions=document.createElement('div');actions.style.cssText='border-top:1px solid #dbe4eb;margin-top:15px;padding-top:12px';for(const id of ['historyBtn','reviewsBtn','profileFirmaBtn','logoutBtn']){const b=document.getElementById(id);if(b){b.style.cssText='display:block;width:100%;margin:4px 0;text-align:left';actions.append(b)}}sidebar.append(actions);}
+ if(!isForm){const logout=document.createElement('button');logout.type='button';logout.className='btn btn-outline-secondary w-100';logout.textContent='Cerrar sesión';logout.addEventListener('click',async()=>{try{const s=await fetch('./api/session',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json());const r=await fetch('./api/logout',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});if(!r.ok)throw Error();location.replace('./formulario.html');}catch(e){alert('No fue posible cerrar sesión. Intenta nuevamente.');}});sidebar.append(logout);}
  const foot=document.createElement('div');foot.className='cl-foot';foot.textContent='Controlab · Piloto';sidebar.append(foot);
  const backdrop=document.createElement('div');backdrop.id='cl-shell-backdrop';
  // Retain old DOM: module scripts may still reference legacy header controls by ID.
@@ -39,7 +46,7 @@ function init(){
  const toggle=top.querySelector('#cl-shell-toggle');
  const setOpen=(open)=>{sidebar.classList.toggle('open',open);backdrop.classList.toggle('open',open);toggle.setAttribute('aria-expanded',String(open))};
  toggle.addEventListener('click',()=>setOpen(!sidebar.classList.contains('open')));sidebar.querySelector('#cl-shell-close').addEventListener('click',()=>setOpen(false));backdrop.addEventListener('click',()=>setOpen(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setOpen(false)});
- fetch('./api/session',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(s=>{if(!s.autenticado)return;const manager=['administrador','administrativo'].includes(s.rol);nav.querySelectorAll('a').forEach(a=>a.hidden=a.dataset.role==='manager'?!manager:a.dataset.role==='admin'?s.rol!=='administrador':false)}).catch(()=>{});
+ fetch('./api/session',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(s=>{if(!s.autenticado){if(!isForm)location.replace('./formulario.html?next='+encodeURIComponent(page+location.search));return;}document.documentElement.classList.remove('cl-session-pending');const manager=['administrador','administrativo'].includes(s.rol);nav.querySelectorAll('a').forEach(a=>a.hidden=a.dataset.role==='manager'?!manager:a.dataset.role==='admin'?s.rol!=='administrador':false)}).catch(()=>{if(!isForm)location.replace('./formulario.html?next='+encodeURIComponent(page+location.search));});
  if(page==='formulario.html'){const app=document.getElementById('appView');if(app){const sync=()=>{top.hidden=app.hidden;sidebar.hidden=app.hidden;toggle.hidden=app.hidden};new MutationObserver(sync).observe(app,{attributes:true,attributeFilter:['hidden']});sync()}}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
