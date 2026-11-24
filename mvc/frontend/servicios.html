@@ -66,10 +66,12 @@
   </section>
   <section id="viewServicios" class="panel" hidden>
    <h2>Catálogo de servicios</h2>
-   <p>Registra los ensayos y trabajos que se pueden solicitar en una OT. Los precios y la facturación se configurarán en otra etapa.</p>
+   <p>Registra los ensayos y trabajos que se pueden solicitar en una OT. Configura tarifas base en CLP y UF. Deja vacío el precio no definido.</p>
    <form id="servicioForm"><div class="grid">
     <div class="field full"><label for="servicioNombre">Nombre del servicio *</label><input id="servicioNombre" maxlength="180" required placeholder="Ej.: Ensayo de densidad en terreno"></div>
     <div class="field mb-2"><label for="servicioUnidad">Unidad de medida *</label><input id="servicioUnidad" maxlength="60" required value="unidad" placeholder="Ej.: ensayo, calicata, unidad"></div>
+    <div class="field mb-2"><label for="precioCLP">Precio CLP</label><input class="form-control" id="precioCLP" type="number" min="0" max="999999999999" step="1"></div>
+    <div class="field mb-2"><label for="precioUF">Precio UF</label><input class="form-control" id="precioUF" type="number" min="0" max="999999999999.9999" step="0.0001"></div>
     <div class="field full"><label for="servicioDescripcion">Descripción (opcional)</label><textarea id="servicioDescripcion" maxlength="500"></textarea></div>
     <div class="field mb-2" id="servicioActiveWrap" hidden><label><input id="servicioActivo" type="checkbox" checked> Servicio activo</label></div>
    </div><div class="actions"><button class="btn btn-primary primary" id="guardarServicio" type="submit">Agregar servicio</button><button class="btn" id="cancelServicio" type="button" hidden>Cancelar edición</button></div><div id="servicioNotice" class="notice" role="status" aria-live="polite"></div></form>
@@ -173,6 +175,7 @@ function renderServices(){
  for(const s of services){
   const card=elem('article','record'),meta=elem('div');
   meta.append(elem('strong','',s.nombre),elem('small','','Unidad: '+s.unidad));
+  meta.append(elem('small','','CLP: '+(s.precio_clp??'Sin tarifa')+' · UF: '+(s.precio_uf??'Sin tarifa')));
   if(s.descripcion)meta.append(elem('small','',s.descripcion));
   meta.append(elem('span','status'+(Number(s.activo)?'':' off'),Number(s.activo)?'Activo':'Inactivo'));
   const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editService(s.id));
@@ -183,7 +186,7 @@ function editService(id){
  const s=services.find(x=>Number(x.id)===Number(id));if(!s)return;
  tab('servicios');editServicio=Number(id);
  $('servicioNombre').value=s.nombre;$('servicioUnidad').value=s.unidad;
- $('servicioDescripcion').value=s.descripcion||'';$('servicioActivo').checked=Number(s.activo)===1;
+ $('precioCLP').value=s.precio_clp??'';$('precioUF').value=s.precio_uf??'';$('servicioDescripcion').value=s.descripcion||'';$('servicioActivo').checked=Number(s.activo)===1;
  $('servicioActiveWrap').hidden=false;$('guardarServicio').textContent='Guardar cambios';$('cancelServicio').hidden=false;
  $('servicioForm').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -196,6 +199,7 @@ $('servicioForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('guardarServicio');btn.disabled=true;
  try{
   const data={nombre:$('servicioNombre').value.trim(),unidad:$('servicioUnidad').value.trim(),descripcion:$('servicioDescripcion').value.trim()};
+  data.precio_clp=$('precioCLP').value;data.precio_uf=$('precioUF').value;
   if(editServicio!==null)data.activo=$('servicioActivo').checked;
   await write(editServicio===null?'/catalogo/servicios':'/catalogo/servicios/'+editServicio,editServicio===null?'POST':'PUT',data);
   resetService();await refresh();notice('servicioNotice','✓ Servicio guardado correctamente.');

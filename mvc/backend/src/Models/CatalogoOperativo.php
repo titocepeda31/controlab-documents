@@ -166,14 +166,30 @@ final class CatalogoOperativo {
     }
     public function servicios(): array {
         return $this->db->connection()->query(
-            'SELECT id,nombre,unidad,descripcion,activo FROM catalogo_servicios ORDER BY nombre,id LIMIT 1000'
+            'SELECT id,nombre,unidad,descripcion,activo,precio_clp,precio_uf FROM catalogo_servicios ORDER BY nombre,id LIMIT 1000'
         )->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    private function saveServicePrices(PDO $pdo,int $id,array $prices): void {
+        foreach($prices as $key=>$value){
+            if(!in_array($key,['precio_clp','precio_uf'],true))continue;
+            $q=$pdo->prepare("UPDATE catalogo_servicios SET $key=? WHERE id=?");
+            $q->execute([$value,$id]);
+        }
+    }
     public function saveServicio(array $data,?int $id=null): int {
         $nombre=self::text($data,'nombre',180);
         $unidad=self::text($data,'unidad',60);
         $descripcion=self::text($data,'descripcion',500,false);
+        $prices=[];
+        foreach(['precio_clp'=>0,'precio_uf'=>4] as $key=>$scale){
+            if(!array_key_exists($key,$data))continue;
+            $value=$data[$key];
+            if($value===null||$value===''){$prices[$key]=null;continue;}
+            if(!is_string($value)||!preg_match($scale===0?'/^\d{1,12}$/D':'/^\d{1,12}(\.\d{1,4})?$/D',$value))
+                throw new InvalidArgumentException('Precio inválido: '.$key);
+            $prices[$key]=$value;
+        }
         if($id!==null&&!is_bool($data['activo']??null))
             throw new InvalidArgumentException('Indica si el servicio está activo');
         $pdo=$this->db->connection();
@@ -181,10 +197,13 @@ final class CatalogoOperativo {
             if($id===null){
                 $q=$pdo->prepare('INSERT INTO catalogo_servicios (nombre,unidad,descripcion) VALUES (?,?,?)');
                 $q->execute([$nombre,$unidad,$descripcion]);
-                return (int)$pdo->lastInsertId();
+                $id=(int)$pdo->lastInsertId();
+                $this->saveServicePrices($pdo,$id,$prices);
+                return $id;
             }
             $q=$pdo->prepare('UPDATE catalogo_servicios SET nombre=?,unidad=?,descripcion=?,activo=? WHERE id=?');
             $q->execute([$nombre,$unidad,$descripcion,(int)$data['activo'],$id]);
+            $this->saveServicePrices($pdo,$id,$prices);
             $q=$pdo->prepare('SELECT id FROM catalogo_servicios WHERE id=?');
             $q->execute([$id]);
             if(!$q->fetchColumn())throw new RuntimeException('Servicio no encontrado',404);
