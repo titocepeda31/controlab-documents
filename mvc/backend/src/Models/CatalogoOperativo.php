@@ -216,8 +216,12 @@ final class CatalogoOperativo {
         $from='FROM cotizaciones c JOIN obras o ON o.id=c.obra_id JOIN empresas e ON e.id=o.empresa_id WHERE 1=1';$params=[];
         $search=Paginator::search($query);
         if($search!==''){$from.=' AND (c.numero LIKE ? OR e.razon_social LIKE ? OR o.nombre LIKE ?)';$params=array_fill(0,3,'%'.$search.'%');}
-        if(($query['estado']??'')==='aprobada')$from.=" AND c.estado='aprobada'";
-        return Paginator::run($this->db->connection(),'SELECT c.*,o.nombre AS obra,e.razon_social AS empresa',$from,'c.id DESC',$params,$query);
+        $estado=$query['estado']??'';
+        if(in_array($estado,['borrador','enviada','aprobada','rechazada','vencida'],true)){$from.=' AND c.estado=?';$params[]=$estado;}
+        $db=$this->db->connection();
+        $result=Paginator::run($db,'SELECT c.*,o.nombre AS obra,e.razon_social AS empresa',$from,'c.id DESC',$params,$query);
+        $result['resumen']=$db->query('SELECT estado,COUNT(*) AS cantidad FROM cotizaciones GROUP BY estado')->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
     }
     public function cotizacion(int $id): array {
         $db=$this->db->connection();
