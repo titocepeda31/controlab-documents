@@ -216,6 +216,18 @@ final class CatalogoOperativo {
         $from='FROM cotizaciones c JOIN obras o ON o.id=c.obra_id JOIN empresas e ON e.id=o.empresa_id WHERE 1=1';$params=[];
         $search=Paginator::search($query);
         if($search!==''){$from.=' AND (c.numero LIKE ? OR e.razon_social LIKE ? OR o.nombre LIKE ?)';$params=array_fill(0,3,'%'.$search.'%');}
+        foreach(['numero'=>'c.numero','empresa'=>'e.razon_social'] as $key=>$column){
+            $value=trim((string)($query[$key]??''));if($value!==''){$from.=" AND $column LIKE ?";$params[]='%'.substr($value,0,160).'%';}
+        }
+        $dates=[];
+        foreach(['desde','hasta'] as $key){$value=(string)($query[$key]??'');if($value==='')continue;
+            $date=\DateTimeImmutable::createFromFormat('!Y-m-d',$value);
+            if(!$date||$date->format('Y-m-d')!==$value)throw new InvalidArgumentException('Fecha inválida');
+            $dates[$key]=$value;
+            $from.=$key==='desde'?' AND c.creado_el >= ?':' AND c.creado_el < ?';
+            $params[]=$key==='desde'?$value:$date->modify('+1 day')->format('Y-m-d');
+        }
+        if(isset($dates['desde'],$dates['hasta'])&&$dates['desde']>$dates['hasta'])throw new InvalidArgumentException('El rango de fechas es inválido');
         $estado=$query['estado']??'';
         if(in_array($estado,['borrador','enviada','aprobada','rechazada','vencida'],true)){$from.=' AND c.estado=?';$params[]=$estado;}
         $db=$this->db->connection();
