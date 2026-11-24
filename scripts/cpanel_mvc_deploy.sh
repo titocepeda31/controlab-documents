@@ -32,6 +32,7 @@ for path in \
   mvc/backend/src/Core/Database.php \
   mvc/backend/src/Core/ReportCrypto.php \
   mvc/backend/src/Core/Http.php \
+  mvc/backend/src/Core/Paginator.php \
   mvc/backend/src/Models/Empresa.php \
   mvc/backend/src/Models/Informe.php \
   mvc/backend/src/Models/LaboratoristaFirma.php \
@@ -64,6 +65,9 @@ for path in \
   mvc/frontend/dashboard.html \
   mvc/frontend/tabler-preview.html \
   mvc/frontend/tabler-shell.js \
+  mvc/frontend/pagination.js \
+  mvc/frontend/assets/css/app.css \
+  mvc/frontend/assets/css/shell.css \
   mvc/frontend/sw.js \
   mvc/frontend/manifest.json \
   mvc/frontend/icon.svg
@@ -110,12 +114,15 @@ chmod 0700 "$BASE/controlab-mvc-backups" "$BACKUP" "$BACKUP/private" "$BACKUP/pu
 # Solo archivos gestionados: no se toca config.php ni app.php.
 BACKEND_FILES=(
   bootstrap.php routes/api.php
-  src/Core/Database.php src/Core/Http.php src/Core/ReportCrypto.php
+  src/Core/Database.php src/Core/Http.php src/Core/ReportCrypto.php src/Core/Paginator.php
   src/Models/Empresa.php src/Models/Informe.php src/Models/LaboratoristaFirma.php src/Models/Revision.php src/Models/Usuario.php src/Models/OrdenTrabajo.php src/Models/CatalogoOperativo.php src/Models/MapaObras.php
   src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/OrdenTrabajoController.php src/Controllers/CatalogoOperativoController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php src/Controllers/CorreoController.php
   src/Middleware/Security.php
 )
-FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html planificador.html catalogos.html empresas.html obras.html servicios.html personal.html modulos.html dashboard.html tabler-preview.html tabler-shell.js sw.js manifest.json icon.svg)
+FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html planificador.html catalogos.html empresas.html obras.html servicios.html personal.html modulos.html dashboard.html tabler-preview.html tabler-shell.js pagination.js sw.js manifest.json icon.svg)
+while IFS= read -r -d '' file; do
+  FRONTEND_FILES+=("${file#"$REPO/mvc/frontend/"}")
+done < <(find "$REPO/mvc/frontend/assets" -type f -name '*.css' -print0)
 
 for rel in "${BACKEND_FILES[@]}"; do
   [[ -f "$PRIVATE/$rel" ]] && { mkdir -p "$BACKUP/private/$(dirname "$rel")"; cp -p "$PRIVATE/$rel" "$BACKUP/private/$rel"; }
@@ -130,6 +137,9 @@ for rel in "${BACKEND_FILES[@]}"; do
   cp -f "$REPO/mvc/backend/$rel" "$PRIVATE/$rel"
 done
 for rel in "${FRONTEND_FILES[@]}"; do
+  mkdir -p "$PUBLIC/$(dirname "$rel")"
+  dir="$(dirname "$rel")"
+  while [[ "$dir" != "." ]]; do chmod 0755 "$PUBLIC/$dir"; dir="$(dirname "$dir")"; done
   cp -f "$REPO/mvc/frontend/$rel" "$PUBLIC/$rel"
   # umask 077 protege los respaldos y ficheros privados, pero deja 0600
   # cuando publica archivos nuevos (por ejemplo usuarios.html).
