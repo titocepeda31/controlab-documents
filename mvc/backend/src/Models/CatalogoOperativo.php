@@ -240,12 +240,13 @@ final class CatalogoOperativo {
         try{
             $q=$db->prepare('SELECT o.id FROM obras o JOIN empresas e ON e.id=o.empresa_id WHERE o.id=? AND o.activo=1 AND e.activo=1');$q->execute([$obra]);if(!$q->fetchColumn())throw new InvalidArgumentException('Obra inválida');
             $q=$db->prepare('INSERT INTO cotizaciones(numero,obra_id,moneda,condiciones) VALUES(?,?,?,?)');$q->execute([$numero,$obra,$moneda,self::text($data,'condiciones',5000,false)]);$id=(int)$db->lastInsertId();
-            $get=$db->prepare('SELECT nombre,unidad FROM catalogo_servicios WHERE id=? AND activo=1');$put=$db->prepare('INSERT INTO cotizacion_servicios(cotizacion_id,servicio_id,nombre,unidad,cantidad,precio_unitario) VALUES(?,?,?,?,?,?)');$seen=[];
+            $get=$db->prepare('SELECT nombre,unidad,precio_clp,precio_uf FROM catalogo_servicios WHERE id=? AND activo=1');$put=$db->prepare('INSERT INTO cotizacion_servicios(cotizacion_id,servicio_id,nombre,unidad,cantidad,precio_unitario) VALUES(?,?,?,?,?,?)');$seen=[];
             foreach($lines as $line){
                 $sid=self::positiveId($line['servicio_id']??null);if(isset($seen[$sid]))throw new InvalidArgumentException('Servicio repetido');$seen[$sid]=true;
                 $qty=$line['cantidad']??null;if($qty!==null){$qty=self::positiveId($qty);if($qty>100000)throw new InvalidArgumentException('Cantidad excesiva');}
-                $price=$line['precio_unitario']??null;if(!is_string($price)||!preg_match($moneda==='CLP'?'/^\d{1,12}$/D':'/^\d{1,12}(\.\d{1,4})?$/D',$price))throw new InvalidArgumentException('Precio inválido');
                 $get->execute([$sid]);$service=$get->fetch(PDO::FETCH_ASSOC);if(!$service)throw new InvalidArgumentException('Servicio inactivo o inexistente');
+                $price=$service[$moneda==='CLP'?'precio_clp':'precio_uf'];
+                if($price===null)throw new InvalidArgumentException('Configura la tarifa en '.$moneda.' del servicio '.$service['nombre']);
                 $put->execute([$id,$sid,$service['nombre'],$service['unidad'],$qty,$price]);
             }
             $db->commit();return $id;
