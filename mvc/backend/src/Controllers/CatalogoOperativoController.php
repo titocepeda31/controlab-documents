@@ -86,4 +86,17 @@ final class CatalogoOperativoController {
         return Http::json($response,['id'=>$this->catalogo->saveServicio(Http::jsonBody($request),(int)$args['id']),'ok'=>true]);
     }
 
+
+    public function cotizaciones(Request $request,Response $response): Response {
+        Security::requireRole('administrador','administrativo');return Http::json($response,$this->catalogo->cotizaciones($request->getQueryParams()));
+    }
+    public function cotizacion(Request $request,Response $response,array $args): Response {
+        Security::requireRole('administrador','administrativo');return Http::json($response,$this->catalogo->cotizacion((int)$args['id']));
+    }
+    public function crearCotizacion(Request $request,Response $response): Response {
+        Security::requireRole('administrador','administrativo');Security::csrf($request);return Http::json($response,['id'=>$this->catalogo->crearCotizacion(Http::jsonBody($request))],201);
+    }
+    public function estadoCotizacion(Request $request,Response $response,array $args): Response {
+        Security::requireRole('administrador','administrativo');Security::csrf($request);$data=Http::jsonBody($request);$this->catalogo->estadoCotizacion((int)$args['id'],(string)($data['estado']??''));return Http::json($response,['ok'=>true]);
+    }
 }

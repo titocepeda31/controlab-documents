@@ -59,6 +59,7 @@ for path in \
   mvc/frontend/catalogos.html \
   mvc/frontend/empresas.html \
   mvc/frontend/obras.html \
+  mvc/frontend/cotizaciones.html \
   mvc/frontend/servicios.html \
   mvc/frontend/personal.html \
   mvc/frontend/modulos.html \
@@ -119,7 +120,7 @@ BACKEND_FILES=(
   src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/OrdenTrabajoController.php src/Controllers/CatalogoOperativoController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php src/Controllers/CorreoController.php
   src/Middleware/Security.php
 )
-FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html planificador.html catalogos.html empresas.html obras.html servicios.html personal.html modulos.html dashboard.html tabler-preview.html tabler-shell.js pagination.js sw.js manifest.json icon.svg)
+FRONTEND_FILES=(index.php .htaccess formulario.html usuarios.html planificador.html catalogos.html empresas.html obras.html servicios.html cotizaciones.html personal.html modulos.html dashboard.html tabler-preview.html tabler-shell.js pagination.js sw.js manifest.json icon.svg)
 while IFS= read -r -d '' file; do
   FRONTEND_FILES+=("${file#"$REPO/mvc/frontend/"}")
 done < <(find "$REPO/mvc/frontend/assets" -type f -name '*.css' -print0)

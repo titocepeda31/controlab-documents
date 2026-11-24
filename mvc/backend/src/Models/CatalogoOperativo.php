@@ -214,4 +214,47 @@ final class CatalogoOperativo {
         }
     }
 
+
+    public function cotizaciones(array $query): array {
+        $from='FROM cotizaciones c JOIN obras o ON o.id=c.obra_id JOIN empresas e ON e.id=o.empresa_id WHERE 1=1';$params=[];
+        $search=Paginator::search($query);
+        if($search!==''){$from.=' AND (c.numero LIKE ? OR e.razon_social LIKE ? OR o.nombre LIKE ?)';$params=array_fill(0,3,'%'.$search.'%');}
+        if(($query['estado']??'')==='aprobada')$from.=" AND c.estado='aprobada'";
+        return Paginator::run($this->db->connection(),'SELECT c.*,o.nombre AS obra,e.razon_social AS empresa',$from,'c.id DESC',$params,$query);
+    }
+    public function cotizacion(int $id): array {
+        $db=$this->db->connection();
+        $q=$db->prepare('SELECT c.*,o.nombre AS obra,o.empresa_id,o.direccion,o.comuna,e.razon_social AS empresa FROM cotizaciones c JOIN obras o ON o.id=c.obra_id JOIN empresas e ON e.id=o.empresa_id WHERE c.id=?');
+        $q->execute([$id]);$row=$q->fetch(PDO::FETCH_ASSOC);
+        if(!$row)throw new RuntimeException('Cotización no encontrada',404);
+        $q=$db->prepare("SELECT s.*,COALESCE((SELECT SUM(t.cantidad) FROM ot_servicios t JOIN ot_ordenes x ON x.id=t.ot_id WHERE x.cotizacion_id=s.cotizacion_id AND t.servicio_id=s.servicio_id AND x.estado<>'cancelada'),0) AS asignada FROM cotizacion_servicios s WHERE s.cotizacion_id=?");
+        $q->execute([$id]);$row['servicios']=$q->fetchAll(PDO::FETCH_ASSOC);
+        $q=$db->prepare('SELECT id,numero_ot,estado FROM ot_ordenes WHERE cotizacion_id=? ORDER BY id');$q->execute([$id]);$row['ordenes']=$q->fetchAll(PDO::FETCH_ASSOC);
+        return $row;
+    }
+    public function crearCotizacion(array $data): int {
+        $numero=self::text($data,'numero',40);$obra=self::positiveId($data['obra_id']??null);
+        $moneda=$data['moneda']??'';if(!in_array($moneda,['CLP','UF'],true))throw new InvalidArgumentException('Moneda inválida');
+        $lines=$data['servicios']??null;if(!is_array($lines)||!count($lines)||count($lines)>60)throw new InvalidArgumentException('Agrega entre 1 y 60 servicios');
+        $db=$this->db->connection();$db->beginTransaction();
+        try{
+            $q=$db->prepare('SELECT o.id FROM obras o JOIN empresas e ON e.id=o.empresa_id WHERE o.id=? AND o.activo=1 AND e.activo=1');$q->execute([$obra]);if(!$q->fetchColumn())throw new InvalidArgumentException('Obra inválida');
+            $q=$db->prepare('INSERT INTO cotizaciones(numero,obra_id,moneda,condiciones) VALUES(?,?,?,?)');$q->execute([$numero,$obra,$moneda,self::text($data,'condiciones',5000,false)]);$id=(int)$db->lastInsertId();
+            $get=$db->prepare('SELECT nombre,unidad FROM catalogo_servicios WHERE id=? AND activo=1');$put=$db->prepare('INSERT INTO cotizacion_servicios(cotizacion_id,servicio_id,nombre,unidad,cantidad,precio_unitario) VALUES(?,?,?,?,?,?)');$seen=[];
+            foreach($lines as $line){
+                $sid=self::positiveId($line['servicio_id']??null);if(isset($seen[$sid]))throw new InvalidArgumentException('Servicio repetido');$seen[$sid]=true;
+                $qty=$line['cantidad']??null;if($qty!==null){$qty=self::positiveId($qty);if($qty>100000)throw new InvalidArgumentException('Cantidad excesiva');}
+                $price=$line['precio_unitario']??null;if(!is_string($price)||!preg_match($moneda==='CLP'?'/^\d{1,12}$/D':'/^\d{1,12}(\.\d{1,4})?$/D',$price))throw new InvalidArgumentException('Precio inválido');
+                $get->execute([$sid]);$service=$get->fetch(PDO::FETCH_ASSOC);if(!$service)throw new InvalidArgumentException('Servicio inactivo o inexistente');
+                $put->execute([$id,$sid,$service['nombre'],$service['unidad'],$qty,$price]);
+            }
+            $db->commit();return $id;
+        }catch(\Throwable $e){if($db->inTransaction())$db->rollBack();if($e instanceof PDOException&&$e->getCode()==='23000')throw new RuntimeException('Número de cotización duplicado',409);throw $e;}
+    }
+    public function estadoCotizacion(int $id,string $estado): void {
+        $previous=['enviada'=>'borrador','aprobada'=>'enviada','rechazada'=>'enviada','vencida'=>'enviada'];
+        if(!isset($previous[$estado]))throw new InvalidArgumentException('Estado inválido');
+        $q=$this->db->connection()->prepare('UPDATE cotizaciones SET estado=? WHERE id=? AND estado=?');$q->execute([$estado,$id,$previous[$estado]]);
+        if(!$q->rowCount())throw new RuntimeException('Transición no permitida',409);
+    }
 }

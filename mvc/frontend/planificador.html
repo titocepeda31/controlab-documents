@@ -81,6 +81,7 @@
    <div class="section-head"><div><span class="eyebrow">Planificación</span><h2 id="formTitle">Nueva orden de trabajo</h2></div><button class="btn" id="closeForm" type="button">Cerrar</button></div>
    <form id="otForm" autocomplete="off">
     <div class="form-grid">
+     <div class="field full"><label for="quoteSearch">Cotización aprobada</label><div class="input-group"><input class="form-control" id="quoteSearch" placeholder="Buscar número de cotización"><button class="btn" type="button" id="quoteFind">Buscar</button></div><div id="quoteResults" class="list-group"></div><a href="./cotizaciones.html">Crear nueva cotización</a><input type="hidden" id="cotizacion_id"></div>
      <div class="field mb-2"><label for="numero_ot">Número de OT (opcional)</label><input id="numero_ot" name="numero_ot" maxlength="40" placeholder="Automático si queda vacío"></div>
      <div class="field mb-2"><label for="empresaSearch">Buscar empresa constructora</label>
  <input id="empresaSearch" type="search" autocomplete="off" placeholder="Nombre, razón social o RUT" aria-controls="empresaMatches" aria-expanded="false">
@@ -359,7 +360,7 @@ async function openDetail(id){
   const result=await request('/ot/'+id);const j=result.orden;
   clearDetails();$('detailTitle').textContent='OT '+j.numero_ot;
   const body=$('detailBody');
-  fieldLine(body,'Cliente',j.cliente);fieldLine(body,'Obra',j.obra);
+  fieldLine(body,'Cotización',j.numero_cotizacion||'Sin cotización');fieldLine(body,'Cliente',j.cliente);fieldLine(body,'Obra',j.obra);
   fieldLine(body,'Trabajo',j.actividad);
   if((j.servicios||[]).length){
    const list=el('div');list.append(el('strong','','Servicios solicitados:'));
@@ -526,7 +527,7 @@ function openForm(record=null){
  editingVersion=record?Number(record.version):null;
  $('formTitle').textContent=record?'Editar OT '+record.numero_ot:'Nueva orden de trabajo';
  $('saveBtn').textContent=record?'Guardar cambios':'Crear orden de trabajo';
- $('otForm').reset();
+ $('otForm').reset();$('cotizacion_id').value=record?.cotizacion_id||'';$('quoteSearch').value=record?.numero_cotizacion||'';$('quoteResults').replaceChildren();$('quoteSearch').disabled=!!record;if(!record){const preset=new URLSearchParams(location.search).get('cotizacion');if(preset)$('quoteSearch').value=preset;}$('quoteFind').disabled=!!record;
  $('otServicios').replaceChildren();
  for(const s of record?.servicios||[])serviceLine(s.servicio_id,s.cantidad);
  fillCompanies();
@@ -550,11 +551,26 @@ function openForm(record=null){
  notice('saveNotice','');$('formSection').hidden=false;
  $('formSection').scrollIntoView({behavior:'smooth',block:'start'});
 }
+$('quoteFind').onclick=async()=>{
+ try{
+ const result=await request('/cotizaciones?estado=aprobada&per_page=20&search='+encodeURIComponent($('quoteSearch').value));
+ const root=$('quoteResults');root.replaceChildren();
+ for(const item of result.data){const b=el('button','list-group-item list-group-item-action',item.numero+' · '+item.empresa+' · '+item.obra);b.type='button';b.onclick=async()=>{try{const q=await request('/cotizaciones/'+item.id);$('cotizacion_id').value=q.id;$('quoteSearch').value=q.numero;root.replaceChildren();
+ const w={id:q.obra_id,empresa_id:q.empresa_id,empresa:q.empresa,nombre:q.obra,direccion:q.direccion,comuna:q.comuna,activo:1};
+ if(!works.some(x=>Number(x.id)===Number(w.id)))works.push(w);
+ if(!companies.some(x=>Number(x.id)===Number(q.empresa_id)))companies.push({id:q.empresa_id,razon_social:q.empresa,activo:1});
+ fillCompanies();chooseCompany({id:q.empresa_id,razon_social:q.empresa});fillWorks(String(q.empresa_id),String(q.obra_id));$('obraSearch').value=q.obra;applyWork();$('otServicios').replaceChildren();
+ for(const line of q.servicios){const remaining=line.cantidad===null?1:Number(line.cantidad)-Number(line.asignada);if(remaining>0)serviceLine(line.servicio_id,Math.min(remaining,100000));}
+ }catch(e){notice('saveNotice',e.message,true);}};root.append(b);}
+ if(!result.data.length)root.append(el('p','','No hay cotizaciones aprobadas'));
+ }catch(e){notice('saveNotice',e.message,true);}
+};
 function formPayload(){
  const data={};
  for(const name of ['numero_ot','cliente','obra','destino','comuna','inicio','fin','estado','prioridad','observaciones'])data[name]=$(name).value.trim();
  data.personal=Array.from($('teamChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
  data.personal_terreno_ids=Array.from($('fieldChoices').querySelectorAll('input[type="checkbox"]:checked'),input=>Number(input.value));
+ data.cotizacion_id=$('cotizacion_id').value||null;
  data.obra_id=$('obraCatalogo').value?Number($('obraCatalogo').value):null;
  data.vehiculo_id=$('vehiculo_id').value?Number($('vehiculo_id').value):null;
  data.servicios=getOtServicios();

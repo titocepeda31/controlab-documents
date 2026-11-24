@@ -51,3 +51,8 @@ $app->post('/api/informes/{id:[0-9]+}/aprobar',[$revisiones,'approve']);
 $app->post('/api/informes/{id:[0-9]+}/devolver',[$revisiones,'returnForChanges']);
 
 $app->post('/api/correo-demo/enviar',[$correoController,'send']);
+
+$app->get('/api/cotizaciones',[$catalogoOperativoController,'cotizaciones']);
+$app->post('/api/cotizaciones',[$catalogoOperativoController,'crearCotizacion']);
+$app->get('/api/cotizaciones/{id:[0-9]+}',[$catalogoOperativoController,'cotizacion']);
+$app->put('/api/cotizaciones/{id:[0-9]+}/estado',[$catalogoOperativoController,'estadoCotizacion']);

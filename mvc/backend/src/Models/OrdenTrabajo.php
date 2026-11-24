@@ -99,6 +99,8 @@ final class OrdenTrabajo {
         if($vehicle===null||$vehicle==='')$data['vehiculo_id']=null;
         elseif((is_int($vehicle)||is_string($vehicle)&&ctype_digit($vehicle))&&(int)$vehicle>0)$data['vehiculo_id']=(int)$vehicle;
         else throw new InvalidArgumentException('Vehículo inválido');
+        $data['cotizacion_id']=empty($input['cotizacion_id'])?null:filter_var($input['cotizacion_id'],FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
+        if($data['cotizacion_id']===false)throw new InvalidArgumentException('Cotización inválida');
         $data['servicios']=null;
         if(array_key_exists('servicios',$input)){
             if(!is_array($input['servicios'])||count($input['servicios'])>60)
@@ -183,7 +185,7 @@ final class OrdenTrabajo {
         if($last<$start||$last->diff($start)->days>100)throw new InvalidArgumentException('Consulta un período de hasta 100 días');
         $max=$last->modify('+1 day')->format('Y-m-d').' 00:00:00';
         $params=[$max,$from.' 00:00:00'];
-        $sql="SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.version,v.obra_id,g.latitud,g.longitud,ov.vehiculo_id,cv.patente ".
+        $sql="SELECT o.id,o.numero_ot,o.cotizacion_id,(SELECT numero FROM cotizaciones WHERE id=o.cotizacion_id) AS numero_cotizacion,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.version,v.obra_id,g.latitud,g.longitud,ov.vehiculo_id,cv.patente ".
              "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id LEFT JOIN obra_ubicaciones g ON g.obra_id=v.obra_id LEFT JOIN ot_vehiculos ov ON ov.ot_id=o.id LEFT JOIN catalogo_vehiculos cv ON cv.id=ov.vehiculo_id WHERE o.inicio < ? AND o.fin > ?";
         if(!self::manager($viewer)){
             $sql.=" AND EXISTS (SELECT 1 FROM ot_asignaciones a WHERE a.ot_id=o.id AND a.usuario_id=?)";
@@ -199,7 +201,7 @@ final class OrdenTrabajo {
 
     public function find(int $id,array $viewer): array {
         $q=$this->db->connection()->prepare(
-            "SELECT o.id,o.numero_ot,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.observaciones,o.version,o.creado_por,o.actualizado_el,v.obra_id,g.latitud,g.longitud,ov.vehiculo_id,cv.patente ".
+            "SELECT o.id,o.numero_ot,o.cotizacion_id,(SELECT numero FROM cotizaciones WHERE id=o.cotizacion_id) AS numero_cotizacion,o.cliente,o.obra,o.destino,o.comuna,o.actividad,o.inicio,o.fin,o.estado,o.prioridad,o.observaciones,o.version,o.creado_por,o.actualizado_el,v.obra_id,g.latitud,g.longitud,ov.vehiculo_id,cv.patente ".
             "FROM ot_ordenes o LEFT JOIN ot_obra_vinculos v ON v.ot_id=o.id LEFT JOIN obra_ubicaciones g ON g.obra_id=v.obra_id LEFT JOIN ot_vehiculos ov ON ov.ot_id=o.id LEFT JOIN catalogo_vehiculos cv ON cv.id=ov.vehiculo_id WHERE o.id=? LIMIT 1"
         );
         $q->execute([$id]);$item=$q->fetch(PDO::FETCH_ASSOC);
@@ -367,8 +369,17 @@ final class OrdenTrabajo {
         }
     }
 
+    private function validateCotizacion(PDO $pdo,array $data,int $otId): void {
+        $id=$data['cotizacion_id'];if($id===null)return;
+        $q=$pdo->prepare('SELECT obra_id,estado FROM cotizaciones WHERE id=? FOR UPDATE');$q->execute([$id]);$quote=$q->fetch(PDO::FETCH_ASSOC);
+        if(!$quote||$quote['estado']!=='aprobada'||(int)$quote['obra_id']!==$data['obra_id'])throw new InvalidArgumentException('Selecciona una cotización aprobada de la misma obra');
+        if(!$data['servicios'])throw new InvalidArgumentException('Indica servicios cotizados');
+        $q=$pdo->prepare("SELECT s.cantidad,COALESCE((SELECT SUM(t.cantidad) FROM ot_servicios t JOIN ot_ordenes x ON x.id=t.ot_id WHERE x.cotizacion_id=s.cotizacion_id AND t.servicio_id=s.servicio_id AND x.id<>? AND x.estado<>'cancelada'),0) AS asignada FROM cotizacion_servicios s WHERE s.cotizacion_id=? AND s.servicio_id=?");
+        foreach($data['servicios'] as $line){$q->execute([$otId,$id,$line['servicio_id']]);$row=$q->fetch(PDO::FETCH_ASSOC);if(!$row||($data['estado']!=='cancelada'&&$row['cantidad']!==null&&$line['cantidad']+(int)$row['asignada']>(int)$row['cantidad']))throw new InvalidArgumentException('Servicio no cotizado o cantidad superior al saldo');}
+    }
     public function create(array $input,int $actor): int {
         $data=self::validate($input);
+        if($data['cotizacion_id']===null)throw new InvalidArgumentException('Selecciona una cotización aprobada');
         $this->applyObraCatalog($data);
         $pdo=$this->db->connection();
         // READ COMMITTED: la consulta de choques ve lo que confirmó otra OT
@@ -383,6 +394,8 @@ final class OrdenTrabajo {
             $q->execute([$data['numero_ot']?:null,$data['cliente'],$data['obra'],$data['destino'],$data['comuna'],$data['actividad'],
                 $data['inicio'],$data['fin'],$data['estado'],$data['prioridad'],$data['observaciones'],$actor,$actor]);
             $id=(int)$pdo->lastInsertId();
+            $this->validateCotizacion($pdo,$data,$id);
+            $q=$pdo->prepare('UPDATE ot_ordenes SET cotizacion_id=? WHERE id=?');$q->execute([$data['cotizacion_id'],$id]);
             if($data['numero_ot']===''){
                 $number='OT-'.substr($data['inicio'],0,4).'-'.str_pad((string)$id,5,'0',STR_PAD_LEFT);
                 $q=$pdo->prepare('UPDATE ot_ordenes SET numero_ot=? WHERE id=?');
@@ -416,10 +429,13 @@ final class OrdenTrabajo {
         $pdo->exec('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
         $pdo->beginTransaction();
         try{
-            $q=$pdo->prepare('SELECT numero_ot,version FROM ot_ordenes WHERE id=? FOR UPDATE');
+            $q=$pdo->prepare('SELECT numero_ot,version,cotizacion_id FROM ot_ordenes WHERE id=? FOR UPDATE');
             $q->execute([$id]);$row=$q->fetch(PDO::FETCH_ASSOC);
             if(!$row)throw new RuntimeException('Orden no encontrada',404);
             if($version!==(int)$row['version'])throw new RuntimeException('Otro usuario modificó la OT. Recarga antes de guardar',409);
+            $data['cotizacion_id']=$row['cotizacion_id']===null?null:(int)$row['cotizacion_id'];
+            $this->validateCotizacion($pdo,$data,$id);
+            $this->saveServicios($pdo,$id,$data['servicios']);
             $number=$data['numero_ot']?:$row['numero_ot'];
             $this->saveAssignments($pdo,$id,$data['personal'],$data['inicio'],$data['fin'],$data['estado']);
             $this->saveFieldAssignments($pdo,$id,$data['personal_terreno_ids'],$data['inicio'],$data['fin'],$data['estado']);
