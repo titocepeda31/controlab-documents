@@ -1,84 +1,23 @@
 <!doctype html>
 <html lang="es-CL"><head>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/css/tabler.min.css"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Dashboard gerencial | Controlab</title>
-<link rel="stylesheet" href="./assets/css/legacy/dashboard.css"><link rel="stylesheet" href="./assets/css/app.css">
+<link rel="stylesheet" href="./assets/css/app.css">
 </head><body>
-<header class="top cl-dashboard-header"><div class="cl-identity"><span class="cl-mark">RC</span><span><strong>CONTROLAB</strong><small>Gestión de laboratorio</small></span></div><button type="button" class="hamburger" id="menuToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="sidebar">☰</button></header>
-<div class="scrim" id="scrim" hidden></div>
-<aside class="sidebar" id="sidebar" aria-label="Navegación principal">
-<div class="side-caption">MENÚ PRINCIPAL</div>
-<nav class="side-links">
-<a class="active" aria-current="page" href="./dashboard.html">▦ &nbsp; Dashboard gerencial</a>
-<a href="./planificador.html">▤ &nbsp; Órdenes de trabajo</a>
-<a class="restricted" href="./empresas.html">▣ &nbsp; Empresas</a>
-<a class="restricted" href="./obras.html">⌂ &nbsp; Obras</a>
-<a class="restricted" href="./servicios.html">◈ &nbsp; Servicios</a>
-<a class="restricted" href="./personal.html">♙ &nbsp; Personal de terreno</a>
-<a href="./formulario.html">▤ &nbsp; Informes (prototipo)</a>
-<a id="usersLink" href="./usuarios.html" hidden>⚙ &nbsp; Usuarios</a>
-</nav>
-<div class="side-footer">Panel de demostración<br>Los indicadores no son datos reales.</div>
-</aside>
-<main class="main-area"><div class="intro"><div><h1>Dashboard gerencial</h1><p>Resumen ejecutivo de operaciones, programación y gestión comercial.</p></div><span class="tag">DEMO · Datos ficticios</span></div>
-<div class="blocked" id="blocked" hidden><strong>Debes iniciar sesión para acceder al dashboard.</strong><p>El formulario de demostración también permite iniciar sesión.</p><a href="./formulario.html">Ir al inicio de sesión</a></div>
-<div class="content" id="content" hidden>
-<div class="notice"><strong>Vista de presentación:</strong> todas las cifras, gráficos y órdenes de esta pantalla son ilustrativos. No representan ventas, cobros ni resultados reales de la empresa.</div>
-<section class="cards" aria-label="Indicadores gerenciales">
-<div class="card"><small>OT generadas este mes</small><strong>128</strong><span>Ejemplo · mes de referencia</span></div>
-<div class="card"><small>OT programadas esta semana</small><strong>24</strong><span>Ejemplo · agenda semanal</span></div>
-<div class="card money"><small>Total facturado</small><strong>$18.450.000</strong><span>CLP · cifra ficticia</span></div>
-<div class="card money"><small>Total pagado</small><strong>$12.800.000</strong><span>CLP · cifra ficticia</span></div>
-<div class="card money"><small>Pendiente de pago</small><strong>$5.650.000</strong><span>Facturado menos pagado · ficticio</span></div>
-<div class="card money"><small>Pendiente por facturar</small><strong>$4.200.000</strong><span>Trabajos por facturar · ficticio</span></div>
-<div class="card"><small>Obras activas</small><strong>36</strong><span>Ejemplo</span></div>
-<div class="card"><small>Servicios realizados</small><strong>317</strong><span>Unidades de servicio · ejemplo</span></div>
-<div class="card"><small>Informes enviados este mes</small><strong>86</strong><span>Entregas de informes · cifra ficticia</span></div>
-<div class="card"><small>Empresas con informes retenidos</small><strong>3</strong><span>Por pagos pendientes · cifra ficticia</span></div>
-<div class="card"><small>Empresas con facturas vencidas</small><strong>5</strong><span>Sin implicar bloqueo automático · ficticio</span></div>
-<div class="card"><small>Informes pendientes de envío</small><strong>12</strong><span>Informes aún no entregados · ficticio</span></div>
-<div class="card"><small>Informes retenidos por pago</small><strong>8</strong><span>Entrega suspendida · cifra ficticia</span></div>
-<div class="card money"><small>Combustible del mes</small><strong>$740.000</strong><span>Gasto de flota · cifra ficticia</span></div>
-<div class="card"><small>Vehículos operativos</small><strong>4 de 5</strong><span>Disponibilidad · cifra ficticia</span></div>
-<div class="card"><small>Mantenciones próximas</small><strong>2</strong><span>Alertas preventivas · ficticio</span></div>
-</section>
-<div class="layout">
-<section class="panel"><h2>Órdenes de trabajo por semana</h2><p>Ejemplo de distribución mensual.</p><div class="bars" aria-label="Semana 1: 21, semana 2: 30, semana 3: 35, semana 4: 42 órdenes">
-<div class="barwrap"><div class="bar" style="height:45%"></div><small>Sem. 1</small></div><div class="barwrap"><div class="bar" style="height:65%"></div><small>Sem. 2</small></div><div class="barwrap"><div class="bar" style="height:76%"></div><small>Sem. 3</small></div><div class="barwrap"><div class="bar" style="height:91%"></div><small>Sem. 4</small></div>
-</div><div class="legend">21 · 30 · 35 · 42 OT (total: 128) · Datos ficticios</div></section>
-<section class="panel"><h2>Programación semanal</h2><p>Ejemplos de trabajos agendados.</p><div class="schedule">
-<div class="entry"><div><strong>Ensayos de densidad</strong><small>Obra Las Cruces · Lunes 09:00</small></div><span class="pill">Programada</span></div>
-<div class="entry"><div><strong>Calicatas</strong><small>Obra Ruta K-33 · Martes 10:30</small></div><span class="pill">Programada</span></div>
-<div class="entry"><div><strong>Estudio de suelo</strong><small>Obra Centro · Jueves 08:30</small></div><span class="pill">Programada</span></div>
-</div></section>
-</div>
-<section class="panel" style="margin-top:14px"><h2>Gestión de vehículos y terreno · ejemplo</h2>
-<p>Proyección del módulo de flota: combustible, kilometraje, mantenciones y rutas asociadas a órdenes de trabajo.</p>
-<div class="schedule">
-<div class="entry"><div><strong>Camioneta de terreno 01</strong><small>Última carga: $65.000 · 42.850 km (ficticio)</small></div><span class="pill">Operativa</span></div>
-<div class="entry"><div><strong>Camioneta de terreno 02</strong><small>Próxima mantención: 50.000 km · 49.600 km actuales (ficticio)</small></div><span class="pill" style="background:#fff5d9;color:#855e13">Mantención próxima</span></div>
-<div class="entry"><div><strong>Camioneta de terreno 03</strong><small>En mantención preventiva (ficticio)</small></div><span class="pill" style="background:#fff1e6;color:#8b4c12">No disponible</span></div>
-</div>
-<p style="margin-top:12px;font-size:12px">Ubicación de vehículos: funcionalidad futura. Requiere GPS o ubicación compartida con consentimiento, conectividad y controles de acceso. No se realiza seguimiento real.</p>
-</section>
-<section class="panel" style="margin-top:14px"><h2>Cobranza y alertas · ejemplo</h2>
-<div class="schedule">
-<div class="entry"><div><strong>Facturas vencidas</strong><small>5 empresas con saldos pendientes · dato ficticio</small></div><span class="pill" style="background:#fff5d9;color:#855e13">Revisar</span></div>
-<div class="entry"><div><strong>Recordatorios de cobranza</strong><small>Propuesta: correos automáticos según vencimiento y validación de pagos</small></div><span class="pill">Futuro módulo</span></div>
-</div><p style="margin-top:12px;font-size:12px">No se envían correos automáticamente desde este dashboard. Se requerirá módulo de facturas, pagos, políticas de cobranza y registro de envíos.</p>
-</section>
-<section class="panel" style="margin-top:14px"><h2>Control de entrega de informes · ejemplo</h2>
-<p>El bloqueo de entrega es independiente del estado activo/inactivo de la empresa. No hay restricciones reales implementadas en esta demostración.</p>
-<div class="schedule">
-<div class="entry"><div><strong>Constructora Ejemplo Norte</strong><small>Informes retenidos por pago pendiente · ejemplo</small></div><span class="pill" style="background:#fff1e6;color:#8b4c12">Retenidos</span></div>
-<div class="entry"><div><strong>Constructora Ejemplo Sur</strong><small>Factura vencida · entrega aún habilitada</small></div><span class="pill" style="background:#fff5d9;color:#855e13">Por revisar</span></div>
-</div><p style="margin-top:12px;font-size:12px">Nombres y estados inventados exclusivamente para la presentación.</p>
-</section>
 
-</div></main>
+<main class="container-xl py-3"><div class="page-header mb-3"><div class="row align-items-center"><div class="col"><div class="page-pretitle">Resumen ejecutivo</div><h1 class="page-title">Dashboard gerencial</h1></div><div class="col-auto"><span class="badge bg-yellow-lt">Datos ficticios</span></div></div></div>
+<div class="alert alert-warning" id="blocked" hidden>Debes iniciar sesión. <a href="./formulario.html">Ingresar</a></div>
+<div id="content" hidden><p class="text-secondary small">Vista de presentación · cifras ilustrativas, no resultados reales de Controlab.</p>
+<div class="row row-cards mb-3">
+<div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Facturado</div><div class="h2 mt-2 mb-1 text-primary">$18.450.000</div><div class="text-secondary small">Mes de referencia</div></div></div></div><div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Pendiente de cobro</div><div class="h2 mt-2 mb-1 text-orange">$5.650.000</div><div class="text-secondary small">Saldo facturado</div></div></div></div><div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">OT del mes</div><div class="h2 mt-2 mb-1 text-primary">128</div><div class="text-secondary small">24 programadas esta semana</div></div></div></div><div class="col-6 col-lg-3"><div class="card"><div class="card-body"><div class="subheader">Informes pendientes</div><div class="h2 mt-2 mb-1 text-orange">12</div><div class="text-secondary small">Pendientes de envío</div></div></div></div>
+</div>
+<div class="row row-cards mb-3"><div class="col-lg-7"><section class="card h-100"><div class="card-header"><h2 class="card-title">Facturación y cobranza</h2></div><div class="card-body"><div class="d-flex justify-content-between mb-2"><span>Pagado</span><strong>$12.800.000</strong></div><div class="progress progress-lg mb-2"><div class="progress-bar bg-primary" style="width:69.4%" role="progressbar" aria-label="Proporción cobrada aproximada"></div></div><div class="text-secondary small mb-3">69,4% del total facturado (ejemplo)</div><div class="d-flex justify-content-between border-top pt-3"><span>Pendiente por facturar</span><strong>$4.200.000</strong></div></div></section></div>
+<div class="col-lg-5"><section class="card h-100"><div class="card-header"><h2 class="card-title">Requiere atención</h2></div><div class="list-group list-group-flush"><div class="list-group-item d-flex justify-content-between align-items-center"><span>Empresas con facturas vencidas</span><strong class="text-orange">5</strong></div><div class="list-group-item d-flex justify-content-between align-items-center"><span>Informes retenidos por pago</span><strong class="text-orange">8</strong></div><div class="list-group-item d-flex justify-content-between align-items-center"><span>Mantenciones próximas</span><strong class="text-orange">2</strong></div></div></section></div></div>
+<section class="card"><div class="card-header"><h2 class="card-title">Detalle por área</h2></div><div class="card-header"><div class="nav nav-tabs card-header-tabs" role="tablist"><button type="button" class="nav-link active" role="tab" aria-selected="true" aria-controls="area-operaciones" data-area="operaciones">Operaciones</button><button type="button" class="nav-link" role="tab" aria-selected="false" aria-controls="area-informes" data-area="informes">Informes</button><button type="button" class="nav-link" role="tab" aria-selected="false" aria-controls="area-flota" data-area="flota">Flota</button></div></div><div class="card-body">
+<div id="area-operaciones" role="tabpanel"><div class="row g-3"><div class="col-md-6"><h3>OT por semana</h3><div class="d-flex justify-content-between mt-2"><span>Semana 1</span><strong>21</strong></div><progress class="w-100" max="42" value="21"></progress><div class="d-flex justify-content-between mt-2"><span>Semana 2</span><strong>30</strong></div><progress class="w-100" max="42" value="30"></progress><div class="d-flex justify-content-between mt-2"><span>Semana 3</span><strong>35</strong></div><progress class="w-100" max="42" value="35"></progress><div class="d-flex justify-content-between mt-2"><span>Semana 4</span><strong>42</strong></div><progress class="w-100" max="42" value="42"></progress></div><div class="col-md-6"><h3>Actividad del mes</h3><p>Obras activas <strong class="float-end">36</strong></p><p>Servicios realizados <strong class="float-end">317</strong></p><p>OT programadas esta semana <strong class="float-end">24</strong></p><a class="btn btn-outline-primary" href="./planificador.html">Ver planificación</a></div></div></div>
+<div id="area-informes" role="tabpanel" hidden><p>Informes enviados este mes <strong class="float-end">86</strong></p><p>Empresas con informes retenidos <strong class="float-end">3</strong></p><p>Informes pendientes de envío <strong class="float-end">12</strong></p><a class="btn btn-outline-primary" href="./formulario.html">Ver informes</a></div>
+<div id="area-flota" role="tabpanel" hidden><p>Vehículos operativos <strong class="float-end">4 de 5</strong></p><p>Combustible del mes <strong class="float-end">$740.000</strong></p><p>Mantenciones próximas <strong class="float-end">2</strong></p><p class="text-secondary small">Proyección de módulo de flota; sin seguimiento real.</p></div></div></section></div></main>
 <script>
-const menu=document.getElementById('sidebar'),toggle=document.getElementById('menuToggle'),scrim=document.getElementById('scrim');
-function setMenu(open){menu.classList.toggle('open',open);scrim.hidden=!open;toggle.setAttribute('aria-expanded',String(open));toggle.setAttribute('aria-label',open?'Cerrar menú':'Abrir menú');}
-toggle.addEventListener('click',()=>setMenu(!menu.classList.contains('open')));scrim.addEventListener('click',()=>setMenu(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
-(async()=>{try{const r=await fetch('./api/session',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:'{}'});const s=await r.json();if(!r.ok||!s.autenticado)throw Error('Sesión no iniciada');document.getElementById('content').hidden=false;const manager=['administrador','administrativo'].includes(s.rol);for(const a of document.querySelectorAll('.restricted'))a.hidden=!manager;document.getElementById('usersLink').hidden=s.rol!=='administrador';}catch(e){document.getElementById('blocked').hidden=false;for(const a of document.querySelectorAll('.restricted'))a.hidden=true;document.getElementById('usersLink').hidden=true;}})();
+document.querySelectorAll('[data-area]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-area]').forEach(tab=>{const active=tab===button;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));document.getElementById('area-'+tab.dataset.area).hidden=!active;});}));
+(async()=>{try{const r=await fetch('./api/session',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:'{}'});const s=await r.json();if(!r.ok||!s.autenticado)throw Error('Sesión no iniciada');document.getElementById('content').hidden=false;}catch(e){document.getElementById('blocked').hidden=false;}})();
 </script><script src="./tabler-shell.js?v=4" defer></script>
 </body></html>
