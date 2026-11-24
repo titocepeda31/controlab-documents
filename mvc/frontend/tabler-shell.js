@@ -5,7 +5,7 @@ const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard']
 
 const isForm=page==='formulario.html';
 if(!isForm)document.documentElement.classList.add('cl-session-pending');
-const st=document.createElement('link');st.rel='stylesheet';st.href='./assets/css/shell.css';document.head.append(st);
+const st=document.createElement('link');st.rel='stylesheet';st.href='./assets/css/shell.css?v=20261124-2';document.head.append(st);
 function init(){
  if(document.getElementById('cl-shell-top'))return;
  const top=document.createElement('header');top.id='cl-shell-top';top.className='navbar navbar-dark';top.innerHTML='<a href="./dashboard.html" class="cl-brand"><span class="cl-mark">RC</span><span><strong>CONTROLAB</strong><small>Gestión de laboratorio</small></span></a><button id="cl-shell-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="cl-shell-sidebar">☰</button>';
