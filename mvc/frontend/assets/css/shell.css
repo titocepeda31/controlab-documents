@@ -22,3 +22,13 @@ body.cl-tabler-shell #sidebar,body.cl-tabler-shell #scrim,body.cl-tabler-shell #
 body.cl-tabler-shell .main-area{margin-left:250px!important}
 body.cl-tabler-shell #cl-shell-top:not([hidden]){display:flex!important}
 @media(max-width:900px){#cl-shell-toggle{display:inline-flex}#cl-shell-sidebar{top:0;width:min(300px,85vw);transform:translateX(-110%);transition:transform .18s ease;z-index:1101;box-shadow:10px 0 40px #132c3c20}#cl-shell-sidebar.open{transform:translateX(0)}#cl-shell-backdrop.open{display:block;position:fixed;inset:0;background:#0c223a75;z-index:1100}body.cl-tabler-shell > main,body.cl-tabler-shell > .app-view > main,body.cl-tabler-shell #appView > main,body.cl-tabler-shell .main-area,body.cl-tabler-shell #appView > .layout,body.cl-tabler-shell .layout{margin-left:0!important}}
+
+/* Shared navigation: override module button sizing and navbar alignment. */
+#cl-shell-sidebar.navbar{display:flex;flex-direction:column;flex-wrap:nowrap;justify-content:flex-start;align-items:stretch;gap:0;padding:12px}
+#cl-shell-sidebar .navbar-nav{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:2px;margin:0;padding:0}
+#cl-shell-sidebar .navbar-nav .nav-link{justify-content:flex-start;text-align:left;min-height:40px;padding:8px 12px;margin:0;font-size:14px;font-weight:500;line-height:1.4}
+#cl-shell-sidebar .btn{min-height:34px;height:auto;padding:6px 12px;font-size:13px;line-height:1.4}
+#cl-shell-sidebar > .btn{margin-top:16px;text-align:left}
+#cl-shell-sidebar .cl-caption{margin:12px 12px 8px}
+#cl-shell-sidebar .cl-foot{margin:16px 12px}
+@media(max-width:900px){#cl-shell-sidebar.navbar{width:min(270px,85vw)}#cl-shell-sidebar > .d-flex{justify-content:space-between!important;gap:8px;font-size:12px}}
