@@ -56,3 +56,6 @@ $app->get('/api/cotizaciones',[$catalogoOperativoController,'cotizaciones']);
 $app->post('/api/cotizaciones',[$catalogoOperativoController,'crearCotizacion']);
 $app->get('/api/cotizaciones/{id:[0-9]+}',[$catalogoOperativoController,'cotizacion']);
 $app->put('/api/cotizaciones/{id:[0-9]+}/estado',[$catalogoOperativoController,'estadoCotizacion']);
+
+$app->get('/api/catalogo/servicios/{id:[0-9]+}/historial',[$catalogoOperativoController,'historialServicio']);
+$app->get('/api/catalogo/uf',[$catalogoOperativoController,'ufDiaria']);

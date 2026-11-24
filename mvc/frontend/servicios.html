@@ -70,10 +70,11 @@
    <form id="servicioForm"><div class="grid">
     <div class="field full"><label for="servicioNombre">Nombre del servicio *</label><input id="servicioNombre" maxlength="180" required placeholder="Ej.: Ensayo de densidad en terreno"></div>
     <div class="field mb-2"><label for="servicioUnidad">Unidad de medida *</label><input id="servicioUnidad" maxlength="60" required value="unidad" placeholder="Ej.: ensayo, calicata, unidad"></div>
-    <div class="field mb-2"><label for="precioCLP">Precio CLP</label><input class="form-control" id="precioCLP" type="number" min="0" max="999999999999" step="1"></div>
-    <div class="field mb-2"><label for="precioUF">Precio UF</label><input class="form-control" id="precioUF" type="number" min="0" max="999999999999.9999" step="0.0001"></div>
-    <div class="field full"><label for="servicioDescripcion">Descripción (opcional)</label><textarea id="servicioDescripcion" maxlength="500"></textarea></div>
-    <div class="mb-3" id="servicioActiveWrap" hidden><label class="form-check form-switch"><input class="form-check-input" id="servicioActivo" type="checkbox" role="switch" checked><span class="form-check-label">Servicio activo</span></label></div>
+    <div class="field mb-2"><label for="monedaBase">Moneda base</label><select class="form-select" id="monedaBase"><option>CLP</option><option>UF</option></select></div>
+<div class="field mb-2"><label for="precioBase">Tarifa base</label><input class="form-control" id="precioBase" type="number" min="0" step="1"></div>
+<div class="field mb-2"><label>Equivalencia automática</label><output id="equivalencia" class="form-control-plaintext"></output><small id="ufFecha" class="text-secondary"></small></div>
+<div class="field mb-2"><label for="motivoPrecio">Motivo del cambio de tarifa</label><input class="form-control" id="motivoPrecio" maxlength="500"></div>
+<div class="mb-3" id="servicioActiveWrap" hidden><label class="form-check form-switch"><input class="form-check-input" id="servicioActivo" type="checkbox" role="switch" checked><span class="form-check-label">Servicio activo</span></label></div>
    </div><div class="actions"><button class="btn btn-primary primary" id="guardarServicio" type="submit">Agregar servicio</button><button class="btn" id="cancelServicio" type="button" hidden>Cancelar edición</button></div><div id="servicioNotice" class="notice" role="status" aria-live="polite"></div></form>
    <div class="section-title" style="margin-top:25px"><h2>Servicios registrados</h2><span id="servicioCount" class="help"></span></div>
    <div class="card-list" id="serviciosList"></div>
@@ -169,7 +170,227 @@ function renderWorks(){
  }
 }
 
-function renderServices(){
+let ufActual=null;
+function conversion(){const currency=$('monedaBase').value;const input=$('precioBase');input.step=currency==='CLP'?'1':'0.0001';const value=Number(input.value);const uf=ufActual||services.find(s=>s.uf_referencia)?.uf_referencia;
+ $('ufFecha').textContent=uf?'UF '+uf.fecha+' · 
+ const root=$('serviciosList');root.replaceChildren();$('servicioCount').textContent=services.length+' servicios';
+ if(!services.length){root.append(elem('p','','Todavía no hay servicios registrados.'));return;}
+ for(const s of services){
+  const card=elem('article','record'),meta=elem('div');
+  meta.append(elem('strong','',s.nombre),elem('small','','Unidad: '+s.unidad));
+  meta.append(elem('small','','CLP: '+(s.precio_clp??'Sin tarifa')+' · UF: '+(s.precio_uf??'Sin tarifa')));
+  if(s.descripcion)meta.append(elem('small','',s.descripcion));
+  meta.append(elem('span','status'+(Number(s.activo)?'':' off'),Number(s.activo)?'Activo':'Inactivo'));
+  const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editService(s.id));
+  const history=elem('button','btn btn-sm','Historial');history.type='button';history.onclick=()=>showHistory(s.id);const actions=elem('div','d-flex flex-column gap-2');actions.append(btn,history);card.append(meta,actions);root.append(card);
+ }
+}
+function editService(id){
+ const s=services.find(x=>Number(x.id)===Number(id));if(!s)return;
+ tab('servicios');editServicio=Number(id);
+ $('servicioNombre').value=s.nombre;$('servicioUnidad').value=s.unidad;
+ $('monedaBase').value=s.moneda_base||'CLP';$('precioBase').value=s.precio_base===null?'':Number(s.precio_base);$('motivoPrecio').value='';conversion();$('servicioDescripcion').value=s.descripcion||'';$('servicioActivo').checked=Number(s.activo)===1;
+ $('servicioActiveWrap').hidden=false;$('guardarServicio').textContent='Guardar cambios';$('cancelServicio').hidden=false;
+ $('servicioForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetService(){
+ editServicio=null;$('servicioForm').reset();conversion();$('servicioUnidad').value='unidad';
+ $('servicioActiveWrap').hidden=true;$('guardarServicio').textContent='Agregar servicio';$('cancelServicio').hidden=true;
+}
+$('cancelServicio').addEventListener('click',resetService);
+$('servicioForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarServicio');btn.disabled=true;
+ try{
+  const data={nombre:$('servicioNombre').value.trim(),unidad:$('servicioUnidad').value.trim(),descripcion:$('servicioDescripcion').value.trim()};
+  data.moneda_base=$('monedaBase').value;data.precio_base=$('precioBase').value;data.motivo=$('motivoPrecio').value;
+  if(editServicio!==null)data.activo=$('servicioActivo').checked;
+  await write(editServicio===null?'/catalogo/servicios':'/catalogo/servicios/'+editServicio,editServicio===null?'POST':'PUT',data);
+  resetService();await refresh();notice('servicioNotice','✓ Servicio guardado correctamente.');
+ }catch(e){notice('servicioNotice',e.message,true);}finally{btn.disabled=false;}
+});
+
+function renderPeople(){
+ const root=$('personalList');root.replaceChildren();$('personalCount').textContent=people.length+' trabajadores';
+ if(!people.length){root.append(elem('p','','Aún no hay personal de terreno registrado.'));return;}
+ for(const p of people){
+  const card=elem('article','record'),meta=elem('div');
+  meta.append(elem('strong','',p.nombre),elem('small','',p.cargo));
+  if(p.observaciones)meta.append(elem('small','',p.observaciones));
+  meta.append(elem('span','status'+(Number(p.activo)?'':' off'),Number(p.activo)?'Activo':'Inactivo'));
+  const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editWorker(p.id));
+  card.append(meta,btn);root.append(card);
+ }
+}
+function editWork(id){
+ const w=works.find(o=>Number(o.id)===Number(id));if(!w)return;
+ tab('obras');editObra=id;
+ $('obraEmpresa').value=String(w.empresa_id);$('obraNombre').value=w.nombre;$('obraDireccion').value=w.direccion;
+ $('obraComuna').value=w.comuna;$('obraActivo').checked=Number(w.activo)===1;
+ $('obraActiveWrap').hidden=false;$('cancelObra').hidden=false;$('guardarObra').textContent='Guardar cambios';
+ notice('obraNotice','');$('viewObras').scrollIntoView({behavior:'smooth'});
+ $('mapPanel').hidden=false;$('geoSearch').value=[w.direccion,w.comuna].filter(Boolean).join(', ');
+ $('geoResults').replaceChildren();geoChoice=null;
+ if(window.L){
+  if(!obraMap){
+   obraMap=L.map('obraMap',{scrollWheelZoom:false}).setView([-35.4264,-71.6554],9);
+   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:19,attribution:'&copy; OpenStreetMap contributors'
+   }).addTo(obraMap);
+   obraMap.on('click',event=>chooseGeo(event.latlng.lat,event.latlng.lng,'mapa_manual'));
+  }
+  const hasGeo=w.latitud!==null&&w.longitud!==null;
+  if(hasGeo)chooseGeo(Number(w.latitud),Number(w.longitud),'mapa_manual');
+  else {if(marker){obraMap.removeLayer(marker);marker=null;}obraMap.setView([-35.4264,-71.6554],9);updateGeoLabel();}
+  setTimeout(()=>obraMap.invalidateSize(),80);
+ }else notice('geoNotice','No se pudo cargar el mapa; revisa conexión a Internet.',true);
+}
+function resetWork(){
+ $('mapPanel').hidden=true;
+ editObra=null;$('obraForm').reset();$('obraActiveWrap').hidden=true;$('cancelObra').hidden=true;
+ $('guardarObra').textContent='Guardar obra';
+}
+function editWorker(id){
+ const p=people.find(o=>Number(o.id)===Number(id));if(!p)return;
+ tab('personal');editPerson=id;$('personalNombre').value=p.nombre;$('personalCargo').value=p.cargo;
+ $('personalObservaciones').value=p.observaciones||'';$('personalActivo').checked=Number(p.activo)===1;
+ $('personalActiveWrap').hidden=false;$('cancelPersonal').hidden=false;$('guardarPersonal').textContent='Guardar cambios';
+ notice('personalNotice','');$('viewPersonal').scrollIntoView({behavior:'smooth'});
+}
+function resetWorker(){
+ editPerson=null;$('personalForm').reset();$('personalActiveWrap').hidden=true;$('cancelPersonal').hidden=true;
+ $('guardarPersonal').textContent='Guardar trabajador';
+}
+function updateGeoLabel(){
+ $('geoCoords').textContent=geoChoice
+  ?'Punto seleccionado: '+geoChoice.lat.toFixed(6)+', '+geoChoice.lon.toFixed(6)
+  :'Aún no se ha fijado el punto de esta obra.';
+ $('geoSaveBtn').disabled=!geoChoice;
+ $('geoRouteBtn').disabled=!geoChoice;
+ $('geoOpenBtn').disabled=!geoChoice;
+}
+function chooseGeo(lat,lon,source='mapa_manual'){
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return;
+ geoChoice={lat,lon};geoSource=source;
+ if(obraMap){
+  if(marker)marker.setLatLng([lat,lon]);
+  else {
+   marker=L.marker([lat,lon],{draggable:true}).addTo(obraMap);
+   marker.on('dragend',()=>{const point=marker.getLatLng();chooseGeo(point.lat,point.lng,'mapa_manual');});
+  }
+  obraMap.setView([lat,lon],Math.max(obraMap.getZoom(),15));
+ }
+ updateGeoLabel();
+}
+$('geoSearchBtn').addEventListener('click',async()=>{
+ if(!editObra)return;
+ const q=$('geoSearch').value.trim();
+ if(q.length<5){notice('geoNotice','Escribe al menos cinco caracteres para buscar.',true);return;}
+ $('geoSearchBtn').disabled=true;$('geoResults').replaceChildren();
+ notice('geoNotice','Buscando dirección en OpenStreetMap…');
+ try{
+  const {resultados}=await request('/catalogo/buscar-direccion?q='+encodeURIComponent(q));
+  if(!resultados.length){notice('geoNotice','No se encontró una dirección. Puedes marcar el punto directamente en el mapa.');return;}
+  notice('geoNotice','Selecciona el resultado más cercano a tu obra y confirma el punto en el mapa.');
+  for(const result of resultados){
+   const btn=elem('button','geo-result',result.nombre);btn.type='button';
+   btn.addEventListener('click',()=>{
+    chooseGeo(Number(result.latitud),Number(result.longitud),'busqueda');
+    notice('geoNotice','Punto seleccionado. Si es necesario, arrástralo al lugar exacto y guárdalo.');
+   });
+   $('geoResults').append(btn);
+  }
+ }catch(e){notice('geoNotice',e.message,true);}
+ finally{$('geoSearchBtn').disabled=false;}
+});
+$('geoSaveBtn').addEventListener('click',async()=>{
+ if(!editObra||!geoChoice)return;
+ const button=$('geoSaveBtn');button.disabled=true;
+ try{
+  await write('/catalogo/obras/'+editObra+'/ubicacion','PUT',{
+   latitud:geoChoice.lat,longitud:geoChoice.lon,fuente:geoSource
+  });
+  await refresh();
+  notice('geoNotice','✓ Ubicación de obra guardada.');
+ }catch(e){notice('geoNotice',e.message,true);}
+ finally{button.disabled=false;}
+});
+function osmMarkerUrl(lat,lon){
+ return 'https://www.openstreetmap.org/?mlat='+encodeURIComponent(lat)+'&mlon='+encodeURIComponent(lon)+'#map=16/'+lat+'/'+lon;
+}
+$('geoOpenBtn').addEventListener('click',()=>{
+ if(!geoChoice)return;
+ window.open(osmMarkerUrl(geoChoice.lat,geoChoice.lon),'_blank','noopener,noreferrer');
+});
+$('geoRouteBtn').addEventListener('click',()=>{
+ if(!geoChoice)return;
+ if(!navigator.geolocation){notice('geoNotice','Tu navegador no permite obtener la ubicación. Abre OpenStreetMap para establecer el origen manualmente.',true);return;}
+ notice('geoNotice','Solicitando permiso para obtener tu ubicación actual…');
+ navigator.geolocation.getCurrentPosition(pos=>{
+  const origin=pos.coords.latitude+','+pos.coords.longitude;
+  const end=geoChoice.lat+','+geoChoice.lon;
+  window.location.assign('https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route='+encodeURIComponent(origin+';'+end));
+  notice('geoNotice','Ruta abierta en OpenStreetMap. Tu ubicación no fue almacenada.');
+ },()=>notice('geoNotice','No se pudo obtener tu ubicación. También puedes abrir el destino en OpenStreetMap y elegir un origen allí.',true),
+ {enableHighAccuracy:false,timeout:12000,maximumAge:0});
+});
+
+function editCompany(id){
+ const c=companies.find(x=>Number(x.id)===Number(id));if(!c)return;
+ editEmpresa=id;$('empresaNombre').value=c.razon_social;$('empresaComercial').value=c.nombre_comercial||'';
+ $('empresaRut').value=c.rut||'';$('empresaContacto').value=c.contacto||'';
+ $('empresaTelefono').value=c.telefono||'';$('empresaEmail').value=c.email||'';
+ $('empresaActivo').checked=Number(c.activo)===1;$('empresaActiveWrap').hidden=false;
+ $('guardarEmpresa').textContent='Guardar cambios';$('cancelEmpresa').hidden=false;
+ $('empresaForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetCompany(){editEmpresa=null;$('empresaForm').reset();$('empresaActiveWrap').hidden=true;$('guardarEmpresa').textContent='Agregar empresa';$('cancelEmpresa').hidden=true;}
+$('cancelEmpresa').addEventListener('click',resetCompany);
+$('cancelObra').addEventListener('click',resetWork);
+$('cancelPersonal').addEventListener('click',resetWorker);
+$('empresaForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarEmpresa');btn.disabled=true;
+ try{
+  const data={razon_social:$('empresaNombre').value.trim(),nombre_comercial:$('empresaComercial').value.trim(),rut:$('empresaRut').value.trim(),contacto:$('empresaContacto').value.trim(),telefono:$('empresaTelefono').value.trim(),email:$('empresaEmail').value.trim()};
+  if(editEmpresa!==null)data.activo=$('empresaActivo').checked;
+  await write(editEmpresa===null?'/catalogo/empresas':'/catalogo/empresas/'+editEmpresa,editEmpresa===null?'POST':'PUT',data);
+  resetCompany();await refresh();notice('empresaNotice','✓ Empresa guardada correctamente.');
+ }catch(e){notice('empresaNotice',e.message,true);}finally{btn.disabled=false;}
+});
+$('obraForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarObra');btn.disabled=true;
+ try{
+  const data={empresa_id:Number($('obraEmpresa').value),nombre:$('obraNombre').value.trim(),
+   direccion:$('obraDireccion').value.trim(),comuna:$('obraComuna').value.trim()};
+  if(editObra!==null)data.activo=$('obraActivo').checked;
+  await write(editObra===null?'/catalogo/obras':'/catalogo/obras/'+editObra,editObra===null?'POST':'PUT',data);
+  const savedId=editObra;
+  resetWork();await refresh();notice('obraNotice','✓ Obra guardada correctamente.');
+  if(savedId===null)notice('obraNotice','✓ Obra registrada. Selecciónala en el listado para ubicarla en el mapa.');
+ }catch(e){notice('obraNotice',e.message,true);}finally{btn.disabled=false;}
+});
+$('personalForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarPersonal');btn.disabled=true;
+ try{
+  const data={nombre:$('personalNombre').value.trim(),cargo:$('personalCargo').value.trim(),observaciones:$('personalObservaciones').value.trim()};
+  if(editPerson!==null)data.activo=$('personalActivo').checked;
+  await write(editPerson===null?'/catalogo/personal':'/catalogo/personal/'+editPerson,editPerson===null?'POST':'PUT',data);
+  resetWorker();await refresh();notice('personalNotice','✓ Trabajador guardado sin crear cuenta ni contraseña.');
+ }catch(e){notice('personalNotice',e.message,true);}finally{btn.disabled=false;}
+});
+(async()=>{
+ try{
+  const s=await session();if(!s.autenticado||!['administrador','administrativo'].includes(s.rol))
+   throw new Error('Solo administradores y administrativos pueden gestionar este catálogo. Inicia sesión en Controlab.');
+  $('app').hidden=false;
+  await refresh();
+  if(activeModule&&Object.hasOwn(moduleNames,activeModule))tab(activeModule);
+ }catch(e){$('app').hidden=true;$('accessError').hidden=false;$('accessText').textContent=e.message;}
+})();
+</script>
+<script src="./tabler-shell.js?v=4" defer></script>
+</body></html>
++Number(uf.valor).toLocaleString('es-CL'):'UF del día no disponible';
+ $('equivalencia').textContent=!input.value||!uf?'—':currency==='CLP'?(value/Number(uf.valor)).toFixed(4)+' UF':'
  const root=$('serviciosList');root.replaceChildren();$('servicioCount').textContent=services.length+' servicios';
  if(!services.length){root.append(elem('p','','Todavía no hay servicios registrados.'));return;}
  for(const s of services){
@@ -186,12 +407,12 @@ function editService(id){
  const s=services.find(x=>Number(x.id)===Number(id));if(!s)return;
  tab('servicios');editServicio=Number(id);
  $('servicioNombre').value=s.nombre;$('servicioUnidad').value=s.unidad;
- $('precioCLP').value=s.precio_clp??'';$('precioUF').value=s.precio_uf??'';$('servicioDescripcion').value=s.descripcion||'';$('servicioActivo').checked=Number(s.activo)===1;
+ $('monedaBase').value=s.moneda_base||'CLP';$('precioBase').value=s.precio_base===null?'':Number(s.precio_base);$('motivoPrecio').value='';conversion();$('servicioDescripcion').value=s.descripcion||'';$('servicioActivo').checked=Number(s.activo)===1;
  $('servicioActiveWrap').hidden=false;$('guardarServicio').textContent='Guardar cambios';$('cancelServicio').hidden=false;
  $('servicioForm').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function resetService(){
- editServicio=null;$('servicioForm').reset();$('servicioUnidad').value='unidad';
+ editServicio=null;$('servicioForm').reset();conversion();$('servicioUnidad').value='unidad';
  $('servicioActiveWrap').hidden=true;$('guardarServicio').textContent='Agregar servicio';$('cancelServicio').hidden=true;
 }
 $('cancelServicio').addEventListener('click',resetService);
@@ -199,7 +420,229 @@ $('servicioForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('guardarServicio');btn.disabled=true;
  try{
   const data={nombre:$('servicioNombre').value.trim(),unidad:$('servicioUnidad').value.trim(),descripcion:$('servicioDescripcion').value.trim()};
-  data.precio_clp=$('precioCLP').value;data.precio_uf=$('precioUF').value;
+  data.moneda_base=$('monedaBase').value;data.precio_base=$('precioBase').value;data.motivo=$('motivoPrecio').value;
+  if(editServicio!==null)data.activo=$('servicioActivo').checked;
+  await write(editServicio===null?'/catalogo/servicios':'/catalogo/servicios/'+editServicio,editServicio===null?'POST':'PUT',data);
+  resetService();await refresh();notice('servicioNotice','✓ Servicio guardado correctamente.');
+ }catch(e){notice('servicioNotice',e.message,true);}finally{btn.disabled=false;}
+});
+
+function renderPeople(){
+ const root=$('personalList');root.replaceChildren();$('personalCount').textContent=people.length+' trabajadores';
+ if(!people.length){root.append(elem('p','','Aún no hay personal de terreno registrado.'));return;}
+ for(const p of people){
+  const card=elem('article','record'),meta=elem('div');
+  meta.append(elem('strong','',p.nombre),elem('small','',p.cargo));
+  if(p.observaciones)meta.append(elem('small','',p.observaciones));
+  meta.append(elem('span','status'+(Number(p.activo)?'':' off'),Number(p.activo)?'Activo':'Inactivo'));
+  const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editWorker(p.id));
+  card.append(meta,btn);root.append(card);
+ }
+}
+function editWork(id){
+ const w=works.find(o=>Number(o.id)===Number(id));if(!w)return;
+ tab('obras');editObra=id;
+ $('obraEmpresa').value=String(w.empresa_id);$('obraNombre').value=w.nombre;$('obraDireccion').value=w.direccion;
+ $('obraComuna').value=w.comuna;$('obraActivo').checked=Number(w.activo)===1;
+ $('obraActiveWrap').hidden=false;$('cancelObra').hidden=false;$('guardarObra').textContent='Guardar cambios';
+ notice('obraNotice','');$('viewObras').scrollIntoView({behavior:'smooth'});
+ $('mapPanel').hidden=false;$('geoSearch').value=[w.direccion,w.comuna].filter(Boolean).join(', ');
+ $('geoResults').replaceChildren();geoChoice=null;
+ if(window.L){
+  if(!obraMap){
+   obraMap=L.map('obraMap',{scrollWheelZoom:false}).setView([-35.4264,-71.6554],9);
+   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:19,attribution:'&copy; OpenStreetMap contributors'
+   }).addTo(obraMap);
+   obraMap.on('click',event=>chooseGeo(event.latlng.lat,event.latlng.lng,'mapa_manual'));
+  }
+  const hasGeo=w.latitud!==null&&w.longitud!==null;
+  if(hasGeo)chooseGeo(Number(w.latitud),Number(w.longitud),'mapa_manual');
+  else {if(marker){obraMap.removeLayer(marker);marker=null;}obraMap.setView([-35.4264,-71.6554],9);updateGeoLabel();}
+  setTimeout(()=>obraMap.invalidateSize(),80);
+ }else notice('geoNotice','No se pudo cargar el mapa; revisa conexión a Internet.',true);
+}
+function resetWork(){
+ $('mapPanel').hidden=true;
+ editObra=null;$('obraForm').reset();$('obraActiveWrap').hidden=true;$('cancelObra').hidden=true;
+ $('guardarObra').textContent='Guardar obra';
+}
+function editWorker(id){
+ const p=people.find(o=>Number(o.id)===Number(id));if(!p)return;
+ tab('personal');editPerson=id;$('personalNombre').value=p.nombre;$('personalCargo').value=p.cargo;
+ $('personalObservaciones').value=p.observaciones||'';$('personalActivo').checked=Number(p.activo)===1;
+ $('personalActiveWrap').hidden=false;$('cancelPersonal').hidden=false;$('guardarPersonal').textContent='Guardar cambios';
+ notice('personalNotice','');$('viewPersonal').scrollIntoView({behavior:'smooth'});
+}
+function resetWorker(){
+ editPerson=null;$('personalForm').reset();$('personalActiveWrap').hidden=true;$('cancelPersonal').hidden=true;
+ $('guardarPersonal').textContent='Guardar trabajador';
+}
+function updateGeoLabel(){
+ $('geoCoords').textContent=geoChoice
+  ?'Punto seleccionado: '+geoChoice.lat.toFixed(6)+', '+geoChoice.lon.toFixed(6)
+  :'Aún no se ha fijado el punto de esta obra.';
+ $('geoSaveBtn').disabled=!geoChoice;
+ $('geoRouteBtn').disabled=!geoChoice;
+ $('geoOpenBtn').disabled=!geoChoice;
+}
+function chooseGeo(lat,lon,source='mapa_manual'){
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return;
+ geoChoice={lat,lon};geoSource=source;
+ if(obraMap){
+  if(marker)marker.setLatLng([lat,lon]);
+  else {
+   marker=L.marker([lat,lon],{draggable:true}).addTo(obraMap);
+   marker.on('dragend',()=>{const point=marker.getLatLng();chooseGeo(point.lat,point.lng,'mapa_manual');});
+  }
+  obraMap.setView([lat,lon],Math.max(obraMap.getZoom(),15));
+ }
+ updateGeoLabel();
+}
+$('geoSearchBtn').addEventListener('click',async()=>{
+ if(!editObra)return;
+ const q=$('geoSearch').value.trim();
+ if(q.length<5){notice('geoNotice','Escribe al menos cinco caracteres para buscar.',true);return;}
+ $('geoSearchBtn').disabled=true;$('geoResults').replaceChildren();
+ notice('geoNotice','Buscando dirección en OpenStreetMap…');
+ try{
+  const {resultados}=await request('/catalogo/buscar-direccion?q='+encodeURIComponent(q));
+  if(!resultados.length){notice('geoNotice','No se encontró una dirección. Puedes marcar el punto directamente en el mapa.');return;}
+  notice('geoNotice','Selecciona el resultado más cercano a tu obra y confirma el punto en el mapa.');
+  for(const result of resultados){
+   const btn=elem('button','geo-result',result.nombre);btn.type='button';
+   btn.addEventListener('click',()=>{
+    chooseGeo(Number(result.latitud),Number(result.longitud),'busqueda');
+    notice('geoNotice','Punto seleccionado. Si es necesario, arrástralo al lugar exacto y guárdalo.');
+   });
+   $('geoResults').append(btn);
+  }
+ }catch(e){notice('geoNotice',e.message,true);}
+ finally{$('geoSearchBtn').disabled=false;}
+});
+$('geoSaveBtn').addEventListener('click',async()=>{
+ if(!editObra||!geoChoice)return;
+ const button=$('geoSaveBtn');button.disabled=true;
+ try{
+  await write('/catalogo/obras/'+editObra+'/ubicacion','PUT',{
+   latitud:geoChoice.lat,longitud:geoChoice.lon,fuente:geoSource
+  });
+  await refresh();
+  notice('geoNotice','✓ Ubicación de obra guardada.');
+ }catch(e){notice('geoNotice',e.message,true);}
+ finally{button.disabled=false;}
+});
+function osmMarkerUrl(lat,lon){
+ return 'https://www.openstreetmap.org/?mlat='+encodeURIComponent(lat)+'&mlon='+encodeURIComponent(lon)+'#map=16/'+lat+'/'+lon;
+}
+$('geoOpenBtn').addEventListener('click',()=>{
+ if(!geoChoice)return;
+ window.open(osmMarkerUrl(geoChoice.lat,geoChoice.lon),'_blank','noopener,noreferrer');
+});
+$('geoRouteBtn').addEventListener('click',()=>{
+ if(!geoChoice)return;
+ if(!navigator.geolocation){notice('geoNotice','Tu navegador no permite obtener la ubicación. Abre OpenStreetMap para establecer el origen manualmente.',true);return;}
+ notice('geoNotice','Solicitando permiso para obtener tu ubicación actual…');
+ navigator.geolocation.getCurrentPosition(pos=>{
+  const origin=pos.coords.latitude+','+pos.coords.longitude;
+  const end=geoChoice.lat+','+geoChoice.lon;
+  window.location.assign('https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route='+encodeURIComponent(origin+';'+end));
+  notice('geoNotice','Ruta abierta en OpenStreetMap. Tu ubicación no fue almacenada.');
+ },()=>notice('geoNotice','No se pudo obtener tu ubicación. También puedes abrir el destino en OpenStreetMap y elegir un origen allí.',true),
+ {enableHighAccuracy:false,timeout:12000,maximumAge:0});
+});
+
+function editCompany(id){
+ const c=companies.find(x=>Number(x.id)===Number(id));if(!c)return;
+ editEmpresa=id;$('empresaNombre').value=c.razon_social;$('empresaComercial').value=c.nombre_comercial||'';
+ $('empresaRut').value=c.rut||'';$('empresaContacto').value=c.contacto||'';
+ $('empresaTelefono').value=c.telefono||'';$('empresaEmail').value=c.email||'';
+ $('empresaActivo').checked=Number(c.activo)===1;$('empresaActiveWrap').hidden=false;
+ $('guardarEmpresa').textContent='Guardar cambios';$('cancelEmpresa').hidden=false;
+ $('empresaForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetCompany(){editEmpresa=null;$('empresaForm').reset();$('empresaActiveWrap').hidden=true;$('guardarEmpresa').textContent='Agregar empresa';$('cancelEmpresa').hidden=true;}
+$('cancelEmpresa').addEventListener('click',resetCompany);
+$('cancelObra').addEventListener('click',resetWork);
+$('cancelPersonal').addEventListener('click',resetWorker);
+$('empresaForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarEmpresa');btn.disabled=true;
+ try{
+  const data={razon_social:$('empresaNombre').value.trim(),nombre_comercial:$('empresaComercial').value.trim(),rut:$('empresaRut').value.trim(),contacto:$('empresaContacto').value.trim(),telefono:$('empresaTelefono').value.trim(),email:$('empresaEmail').value.trim()};
+  if(editEmpresa!==null)data.activo=$('empresaActivo').checked;
+  await write(editEmpresa===null?'/catalogo/empresas':'/catalogo/empresas/'+editEmpresa,editEmpresa===null?'POST':'PUT',data);
+  resetCompany();await refresh();notice('empresaNotice','✓ Empresa guardada correctamente.');
+ }catch(e){notice('empresaNotice',e.message,true);}finally{btn.disabled=false;}
+});
+$('obraForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarObra');btn.disabled=true;
+ try{
+  const data={empresa_id:Number($('obraEmpresa').value),nombre:$('obraNombre').value.trim(),
+   direccion:$('obraDireccion').value.trim(),comuna:$('obraComuna').value.trim()};
+  if(editObra!==null)data.activo=$('obraActivo').checked;
+  await write(editObra===null?'/catalogo/obras':'/catalogo/obras/'+editObra,editObra===null?'POST':'PUT',data);
+  const savedId=editObra;
+  resetWork();await refresh();notice('obraNotice','✓ Obra guardada correctamente.');
+  if(savedId===null)notice('obraNotice','✓ Obra registrada. Selecciónala en el listado para ubicarla en el mapa.');
+ }catch(e){notice('obraNotice',e.message,true);}finally{btn.disabled=false;}
+});
+$('personalForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarPersonal');btn.disabled=true;
+ try{
+  const data={nombre:$('personalNombre').value.trim(),cargo:$('personalCargo').value.trim(),observaciones:$('personalObservaciones').value.trim()};
+  if(editPerson!==null)data.activo=$('personalActivo').checked;
+  await write(editPerson===null?'/catalogo/personal':'/catalogo/personal/'+editPerson,editPerson===null?'POST':'PUT',data);
+  resetWorker();await refresh();notice('personalNotice','✓ Trabajador guardado sin crear cuenta ni contraseña.');
+ }catch(e){notice('personalNotice',e.message,true);}finally{btn.disabled=false;}
+});
+(async()=>{
+ try{
+  const s=await session();if(!s.autenticado||!['administrador','administrativo'].includes(s.rol))
+   throw new Error('Solo administradores y administrativos pueden gestionar este catálogo. Inicia sesión en Controlab.');
+  $('app').hidden=false;
+  await refresh();
+  if(activeModule&&Object.hasOwn(moduleNames,activeModule))tab(activeModule);
+ }catch(e){$('app').hidden=true;$('accessError').hidden=false;$('accessText').textContent=e.message;}
+})();
+</script>
+<script src="./tabler-shell.js?v=4" defer></script>
+</body></html>
++Math.round(value*Number(uf.valor)).toLocaleString('es-CL');
+}
+$('monedaBase').addEventListener('change',conversion);$('precioBase').addEventListener('input',conversion);
+async function showHistory(id,page=1){try{const result=await request('/catalogo/servicios/'+id+'/historial?page='+page);let root=$('historialPrecios');if(!root){root=elem('section','card mt-3');root.id='historialPrecios';$('serviciosList').after(root);}root.replaceChildren();const body=elem('div','card-body');body.append(elem('h3','','Historial de tarifas'));for(const row of result.data){body.append(elem('p','mb-2',row.vigente_desde+' · '+row.precio_nuevo+' '+row.moneda_nueva+' · Usuario '+(row.usuario_id??'Migración')+' · '+(row.motivo||'')+(row.vigente_hasta?'':' · Vigente')));}const close=elem('button','btn','Cerrar');close.onclick=()=>root.remove();body.append(close);if(page>1){const b=elem('button','btn','Anterior');b.onclick=()=>showHistory(id,page-1);body.append(b);}if(page<result.pagination.last_page){const b=elem('button','btn','Siguiente');b.onclick=()=>showHistory(id,page+1);body.append(b);}root.append(body);root.scrollIntoView({block:'start'});}catch(e){notice('servicioNotice',e.message,true);}}
+function renderServices(){
+ conversion();if(!services.length&&!ufActual)request('/catalogo/uf').then(x=>{ufActual=x.uf;conversion();}).catch(()=>{});
+ const root=$('serviciosList');root.replaceChildren();$('servicioCount').textContent=services.length+' servicios';
+ if(!services.length){root.append(elem('p','','Todavía no hay servicios registrados.'));return;}
+ for(const s of services){
+  const card=elem('article','record'),meta=elem('div');
+  meta.append(elem('strong','',s.nombre),elem('small','','Unidad: '+s.unidad));
+  meta.append(elem('small','','CLP: '+(s.precio_clp??'Sin tarifa')+' · UF: '+(s.precio_uf??'Sin tarifa')));
+  if(s.descripcion)meta.append(elem('small','',s.descripcion));
+  meta.append(elem('span','status'+(Number(s.activo)?'':' off'),Number(s.activo)?'Activo':'Inactivo'));
+  const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editService(s.id));
+  card.append(meta,btn);root.append(card);
+ }
+}
+function editService(id){
+ const s=services.find(x=>Number(x.id)===Number(id));if(!s)return;
+ tab('servicios');editServicio=Number(id);
+ $('servicioNombre').value=s.nombre;$('servicioUnidad').value=s.unidad;
+ $('monedaBase').value=s.moneda_base||'CLP';$('precioBase').value=s.precio_base===null?'':Number(s.precio_base);$('motivoPrecio').value='';conversion();$('servicioDescripcion').value=s.descripcion||'';$('servicioActivo').checked=Number(s.activo)===1;
+ $('servicioActiveWrap').hidden=false;$('guardarServicio').textContent='Guardar cambios';$('cancelServicio').hidden=false;
+ $('servicioForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetService(){
+ editServicio=null;$('servicioForm').reset();conversion();$('servicioUnidad').value='unidad';
+ $('servicioActiveWrap').hidden=true;$('guardarServicio').textContent='Agregar servicio';$('cancelServicio').hidden=true;
+}
+$('cancelServicio').addEventListener('click',resetService);
+$('servicioForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('guardarServicio');btn.disabled=true;
+ try{
+  const data={nombre:$('servicioNombre').value.trim(),unidad:$('servicioUnidad').value.trim(),descripcion:$('servicioDescripcion').value.trim()};
+  data.moneda_base=$('monedaBase').value;data.precio_base=$('precioBase').value;data.motivo=$('motivoPrecio').value;
   if(editServicio!==null)data.activo=$('servicioActivo').checked;
   await write(editServicio===null?'/catalogo/servicios':'/catalogo/servicios/'+editServicio,editServicio===null?'POST':'PUT',data);
   resetService();await refresh();notice('servicioNotice','✓ Servicio guardado correctamente.');

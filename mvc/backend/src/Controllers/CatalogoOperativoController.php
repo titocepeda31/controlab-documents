@@ -79,11 +79,11 @@ final class CatalogoOperativoController {
     }
     public function crearServicio(Request $request,Response $response): Response {
         Security::requireRole('administrador','administrativo');Security::csrf($request);
-        return Http::json($response,['id'=>$this->catalogo->saveServicio(Http::jsonBody($request))],201);
+        return Http::json($response,['id'=>$this->catalogo->saveServicio(Http::jsonBody($request),null,(int)Security::auth()['id'])],201);
     }
     public function editarServicio(Request $request,Response $response,array $args): Response {
         Security::requireRole('administrador','administrativo');Security::csrf($request);
-        return Http::json($response,['id'=>$this->catalogo->saveServicio(Http::jsonBody($request),(int)$args['id']),'ok'=>true]);
+        return Http::json($response,['id'=>$this->catalogo->saveServicio(Http::jsonBody($request),(int)$args['id'],(int)Security::auth()['id']),'ok'=>true]);
     }
 
 
@@ -98,5 +98,11 @@ final class CatalogoOperativoController {
     }
     public function estadoCotizacion(Request $request,Response $response,array $args): Response {
         Security::requireRole('administrador','administrativo');Security::csrf($request);$data=Http::jsonBody($request);$this->catalogo->estadoCotizacion((int)$args['id'],(string)($data['estado']??''));return Http::json($response,['ok'=>true]);
+    }
+    public function historialServicio(Request $request,Response $response,array $args): Response {
+        Security::requireRole('administrador','administrativo');return Http::json($response,$this->catalogo->historialServicio((int)$args['id'],$request->getQueryParams()));
+    }
+    public function ufDiaria(Request $request,Response $response): Response {
+        Security::requireRole('administrador','administrativo');return Http::json($response,['uf'=>$this->catalogo->ufDiaria()]);
     }
 }

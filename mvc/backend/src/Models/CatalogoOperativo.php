@@ -164,56 +164,53 @@ final class CatalogoOperativo {
         }
         return $id;
     }
+    public function ufDiaria(): ?array {
+        $date=(new \DateTimeImmutable('now',new \DateTimeZone('America/Santiago')))->format('Y-m-d');
+        $pdo=$this->db->connection();$q=$pdo->prepare('SELECT fecha,valor,fuente FROM valores_uf WHERE fecha=? AND valor>0');$q->execute([$date]);$row=$q->fetch(PDO::FETCH_ASSOC);if($row)return $row;
+        if(!function_exists('curl_init'))return null;
+        $url='https://mindicador.cl/api/uf/'.implode('-',array_reverse(explode('-',$date)));
+        $ch=curl_init($url);curl_setopt_array($ch,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>3,CURLOPT_TIMEOUT=>6,CURLOPT_SSL_VERIFYPEER=>true,CURLOPT_SSL_VERIFYHOST=>2]);
+        $raw=curl_exec($ch);$status=curl_getinfo($ch,CURLINFO_HTTP_CODE);curl_close($ch);
+        if($status!==200||!is_string($raw))return null;
+        $json=json_decode($raw,true);$item=$json['serie'][0]??null;
+        if(!is_array($item)||substr((string)($item['fecha']??''),0,10)!==$date||!is_numeric($item['valor']??null)||(float)$item['valor']<=0)return null;
+        $value=number_format((float)$item['valor'],2,'.','');
+        $q=$pdo->prepare("INSERT INTO valores_uf(fecha,valor,fuente) VALUES(?,?,'mindicador.cl') ON DUPLICATE KEY UPDATE valor=VALUES(valor),fuente=VALUES(fuente)");$q->execute([$date,$value]);return ['fecha'=>$date,'valor'=>$value,'fuente'=>'mindicador.cl'];
+    }
+    private static function tarifa(array $s,string $moneda,?array $uf): ?string {
+        if($s['precio_base']===null||$s['moneda_base']===null)return null;
+        $base=(float)$s['precio_base'];
+        if($s['moneda_base']!==$moneda){if(!$uf)return null;$base=$moneda==='CLP'?$base*(float)$uf['valor']:$base/(float)$uf['valor'];}
+        return number_format($base,$moneda==='CLP'?0:4,'.','');
+    }
     public function servicios(): array {
-        return $this->db->connection()->query(
-            'SELECT id,nombre,unidad,descripcion,activo,precio_clp,precio_uf FROM catalogo_servicios ORDER BY nombre,id LIMIT 1000'
-        )->fetchAll(PDO::FETCH_ASSOC);
+        $uf=$this->ufDiaria();$rows=$this->db->connection()->query('SELECT id,nombre,unidad,descripcion,activo,moneda_base,precio_base FROM catalogo_servicios ORDER BY nombre,id LIMIT 1000')->fetchAll(PDO::FETCH_ASSOC);
+        foreach($rows as &$s){$s['precio_clp']=self::tarifa($s,'CLP',$uf);$s['precio_uf']=self::tarifa($s,'UF',$uf);$s['uf_referencia']=$uf;}unset($s);return $rows;
     }
-
-    private function saveServicePrices(PDO $pdo,int $id,array $prices): void {
-        foreach($prices as $key=>$value){
-            if(!in_array($key,['precio_clp','precio_uf'],true))continue;
-            $q=$pdo->prepare("UPDATE catalogo_servicios SET $key=? WHERE id=?");
-            $q->execute([$value,$id]);
-        }
+    public function historialServicio(int $id,array $query): array {
+        return Paginator::run($this->db->connection(),'SELECT h.*','FROM servicios_precios_historial h WHERE h.servicio_id=?','h.id DESC',[$id],$query);
     }
-    public function saveServicio(array $data,?int $id=null): int {
-        $nombre=self::text($data,'nombre',180);
-        $unidad=self::text($data,'unidad',60);
-        $descripcion=self::text($data,'descripcion',500,false);
-        $prices=[];
-        foreach(['precio_clp'=>0,'precio_uf'=>4] as $key=>$scale){
-            if(!array_key_exists($key,$data))continue;
-            $value=$data[$key];
-            if($value===null||$value===''){$prices[$key]=null;continue;}
-            if(!is_string($value)||!preg_match($scale===0?'/^\d{1,12}$/D':'/^\d{1,12}(\.\d{1,4})?$/D',$value))
-                throw new InvalidArgumentException('Precio inválido: '.$key);
-            $prices[$key]=$value;
-        }
-        if($id!==null&&!is_bool($data['activo']??null))
-            throw new InvalidArgumentException('Indica si el servicio está activo');
-        $pdo=$this->db->connection();
-        try {
-            if($id===null){
-                $q=$pdo->prepare('INSERT INTO catalogo_servicios (nombre,unidad,descripcion) VALUES (?,?,?)');
-                $q->execute([$nombre,$unidad,$descripcion]);
-                $id=(int)$pdo->lastInsertId();
-                $this->saveServicePrices($pdo,$id,$prices);
-                return $id;
+    public function saveServicio(array $data,?int $id=null,?int $actor=null): int {
+        $nombre=self::text($data,'nombre',180);$unidad=self::text($data,'unidad',60);$descripcion=self::text($data,'descripcion',500,false);
+        if($id!==null&&!is_bool($data['activo']??null))throw new InvalidArgumentException('Indica si el servicio está activo');
+        $pdo=$this->db->connection();$pdo->beginTransaction();
+        try{
+            $old=['moneda_base'=>null,'precio_base'=>null];
+            if($id===null){$q=$pdo->prepare('INSERT INTO catalogo_servicios(nombre,unidad,descripcion) VALUES(?,?,?)');$q->execute([$nombre,$unidad,$descripcion]);$id=(int)$pdo->lastInsertId();}
+            else{$q=$pdo->prepare('SELECT moneda_base,precio_base FROM catalogo_servicios WHERE id=? FOR UPDATE');$q->execute([$id]);$old=$q->fetch(PDO::FETCH_ASSOC);if(!$old)throw new RuntimeException('Servicio no encontrado',404);$q=$pdo->prepare('UPDATE catalogo_servicios SET nombre=?,unidad=?,descripcion=?,activo=? WHERE id=?');$q->execute([$nombre,$unidad,$descripcion,(int)$data['activo'],$id]);}
+            if(array_key_exists('precio_base',$data)&&$data['precio_base']!==''){
+                $currency=$data['moneda_base']??null;$price=$data['precio_base'];
+                if(!in_array($currency,['CLP','UF'],true)||!is_string($price)||!preg_match($currency==='CLP'?'/^\d{1,12}$/D':'/^\d{1,12}(\.\d{1,4})?$/D',$price))throw new InvalidArgumentException('Tarifa base inválida');
+                if($old['moneda_base']!==$currency||$old['precio_base']===null||(float)$old['precio_base']!==(float)$price){
+                    $reason=self::text($data,'motivo',500,false);if($old['precio_base']!==null&&trim((string)$reason)==='')throw new InvalidArgumentException('Indica el motivo del cambio de tarifa');
+                    $q=$pdo->prepare('UPDATE servicios_precios_historial SET vigente_hasta=NOW() WHERE servicio_id=? AND vigente_hasta IS NULL');$q->execute([$id]);
+                    $q=$pdo->prepare('INSERT INTO servicios_precios_historial(servicio_id,moneda_anterior,precio_anterior,moneda_nueva,precio_nuevo,usuario_id,motivo) VALUES(?,?,?,?,?,?,?)');$q->execute([$id,$old['moneda_base'],$old['precio_base'],$currency,$price,$actor,$reason?:'Tarifa inicial']);
+                    $q=$pdo->prepare('UPDATE catalogo_servicios SET moneda_base=?,precio_base=?,precio_actualizado_el=NOW(),precio_clp=?,precio_uf=? WHERE id=?');$q->execute([$currency,$price,$currency==='CLP'?$price:null,$currency==='UF'?$price:null,$id]);
+                }
             }
-            $q=$pdo->prepare('UPDATE catalogo_servicios SET nombre=?,unidad=?,descripcion=?,activo=? WHERE id=?');
-            $q->execute([$nombre,$unidad,$descripcion,(int)$data['activo'],$id]);
-            $this->saveServicePrices($pdo,$id,$prices);
-            $q=$pdo->prepare('SELECT id FROM catalogo_servicios WHERE id=?');
-            $q->execute([$id]);
-            if(!$q->fetchColumn())throw new RuntimeException('Servicio no encontrado',404);
-            return $id;
-        } catch(PDOException $e) {
-            if($e->getCode()==='23000')throw new RuntimeException('Ya existe un servicio con ese nombre',409);
-            throw $e;
-        }
+            $pdo->commit();return $id;
+        }catch(\Throwable $e){if($pdo->inTransaction())$pdo->rollBack();if($e instanceof PDOException&&$e->getCode()==='23000')throw new RuntimeException('Ya existe un servicio con ese nombre',409);throw $e;}
     }
-
 
     public function cotizaciones(array $query): array {
         $from='FROM cotizaciones c JOIN obras o ON o.id=c.obra_id JOIN empresas e ON e.id=o.empresa_id WHERE 1=1';$params=[];
@@ -236,18 +233,18 @@ final class CatalogoOperativo {
         $numero=self::text($data,'numero',40);$obra=self::positiveId($data['obra_id']??null);
         $moneda=$data['moneda']??'';if(!in_array($moneda,['CLP','UF'],true))throw new InvalidArgumentException('Moneda inválida');
         $lines=$data['servicios']??null;if(!is_array($lines)||!count($lines)||count($lines)>60)throw new InvalidArgumentException('Agrega entre 1 y 60 servicios');
-        $db=$this->db->connection();$db->beginTransaction();
+        $uf=$this->ufDiaria();$db=$this->db->connection();$db->beginTransaction();
         try{
             $q=$db->prepare('SELECT o.id FROM obras o JOIN empresas e ON e.id=o.empresa_id WHERE o.id=? AND o.activo=1 AND e.activo=1');$q->execute([$obra]);if(!$q->fetchColumn())throw new InvalidArgumentException('Obra inválida');
-            $q=$db->prepare('INSERT INTO cotizaciones(numero,obra_id,moneda,condiciones) VALUES(?,?,?,?)');$q->execute([$numero,$obra,$moneda,self::text($data,'condiciones',5000,false)]);$id=(int)$db->lastInsertId();
-            $get=$db->prepare('SELECT nombre,unidad,precio_clp,precio_uf FROM catalogo_servicios WHERE id=? AND activo=1');$put=$db->prepare('INSERT INTO cotizacion_servicios(cotizacion_id,servicio_id,nombre,unidad,cantidad,precio_unitario) VALUES(?,?,?,?,?,?)');$seen=[];
+            $q=$db->prepare('INSERT INTO cotizaciones(numero,obra_id,moneda,condiciones,valor_uf,fecha_uf) VALUES(?,?,?,?,?,?)');$q->execute([$numero,$obra,$moneda,self::text($data,'condiciones',5000,false),$uf['valor']??null,$uf['fecha']??null]);$id=(int)$db->lastInsertId();
+            $get=$db->prepare('SELECT nombre,unidad,moneda_base,precio_base,(SELECT MAX(h.id) FROM servicios_precios_historial h WHERE h.servicio_id=c.id AND h.vigente_hasta IS NULL) AS historial_id FROM catalogo_servicios c WHERE id=? AND activo=1 FOR UPDATE');$put=$db->prepare('INSERT INTO cotizacion_servicios(cotizacion_id,servicio_id,nombre,unidad,cantidad,precio_unitario,moneda_base,precio_base,precio_historial_id) VALUES(?,?,?,?,?,?,?,?,?)');$seen=[];
             foreach($lines as $line){
                 $sid=self::positiveId($line['servicio_id']??null);if(isset($seen[$sid]))throw new InvalidArgumentException('Servicio repetido');$seen[$sid]=true;
                 $qty=$line['cantidad']??null;if($qty!==null){$qty=self::positiveId($qty);if($qty>100000)throw new InvalidArgumentException('Cantidad excesiva');}
                 $get->execute([$sid]);$service=$get->fetch(PDO::FETCH_ASSOC);if(!$service)throw new InvalidArgumentException('Servicio inactivo o inexistente');
-                $price=$service[$moneda==='CLP'?'precio_clp':'precio_uf'];
+                $price=self::tarifa($service,$moneda,$uf);
                 if($price===null)throw new InvalidArgumentException('Configura la tarifa en '.$moneda.' del servicio '.$service['nombre']);
-                $put->execute([$id,$sid,$service['nombre'],$service['unidad'],$qty,$price]);
+                $put->execute([$id,$sid,$service['nombre'],$service['unidad'],$qty,$price,$service['moneda_base'],$service['precio_base'],$service['historial_id']]);
             }
             $db->commit();return $id;
         }catch(\Throwable $e){if($db->inTransaction())$db->rollBack();if($e instanceof PDOException&&$e->getCode()==='23000')throw new RuntimeException('Número de cotización duplicado',409);throw $e;}
