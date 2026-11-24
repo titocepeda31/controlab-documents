@@ -137,6 +137,7 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
  </div>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./pagination.js"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -182,49 +183,26 @@ if(Object.hasOwn(moduleNames,activeModule)){
  document.querySelector('main > p').textContent='Administración del módulo '+moduleNames[activeModule].toLowerCase()+'.';
  tab(activeModule);
 }
-async function refresh(){
- const results=await Promise.allSettled([request('/catalogo/empresas'),request('/catalogo/obras'),request('/catalogo/personal'),request('/catalogo/servicios')]);
- const [c,w,p,s]=results.map(x=>x.status==='fulfilled'?x.value:{});
- companies=c.empresas||[];works=w.obras||[];people=p.personal||[];services=s.servicios||[];
- const failed=results.map((x,i)=>x.status==='rejected'?['empresas','obras','personal','servicios'][i]+': '+x.reason.message:null).filter(Boolean);
- if(failed.length){$('accessError').hidden=false;$('accessText').textContent='Algunos catálogos no pudieron cargarse: '+failed.join(' · ');}else $('accessError').hidden=true;
- renderPeople();renderServices();renderOptions();renderCompanies();renderWorks();
-}
+let selectedCompany=null;
+async function refresh(){await renderCompanies();if(selectedCompany)await renderWorks();}
 function renderOptions(){
- const select=$('obraEmpresa'),keep=select.value;
- const filter=$('obraFiltroEmpresa'),filterKeep=filter.value;
- filter.replaceChildren();const initial=elem('option','','Selecciona una constructora');initial.value='';filter.append(initial);
- for(const c of companies){const opt=elem('option','',c.razon_social);opt.value=String(c.id);filter.append(opt);}
- filter.value=filterKeep;
- select.replaceChildren();const placeholder=elem('option','','Selecciona una constructora');placeholder.value='';select.append(placeholder);
- for(const company of companies.filter(c=>Number(c.activo)===1)){const option=elem('option','',company.razon_social);option.value=String(company.id);select.append(option);}
- select.value=keep;
+ for(const id of ['obraEmpresa','obraFiltroEmpresa']){const select=$(id);select.replaceChildren();if(selectedCompany){const opt=elem('option','',selectedCompany.razon_social);opt.value=String(selectedCompany.id);select.append(opt);select.value=opt.value;}}
 }
-let companyPage=1,workPage=1;const pageSize=15;
 function tableFor(root,headers){const t=elem('table','table table-vcenter compact-table');const head=t.createTHead().insertRow();for(const h of headers){const th=elem('th','',h);th.scope='col';head.append(th);}root.append(t);return t.createTBody();}
 function cell(row,value,cls=''){const td=row.insertCell();td.className=cls;if(value instanceof Node)td.append(value);else td.textContent=value;return td;}
 function action(label,fn){const b=elem('button','btn compact-action',label);b.type='button';b.addEventListener('click',fn);return b;}
-function paginate(root,total,page,change){const max=Math.max(1,Math.ceil(total/pageSize));const bar=elem('div','compact-pagination');bar.append(elem('span','help',total?((page-1)*pageSize+1)+'–'+Math.min(page*pageSize,total)+' de '+total:'0 registros'));const controls=elem('div','pagination-controls');const prev=action('‹',()=>change(page-1)),next=action('›',()=>change(page+1));prev.disabled=page<=1;next.disabled=page>=max;prev.setAttribute('aria-label','Página anterior');next.setAttribute('aria-label','Página siguiente');controls.append(prev,elem('span','help',page+' / '+max),next);bar.append(controls);root.append(bar);}
-function selectCompany(id){resetWork();workPage=1;$('obraFiltroEmpresa').value=String(id);$('obraEmpresa').value=String(id);$('app').classList.add('company-detail');renderWorks();renderCompanies();$('viewObras').scrollIntoView({block:'start'});}
-function renderCompanies(){
- const root=$('empresasList');root.replaceChildren();
- const filtered=companies.filter(c=>[c.razon_social,c.rut,c.nombre_comercial].join(' ').toLowerCase().includes($('companySearch').value.toLowerCase())).sort((a,b)=>String(a.razon_social).localeCompare(String(b.razon_social),'es'));
- $('empresaCount').textContent=filtered.length+' empresas';companyPage=Math.min(companyPage,Math.max(1,Math.ceil(filtered.length/pageSize)));
- if(!filtered.length){root.append(elem('p','','No se encontraron empresas.'));return;}
- const counts=new Map();for(const w of works){const k=String(w.empresa_id);counts.set(k,(counts.get(k)||0)+1);}
- const body=tableFor(root,['Razón social','RUT','Obras','Estado','Acciones']);
- for(const c of filtered.slice((companyPage-1)*pageSize,companyPage*pageSize)){const row=body.insertRow();cell(row,action(c.razon_social,()=>selectCompany(c.id)),'name-cell');cell(row,c.rut||'—','desktop-col');cell(row,String(counts.get(String(c.id))||0));cell(row,elem('span','status'+(Number(c.activo)?'':' off'),Number(c.activo)?'Activa':'Inactiva'));const actions=elem('div','table-actions');actions.append(action('Ver',()=>selectCompany(c.id)),action('Editar',()=>editCompany(c.id)));cell(row,actions);}
- paginate(root,filtered.length,companyPage,p=>{companyPage=p;renderCompanies();});
-}
-function renderWorks(){
- const root=$('obrasList');root.replaceChildren();const companyId=$('obraFiltroEmpresa').value;
- const selected=companies.find(c=>String(c.id)===companyId);$('newWork').disabled=!selected||Number(selected.activo)!==1;$('selectedCompany').textContent=selected?[selected.razon_social,selected.rut,selected.contacto,selected.telefono,selected.email].filter(Boolean).join(' · '):'Selecciona una constructora';
- const filtered=works.filter(w=>String(w.empresa_id)===companyId);$('obraCount').textContent=filtered.length+' obras';workPage=Math.min(workPage,Math.max(1,Math.ceil(filtered.length/pageSize)));
- if(!filtered.length){root.append(elem('p','',companyId?'Esta constructora todavía no tiene obras registradas.':'Selecciona una constructora.'));return;}
- const body=tableFor(root,['Obra','Ubicación','Estado','Acciones']);for(const w of filtered.slice((workPage-1)*pageSize,workPage*pageSize)){const row=body.insertRow();cell(row,w.nombre);cell(row,[w.direccion,w.comuna].filter(Boolean).join(' · '),'desktop-col');cell(row,elem('span','status'+(Number(w.activo)?'':' off'),Number(w.activo)?'Activa':'Inactiva'));cell(row,action('Editar',()=>editWork(w.id)));}
- paginate(root,filtered.length,workPage,p=>{workPage=p;renderWorks();});
-}
-$('obraFiltroEmpresa').addEventListener('change',()=>selectCompany($('obraFiltroEmpresa').value));
+function selectCompany(id){const c=companies.find(x=>String(x.id)===String(id));if(!c)return;selectedCompany=c;resetWork();renderOptions();$('app').classList.add('company-detail');renderWorks(1);$('viewObras').scrollIntoView({block:'start'});}
+const companyPager=new ControlabPagination({root:$('empresasList'),request,endpoint:'/catalogo/empresas',params:()=>({search:$('companySearch').value}),render:(rows,p)=>{
+ companies=rows;if(selectedCompany){selectedCompany=rows.find(c=>String(c.id)===String(selectedCompany.id))||selectedCompany;}
+ $('empresaCount').textContent=p.total+' empresas';const body=tableFor($('empresasList'),['Razón social','RUT','Obras','Estado','Acciones']);
+ for(const c of rows){const row=body.insertRow();cell(row,action(c.razon_social,()=>selectCompany(c.id)),'name-cell');cell(row,c.rut||'—','desktop-col');cell(row,String(c.obras_count||0));cell(row,elem('span','status'+(Number(c.activo)?'':' off'),Number(c.activo)?'Activa':'Inactiva'));const actions=elem('div','table-actions');actions.append(action('Ver',()=>selectCompany(c.id)),action('Editar',()=>editCompany(c.id)));cell(row,actions);}
+}});
+const workPager=new ControlabPagination({root:$('obrasList'),request,endpoint:'/catalogo/obras',params:()=>({empresa_id:selectedCompany.id}),render:(rows,p)=>{
+ works=rows;$('obraCount').textContent=p.total+' obras';const body=tableFor($('obrasList'),['Obra','Ubicación','Estado','Acciones']);for(const w of rows){const row=body.insertRow();cell(row,w.nombre);cell(row,[w.direccion,w.comuna].filter(Boolean).join(' · '),'desktop-col');cell(row,elem('span','status'+(Number(w.activo)?'':' off'),Number(w.activo)?'Activa':'Inactiva'));cell(row,action('Editar',()=>editWork(w.id)));}
+}});
+function renderCompanies(page){return companyPager.load(page);}
+function renderWorks(page){if(!selectedCompany)return Promise.resolve();$('newWork').disabled=Number(selectedCompany.activo)!==1;$('selectedCompany').textContent=[selectedCompany.razon_social,selectedCompany.rut,selectedCompany.contacto,selectedCompany.telefono,selectedCompany.email].filter(Boolean).join(' · ');return workPager.load(page);}
+$('obraFiltroEmpresa').closest('.field').hidden=true;
 function renderServices(){
  const root=$('serviciosList');root.replaceChildren();$('servicioCount').textContent=services.length+' servicios';
  if(!services.length){root.append(elem('p','','Todavía no hay servicios registrados.'));return;}
@@ -415,7 +393,7 @@ $('obraForm').addEventListener('submit',async e=>{
   if(editObra!==null)data.activo=$('obraActivo').checked;
   await write(editObra===null?'/catalogo/obras':'/catalogo/obras/'+editObra,editObra===null?'POST':'PUT',data);
   const savedId=editObra,selectedCompany=String(data.empresa_id);
-  resetWork();closeEditor('workDialog');await refresh();$('saveFeedback').textContent='Obra guardada correctamente.';$('obraFiltroEmpresa').value=selectedCompany;renderWorks();renderCompanies();$('obraEmpresa').value=selectedCompany;notice('obraNotice','✓ Obra guardada correctamente.');
+  resetWork();renderOptions();closeEditor('workDialog');await refresh();$('saveFeedback').textContent='Obra guardada correctamente.';$('obraFiltroEmpresa').value=selectedCompany;renderWorks();renderCompanies();$('obraEmpresa').value=selectedCompany;notice('obraNotice','✓ Obra guardada correctamente.');
   if(savedId===null)notice('obraNotice','✓ Obra registrada. Selecciónala en el listado para ubicarla en el mapa.');
  }catch(e){notice('obraNotice',e.message,true);}finally{btn.disabled=false;}
 });
@@ -429,9 +407,10 @@ $('personalForm').addEventListener('submit',async e=>{
  }catch(e){notice('personalNotice',e.message,true);}finally{btn.disabled=false;}
 });
 $('backCompanies').addEventListener('click',()=>{$('app').classList.remove('company-detail');});
-$('companySearch').addEventListener('input',()=>{companyPage=1;renderCompanies();});
+let searchTimer;
+$('companySearch').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderCompanies(1),250);});
 $('newCompany').addEventListener('click',()=>{resetCompany();notice('empresaNotice','');openEditor('companyDialog');});
-$('newWork').addEventListener('click',()=>{resetWork();$('obraEmpresa').value=$('obraFiltroEmpresa').value;notice('obraNotice','');openEditor('workDialog');});
+$('newWork').addEventListener('click',()=>{resetWork();renderOptions();notice('obraNotice','');openEditor('workDialog');});
 $('closeCompany').addEventListener('click',()=>closeEditor('companyDialog'));
 $('closeWork').addEventListener('click',()=>closeEditor('workDialog'));
 $('cancelEmpresa').addEventListener('click',()=>closeEditor('companyDialog'));
