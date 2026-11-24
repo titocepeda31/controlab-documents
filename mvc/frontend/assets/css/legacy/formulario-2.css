@@ -1,0 +1,16 @@
+
+/* Historial compacto: filas de gestión en escritorio y móvil. */
+#historyList{display:grid;gap:0;border:1px solid #dce4ea;border-radius:10px;overflow:hidden;background:#fff}
+#historyList .history-item{display:grid;grid-template-columns:auto minmax(180px,1fr) minmax(0,2fr);align-items:center;gap:10px;padding:9px 12px;margin:0;border:0;border-bottom:1px solid #e5ebef;border-radius:0;box-shadow:none}
+#historyList .history-item:last-child{border-bottom:0}
+#historyList .history-item>div:first-child{min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+#historyList .history-item>div:first-child strong{font-size:13px}
+#historyList .history-item>div:first-child small{font-size:11px}
+#historyList .history-buttons{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}
+#historyList .history-buttons .btn{padding:5px 8px;min-height:30px;font-size:11px;margin:0}
+@media(max-width:750px){
+#historyList .history-item{grid-template-columns:auto minmax(0,1fr);gap:6px;padding:9px}
+#historyList .history-buttons{justify-content:flex-start}
+#historyList .history-buttons .btn{flex:0 1 auto}
+#historyModal .work-card{padding:12px}
+}

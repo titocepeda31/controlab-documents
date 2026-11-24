@@ -1,0 +1,8 @@
+/* Shared Controlab overrides. Legacy module CSS is transitional. */
+:root{--tblr-primary:#087d70;--tblr-primary-rgb:8,125,112}
+[hidden]{display:none!important}
+.cl-tabler-shell .navbar-vertical{align-items:stretch}
+.cl-tabler-shell .navbar-nav{flex-direction:column}
+.cl-tabler-shell .table{margin-bottom:0}
+.cl-tabler-shell .btn-primary{--tblr-btn-bg:var(--tblr-primary);--tblr-btn-border-color:var(--tblr-primary)}
+@media print{.navbar,#cl-shell-sidebar,#cl-shell-top{display:none!important}}

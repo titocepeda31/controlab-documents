@@ -1,0 +1,2 @@
+# Frontend Controlab
+Tabler Core 1.0.0 se carga desde CDN con versión fija. app.css contiene ajustes comunes; shell.css mantiene el layout compartido. legacy/ contiene CSS extraído de los módulos existentes para preservar sus funcionalidades durante la migración. No agregar nuevos estilos a legacy. Migrar a componentes nativos por módulo y validar escritorio, móvil, impresión y modo offline antes de eliminar reglas. pagination.js sigue siendo el componente compartido de paginación remota. No usar modales para formularios.

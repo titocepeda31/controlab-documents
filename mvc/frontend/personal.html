@@ -1,42 +1,12 @@
 <!doctype html>
 <html lang="es-CL">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/css/tabler.min.css"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#10283d">
 <title>Empresas, obras, servicios y personal | Controlab</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
-:root{--navy:#10283d;--accent:#087d70;--bg:#f3f6f8;--border:#d7e3ea;--text:#19384b;--muted:#60798c}
-*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);font:14px/1.5 system-ui,-apple-system,Arial,sans-serif;color:var(--text)}
-button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.6;cursor:wait}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #85d7cf;outline-offset:2px}
-header.top{background:var(--navy);padding:16px max(16px,calc((100vw - 1100px)/2));color:#fff;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
-header.top strong{font-size:16px;letter-spacing:.3px}header.top small{display:block;color:#aed0da}
-a{color:inherit}.nav{display:flex;gap:8px}.nav a{text-decoration:none;background:#21485c;border:1px solid #577587;border-radius:8px;padding:8px 11px;font-weight:750;font-size:12px}
-main{max-width:1120px;margin:auto;padding:24px 15px 60px}h1{font-size:clamp(24px,5vw,32px);line-height:1.2;margin:4px 0 7px}h2{font-size:20px;margin:0 0 10px}
-p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px;border:1px solid var(--border);padding:20px;margin-bottom:18px;box-shadow:0 6px 24px #182e4b0a}
-.eyebrow{font-weight:850;font-size:11px;text-transform:uppercase;color:var(--accent);letter-spacing:1.4px}
-.tabs{display:flex;gap:6px;background:#e4edf1;border-radius:10px;padding:4px;margin:16px 0}
-.tab{border:0;background:transparent;border-radius:8px;min-height:43px;padding:9px 14px;flex:1;color:#466477;font-weight:750}
-.tab.active{background:white;color:var(--accent);box-shadow:0 2px 8px #33445512}
-.section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.btn{border:1px solid #c7d7df;background:#fff;color:var(--text);border-radius:9px;padding:10px 13px;min-height:42px;font-weight:750}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:white}.btn.light{background:#edf3f6}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:grid;gap:5px;min-width:0}
-.field label{font-weight:750;font-size:12px;color:#37556a}
-.field input,.field select,.field textarea{min-height:43px;width:100%;border:1px solid #bfcfd9;border-radius:9px;padding:10px;background:#fff;color:var(--text)}
-.field textarea{min-height:80px}.full{grid-column:1/-1}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-.card-list{display:grid;gap:9px;margin-top:12px}.record{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid var(--border);border-radius:10px}
-.record strong{display:block}.record small{display:block;color:var(--muted);margin-top:2px}.record .btn{font-size:12px;padding:7px 11px;min-height:35px}
-.status{display:inline-block;background:#e7f4ef;color:#20765f;border-radius:20px;font-size:11px;font-weight:750;padding:3px 9px;margin-top:5px}
-.status.off{background:#f1edf0;color:#896879}.notice{border:1px solid #bee2d8;background:#eaf8f1;color:#156b55;padding:11px;border-radius:9px;margin-top:13px;white-space:pre-wrap}
-.notice.error{background:#fff0f1;color:#a3263b;border-color:#eeb8c0}.notice:empty{display:none}
-.help{font-size:12px;color:var(--muted)}.hint{background:#f0f8f5;padding:11px;border-left:3px solid var(--accent);border-radius:5px}
-@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.panel{padding:15px}.tab{padding:8px;font-size:12px}.record .btn{width:100%}}
-#obraMap{height:310px;border-radius:12px;border:1px solid #bdd1d9;margin-top:10px;z-index:0}
-.geo-results{display:grid;gap:7px;margin-top:10px}.geo-result{text-align:left;border:1px solid #cbdce3;border-radius:8px;background:#f5fafb;padding:9px;color:var(--text);cursor:pointer}
-.geo-controls{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0;align-items:center}
-.geo-controls input{max-width:100%;flex:1;min-width:200px;border:1px solid #bacbd5;border-radius:8px;padding:10px;min-height:42px}
-</style></head>
+<link rel="stylesheet" href="./assets/css/legacy/personal.css"><link rel="stylesheet" href="./assets/css/app.css">
+</head>
 <body>
 <header class="top"><div><strong>CONTROL DE CALIDAD</strong><small>Catálogos de operación · Forestal 3M</small></div></header>
 <main>
@@ -54,13 +24,13 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
    <h2>Empresas constructoras</h2><p>El catálogo conserva las empresas ya usadas para emitir informes; no se duplican.</p>
    <form id="empresaForm"><div class="grid">
     <div class="field full"><label for="empresaNombre">Razón social *</label><input id="empresaNombre" maxlength="160" required></div>
-    <div class="field"><label for="empresaComercial">Nombre comercial</label><input id="empresaComercial" maxlength="160"></div>
-    <div class="field"><label for="empresaRut">RUT (opcional)</label><input id="empresaRut" maxlength="20"></div>
-    <div class="field"><label for="empresaContacto">Persona de contacto</label><input id="empresaContacto" maxlength="160"></div>
-    <div class="field"><label for="empresaTelefono">Teléfono</label><input id="empresaTelefono" type="tel" maxlength="40"></div>
-    <div class="field"><label for="empresaEmail">Correo electrónico</label><input id="empresaEmail" type="email" maxlength="190"></div>
-    <div class="field" id="empresaActiveWrap" hidden><label><input id="empresaActivo" type="checkbox" checked> Empresa activa</label></div>
-    </div><div class="actions"><button class="btn primary" id="guardarEmpresa" type="submit">Agregar empresa</button><button class="btn" type="button" id="cancelEmpresa" hidden>Cancelar edición</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form>
+    <div class="field mb-2"><label for="empresaComercial">Nombre comercial</label><input id="empresaComercial" maxlength="160"></div>
+    <div class="field mb-2"><label for="empresaRut">RUT (opcional)</label><input id="empresaRut" maxlength="20"></div>
+    <div class="field mb-2"><label for="empresaContacto">Persona de contacto</label><input id="empresaContacto" maxlength="160"></div>
+    <div class="field mb-2"><label for="empresaTelefono">Teléfono</label><input id="empresaTelefono" type="tel" maxlength="40"></div>
+    <div class="field mb-2"><label for="empresaEmail">Correo electrónico</label><input id="empresaEmail" type="email" maxlength="190"></div>
+    <div class="field mb-2" id="empresaActiveWrap" hidden><label><input id="empresaActivo" type="checkbox" checked> Empresa activa</label></div>
+    </div><div class="actions"><button class="btn btn-primary primary" id="guardarEmpresa" type="submit">Agregar empresa</button><button class="btn" type="button" id="cancelEmpresa" hidden>Cancelar edición</button></div><div id="empresaNotice" class="notice" role="status" aria-live="polite"></div></form>
    <div class="section-title" style="margin-top:25px"><h2>Empresas registradas</h2><span id="empresaCount" class="help"></span></div>
    <div class="card-list" id="empresasList"></div>
   </section>
@@ -68,13 +38,13 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
    <h2>Obras por empresa</h2><p class="hint">La dirección y comuna se completarán automáticamente en una nueva OT al seleccionar su obra.</p>
    <form id="obraForm">
     <div class="grid">
-     <div class="field"><label for="obraEmpresa">Constructora *</label><select id="obraEmpresa" required><option value="">Selecciona empresa</option></select></div>
-     <div class="field"><label for="obraNombre">Nombre de la obra *</label><input id="obraNombre" maxlength="180" required placeholder="Ej.: Mejoramiento Ruta X"></div>
-     <div class="field"><label for="obraDireccion">Dirección o ubicación *</label><input id="obraDireccion" maxlength="240" required placeholder="Ruta, km, predio o dirección"></div>
-     <div class="field"><label for="obraComuna">Comuna *</label><input id="obraComuna" maxlength="120" required placeholder="Ej.: Talca"></div>
-     <div class="field" id="obraActiveWrap" hidden><label><input type="checkbox" id="obraActivo" checked> Obra activa</label></div>
+     <div class="field mb-2"><label for="obraEmpresa">Constructora *</label><select id="obraEmpresa" required><option value="">Selecciona empresa</option></select></div>
+     <div class="field mb-2"><label for="obraNombre">Nombre de la obra *</label><input id="obraNombre" maxlength="180" required placeholder="Ej.: Mejoramiento Ruta X"></div>
+     <div class="field mb-2"><label for="obraDireccion">Dirección o ubicación *</label><input id="obraDireccion" maxlength="240" required placeholder="Ruta, km, predio o dirección"></div>
+     <div class="field mb-2"><label for="obraComuna">Comuna *</label><input id="obraComuna" maxlength="120" required placeholder="Ej.: Talca"></div>
+     <div class="field mb-2" id="obraActiveWrap" hidden><label><input type="checkbox" id="obraActivo" checked> Obra activa</label></div>
     </div>
-    <div class="actions"><button class="btn primary" id="guardarObra" type="submit">Guardar obra</button><button class="btn light" type="button" id="cancelObra" hidden>Cancelar edición</button></div>
+    <div class="actions"><button class="btn btn-primary primary" id="guardarObra" type="submit">Guardar obra</button><button class="btn btn-outline-secondary light" type="button" id="cancelObra" hidden>Cancelar edición</button></div>
     <div id="obraNotice" class="notice" role="status" aria-live="polite"></div>
    </form>
    <div id="mapPanel" hidden style="margin:20px 0;padding:17px;border:1px solid #bed5dd;border-radius:12px;background:#f5fafb">
@@ -85,7 +55,7 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
       <div id="obraMap" role="region" aria-label="Mapa para seleccionar ubicación de obra"></div>
       <p id="geoCoords" class="help">Aún no se ha fijado el punto de esta obra.</p>
       <div class="geo-controls">
-       <button type="button" class="btn primary" id="geoSaveBtn">Guardar ubicación de la obra</button>
+       <button type="button" class="btn btn-primary primary" id="geoSaveBtn">Guardar ubicación de la obra</button>
        <button type="button" class="btn" id="geoOpenBtn">Ver en OpenStreetMap</button>
        <button type="button" class="btn" id="geoRouteBtn">Cómo llegar desde mi ubicación</button>
       </div>
@@ -99,10 +69,10 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
    <p>Registra los ensayos y trabajos que se pueden solicitar en una OT. Los precios y la facturación se configurarán en otra etapa.</p>
    <form id="servicioForm"><div class="grid">
     <div class="field full"><label for="servicioNombre">Nombre del servicio *</label><input id="servicioNombre" maxlength="180" required placeholder="Ej.: Ensayo de densidad en terreno"></div>
-    <div class="field"><label for="servicioUnidad">Unidad de medida *</label><input id="servicioUnidad" maxlength="60" required value="unidad" placeholder="Ej.: ensayo, calicata, unidad"></div>
+    <div class="field mb-2"><label for="servicioUnidad">Unidad de medida *</label><input id="servicioUnidad" maxlength="60" required value="unidad" placeholder="Ej.: ensayo, calicata, unidad"></div>
     <div class="field full"><label for="servicioDescripcion">Descripción (opcional)</label><textarea id="servicioDescripcion" maxlength="500"></textarea></div>
-    <div class="field" id="servicioActiveWrap" hidden><label><input id="servicioActivo" type="checkbox" checked> Servicio activo</label></div>
-   </div><div class="actions"><button class="btn primary" id="guardarServicio" type="submit">Agregar servicio</button><button class="btn" id="cancelServicio" type="button" hidden>Cancelar edición</button></div><div id="servicioNotice" class="notice" role="status" aria-live="polite"></div></form>
+    <div class="field mb-2" id="servicioActiveWrap" hidden><label><input id="servicioActivo" type="checkbox" checked> Servicio activo</label></div>
+   </div><div class="actions"><button class="btn btn-primary primary" id="guardarServicio" type="submit">Agregar servicio</button><button class="btn" id="cancelServicio" type="button" hidden>Cancelar edición</button></div><div id="servicioNotice" class="notice" role="status" aria-live="polite"></div></form>
    <div class="section-title" style="margin-top:25px"><h2>Servicios registrados</h2><span id="servicioCount" class="help"></span></div>
    <div class="card-list" id="serviciosList"></div>
   </section>
@@ -111,12 +81,12 @@ p{color:var(--muted);margin:6px 0 15px}.panel{background:#fff;border-radius:14px
    <p class="hint">Para choferes, ayudantes, muestreadores, operadores u otros integrantes que solo necesitan aparecer en la programación. No tendrán correo, contraseña ni acceso a Controlab.</p>
    <form id="personalForm">
     <div class="grid">
-     <div class="field"><label for="personalNombre">Nombre y apellido *</label><input id="personalNombre" maxlength="160" required placeholder="Trabajador de terreno"></div>
-     <div class="field"><label for="personalCargo">Función *</label><input id="personalCargo" maxlength="100" required placeholder="Ej.: Conductor / Muestreador / Ayudante"></div>
+     <div class="field mb-2"><label for="personalNombre">Nombre y apellido *</label><input id="personalNombre" maxlength="160" required placeholder="Trabajador de terreno"></div>
+     <div class="field mb-2"><label for="personalCargo">Función *</label><input id="personalCargo" maxlength="100" required placeholder="Ej.: Conductor / Muestreador / Ayudante"></div>
      <div class="field full"><label for="personalObservaciones">Observaciones (opcional)</label><textarea id="personalObservaciones" maxlength="500" placeholder="Especialidad o información operativa necesaria"></textarea></div>
-     <div class="field" id="personalActiveWrap" hidden><label><input type="checkbox" id="personalActivo" checked> Trabajador activo</label></div>
+     <div class="field mb-2" id="personalActiveWrap" hidden><label><input type="checkbox" id="personalActivo" checked> Trabajador activo</label></div>
     </div>
-    <div class="actions"><button class="btn primary" id="guardarPersonal" type="submit">Guardar trabajador</button><button class="btn light" type="button" id="cancelPersonal" hidden>Cancelar edición</button></div>
+    <div class="actions"><button class="btn btn-primary primary" id="guardarPersonal" type="submit">Guardar trabajador</button><button class="btn btn-outline-secondary light" type="button" id="cancelPersonal" hidden>Cancelar edición</button></div>
     <div id="personalNotice" class="notice" role="status" aria-live="polite"></div>
    </form>
    <div class="section-title" style="margin-top:25px"><h2>Personal registrado</h2><span id="personalCount" class="help"></span></div><div class="card-list" id="personalList"></div>
@@ -410,5 +380,5 @@ $('personalForm').addEventListener('submit',async e=>{
  }catch(e){$('app').hidden=true;$('accessError').hidden=false;$('accessText').textContent=e.message;}
 })();
 </script>
-<script src="./tabler-shell.js?v=2" defer></script>
+<script src="./tabler-shell.js?v=4" defer></script>
 </body></html>

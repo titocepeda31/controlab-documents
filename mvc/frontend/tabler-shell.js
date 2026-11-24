@@ -2,42 +2,18 @@
 (()=>{'use strict';
 const page=location.pathname.split('/').pop()||'dashboard.html';
 const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard'],['planificador.html','Órdenes de trabajo','all','calendar-days'],['empresas.html','Empresas y obras','manager','building-2'],['servicios.html','Servicios','manager','clipboard-list'],['personal.html','Personal de terreno','manager','users'],['formulario.html','Informes (prototipo)','all','file-text'],['usuarios.html','Usuarios','admin','settings']];
-const css=`
-html.cl-session-pending body{visibility:hidden}
-@media screen and (min-width:901px){body.cl-tabler-shell:has(#cl-shell-top:not([hidden])){height:100dvh;overflow:hidden;margin:0;padding:0}body.cl-tabler-shell #cl-shell-top{position:fixed;inset:0 0 auto 0;box-sizing:border-box;width:100%}body.cl-tabler-shell:has(#cl-shell-top:not([hidden])) > main,body.cl-tabler-shell:has(#cl-shell-top:not([hidden])) #appView > .layout{position:fixed!important;top:68px;left:250px;right:0;bottom:0;margin:0!important;width:auto!important;height:auto!important;overflow:auto!important;box-sizing:border-box}body.cl-tabler-shell #cl-shell-close{display:none}}
-@media print{#cl-shell-top,#cl-shell-sidebar,#cl-shell-backdrop{display:none!important}}
 
-#cl-shell-top{height:68px;min-height:68px;background:#10283d!important;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;position:relative;z-index:1002}
-#cl-shell-top .cl-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
-#cl-shell-top .cl-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#32b6a3;color:#073236;font-weight:800}
-#cl-shell-top .cl-brand strong{display:block;font-size:17px;line-height:1.3}#cl-shell-top .cl-brand small{display:block;color:#bbd1dc;font-size:11px}
-#cl-shell-toggle{display:none;border:1px solid #698294;border-radius:9px;background:transparent;color:white;padding:6px 12px;font-size:24px;line-height:1.2;cursor:pointer}
-#cl-shell-sidebar{position:fixed;top:68px;bottom:0;left:0;width:250px;z-index:1001;overflow-y:auto;background:#fff;border-right:1px solid #dbe4eb;padding:22px 12px;box-sizing:border-box}
-#cl-shell-sidebar .cl-caption{font-size:11px;letter-spacing:.08em;font-weight:800;color:#8194a1;margin:0 12px 14px}
-#cl-shell-sidebar a{display:flex;align-items:center;gap:10px;text-decoration:none;color:#385367;font:650 14px/1.4 system-ui;padding:12px;border-radius:9px;margin-bottom:4px}
-#cl-shell-sidebar a:hover{background:#edf5f4;color:#075f59}#cl-shell-sidebar a.active{background:#e3f4ef;color:#087d70}
-#cl-shell-sidebar a[hidden]{display:none!important}#cl-shell-sidebar .cl-foot{font:11px/1.5 system-ui;color:#78909e;margin:20px 12px}
-#cl-shell-backdrop{display:none}#cl-shell-top[hidden],#cl-shell-sidebar[hidden],#cl-shell-toggle[hidden]{display:none!important}
-body.cl-tabler-shell{background:#f3f6f8}body.cl-tabler-shell > main,body.cl-tabler-shell > .app-view > main,body.cl-tabler-shell #appView > main{margin-left:250px!important;max-width:none!important}
-body.cl-tabler-shell #appView > .layout,body.cl-tabler-shell .layout{margin-left:250px!important}
-body.cl-tabler-shell #appView > .layout main,body.cl-tabler-shell .layout main{margin-left:0!important}
-body.cl-tabler-shell #appView > .topbar,body.cl-tabler-shell > header.top,body.cl-tabler-shell > header.header,body.cl-tabler-shell > header.topbar,body.cl-tabler-shell > header.cl-dashboard-header{display:none!important}
-body.cl-tabler-shell #sidebar,body.cl-tabler-shell #scrim,body.cl-tabler-shell #cl-nav-sidebar,body.cl-tabler-shell #cl-nav-toggle,body.cl-tabler-shell #cl-nav-scrim{display:none!important}
-body.cl-tabler-shell .main-area{margin-left:250px!important}
-body.cl-tabler-shell #cl-shell-top:not([hidden]){display:flex!important}
-@media(max-width:900px){#cl-shell-toggle{display:inline-flex}#cl-shell-sidebar{top:0;width:min(300px,85vw);transform:translateX(-110%);transition:transform .18s ease;z-index:1101;box-shadow:10px 0 40px #132c3c20}#cl-shell-sidebar.open{transform:translateX(0)}#cl-shell-backdrop.open{display:block;position:fixed;inset:0;background:#0c223a75;z-index:1100}body.cl-tabler-shell > main,body.cl-tabler-shell > .app-view > main,body.cl-tabler-shell #appView > main,body.cl-tabler-shell .main-area,body.cl-tabler-shell #appView > .layout,body.cl-tabler-shell .layout{margin-left:0!important}}
-`;
 const isForm=page==='formulario.html';
 if(!isForm)document.documentElement.classList.add('cl-session-pending');
-const st=document.createElement('style');st.textContent=css;document.head.append(st);
+const st=document.createElement('link');st.rel='stylesheet';st.href='./assets/css/shell.css';document.head.append(st);
 function init(){
  if(document.getElementById('cl-shell-top'))return;
- const top=document.createElement('header');top.id='cl-shell-top';top.innerHTML='<a href="./dashboard.html" class="cl-brand"><span class="cl-mark">RC</span><span><strong>CONTROLAB</strong><small>Gestión de laboratorio</small></span></a><button id="cl-shell-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="cl-shell-sidebar">☰</button>';
- const sidebar=document.createElement('aside');sidebar.id='cl-shell-sidebar';sidebar.setAttribute('aria-label','Navegación principal');sidebar.innerHTML='<div class="d-flex align-items-center justify-content-between d-lg-none mb-3"><strong>MENÚ PRINCIPAL</strong><button type="button" id="cl-shell-close" class="btn btn-sm btn-outline-secondary">Cerrar ✕</button></div><div class="cl-caption">ADMINISTRACIÓN</div>';
- const nav=document.createElement('nav');
- for(const [href,title,role] of modules){const a=document.createElement('a');a.href='./'+href;a.textContent=title;a.dataset.role=role;if(page===href){a.classList.add('active');a.setAttribute('aria-current','page')}if(role!=='all')a.hidden=true;nav.append(a);}
+ const top=document.createElement('header');top.id='cl-shell-top';top.className='navbar navbar-dark';top.innerHTML='<a href="./dashboard.html" class="cl-brand"><span class="cl-mark">RC</span><span><strong>CONTROLAB</strong><small>Gestión de laboratorio</small></span></a><button id="cl-shell-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="cl-shell-sidebar">☰</button>';
+ const sidebar=document.createElement('aside');sidebar.id='cl-shell-sidebar';sidebar.className='navbar navbar-vertical';sidebar.setAttribute('aria-label','Navegación principal');sidebar.innerHTML='<div class="d-flex align-items-center justify-content-between d-lg-none mb-3"><strong>MENÚ PRINCIPAL</strong><button type="button" id="cl-shell-close" class="btn btn-sm btn-outline-secondary">Cerrar ✕</button></div><div class="cl-caption">ADMINISTRACIÓN</div>';
+ const nav=document.createElement('nav');nav.className='navbar-nav w-100';
+ for(const [href,title,role] of modules){const a=document.createElement('a');a.className='nav-link';a.href='./'+href;a.textContent=title;a.dataset.role=role;if(page===href){a.classList.add('active');a.setAttribute('aria-current','page')}if(role!=='all')a.hidden=true;nav.append(a);}
  sidebar.append(nav);
- if(page==='formulario.html'){const actions=document.createElement('div');actions.style.cssText='border-top:1px solid #dbe4eb;margin-top:15px;padding-top:12px';for(const id of ['historyBtn','reviewsBtn','profileFirmaBtn','logoutBtn']){const b=document.getElementById(id);if(b){b.style.cssText='display:block;width:100%;margin:4px 0;text-align:left';actions.append(b)}}sidebar.append(actions);}
+ if(page==='formulario.html'){const actions=document.createElement('div');actions.className='border-top mt-3 pt-3';for(const id of ['historyBtn','reviewsBtn','profileFirmaBtn','logoutBtn']){const b=document.getElementById(id);if(b){b.classList.add('d-block','w-100','my-1','text-start');actions.append(b)}}sidebar.append(actions);}
  if(!isForm){const logout=document.createElement('button');logout.type='button';logout.className='btn btn-outline-secondary w-100';logout.textContent='Cerrar sesión';logout.addEventListener('click',async()=>{try{const s=await fetch('./api/session',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json());const r=await fetch('./api/logout',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf})});if(!r.ok)throw Error();location.replace('./formulario.html');}catch(e){alert('No fue posible cerrar sesión. Intenta nuevamente.');}});sidebar.append(logout);}
  const foot=document.createElement('div');foot.className='cl-foot';foot.textContent='Controlab · Piloto';sidebar.append(foot);
  const backdrop=document.createElement('div');backdrop.id='cl-shell-backdrop';

@@ -1,96 +1,14 @@
 <!doctype html>
 <html lang="es-CL">
 <head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0/dist/css/tabler.min.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#10283d">
 <title>Planificador de OT | Controlab</title>
-<style>
-:root{--navy:#10283d;--navy2:#1b4056;--teal:#087d70;--teal-soft:#e1f4ee;--bg:#f3f6f8;--text:#18364a;--muted:#627b8e;--border:#d7e3ea;--white:#fff;--red:#b42c41}
-*{box-sizing:border-box}[hidden]{display:none!important}
-body{margin:0;background:var(--bg);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--text)}
-button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #83ccc2;outline-offset:2px}
-a{color:inherit}.top{background:var(--navy);color:#fff;padding:13px max(16px,calc((100vw - 1280px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.brand{font-size:15px;font-weight:850;letter-spacing:.3px}.brand small{display:block;font-size:11px;font-weight:500;color:#acd1d7}
-.top-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.top-links a{border:1px solid #547283;background:#193e54;text-decoration:none;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:750}
-main{max-width:1300px;margin:auto;padding:26px 17px 65px}
-.eyebrow{font-weight:850;letter-spacing:1.6px;color:var(--teal);text-transform:uppercase;font-size:11px}
-.intro{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}
-h1{font-size:clamp(24px,3.2vw,33px);line-height:1.2;margin:7px 0 6px;letter-spacing:-.6px}h2{font-size:20px;margin:0}h3{font-size:16px;margin:0 0 6px}
-p{margin:6px 0;color:var(--muted)}
-.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:10px;min-height:41px;padding:9px 13px;font-weight:750;display:inline-flex;align-items:center;justify-content:center;gap:5px}
-.btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
-.btn.muted{background:#eaf0f4}.btn.danger{background:#fff3f3;border-color:#edb3c0;color:var(--red)}
-.panel{background:#fff;border:1px solid var(--border);border-radius:15px;padding:20px;margin-bottom:16px;box-shadow:0 6px 20px #25405809}
-.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:17px}
-.stat{background:#fff;border:1px solid var(--border);padding:14px 15px;border-radius:12px}
-.stat strong{display:block;font-size:25px;font-weight:850;line-height:1.2}.stat small{color:var(--muted);font-size:12px}
-.bar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px}
-.tabs{display:flex;gap:5px;background:#e5edf2;border-radius:11px;padding:4px}
-.tab{border:0;background:transparent;color:#486275;padding:9px 12px;border-radius:8px;font-weight:800}
-.tab.active{color:var(--teal);background:#fff;box-shadow:0 2px 6px #22384d12}
-.filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.filters select,.filters input{border:1px solid #becfd9;min-height:41px;border-radius:9px;padding:8px 11px;background:#fff;color:var(--text);max-width:240px}
-.month-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px;flex-wrap:wrap}
-.month-title{font-size:22px;font-weight:850;letter-spacing:-.3px;text-transform:capitalize}
-.month-buttons{display:flex;gap:6px}
-.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-left:1px solid var(--border);border-top:1px solid var(--border);background:#fff}
-.weekday{text-align:center;font-size:12px;font-weight:800;color:#617a89;padding:10px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:#f6f9fa}
-.calendar-day{border:0;border-radius:0;text-align:left;background:#fff;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px;min-height:115px;min-width:0;color:var(--text)}
-.calendar-day:hover{background:#f0f8f6}
-.calendar-day.other{background:#f7f9fa;color:#9cabb6}
-.calendar-day.selected{background:#e9f6f3;box-shadow:inset 0 0 0 2px #229d8d}
-.calendar-day.today .daynum{background:var(--navy);color:#fff}
-.daynum{font-weight:850;display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%}
-.dayitems{display:grid;gap:4px;margin-top:7px}
-.dayitem{font-size:11px;line-height:1.25;background:#e4f0fa;border-left:3px solid #4280ad;padding:4px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dayitem.urgente{background:#ffeaec;border-color:#bd3d51}
-.dayitem.terminada{background:#e8edea;border-color:#899b92}
-.more{font-size:10px;color:#536a7a;font-weight:800}
-.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.assignment-list{display:grid;gap:10px}
-.assignment{background:#fff;border:1px solid var(--border);border-radius:11px;padding:13px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.assignment:hover{border-color:#9dbfb6}
-.assignment strong{display:block;font-size:15px}.assignment small{display:block;color:var(--muted);margin-top:3px}
-.assignment-details{flex:1;min-width:180px}.assignment-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.pill{font-size:11px;font-weight:800;border-radius:20px;background:#eaf2fb;color:#245677;padding:4px 9px;display:inline-flex;align-items:center}
-.pill.en_curso{background:#fff0d4;color:#82570a}.pill.finalizada{background:#e8f0ea;color:#4a6a51}
-.pill.cancelada{background:#f4eeee;color:#8e6464}.pill.urgente{background:#ffebed;color:#a7293e}
-.empty{padding:30px;text-align:center;background:#f7fafb;border:1px dashed #c4d6de;border-radius:12px;color:var(--muted)}
-.field{display:grid;gap:6px;min-width:0}
-.field label{font-weight:750;font-size:12px;color:#3b586a}
-.field input,.field textarea,.field select{width:100%;border:1px solid #c4d3dc;background:white;border-radius:9px;padding:10px 11px;min-height:44px;min-width:0;color:var(--text)}
-.field textarea{min-height:91px;resize:vertical}
-.search-results{max-height:210px;overflow-y:auto;border:1px solid #b7cbd3;border-radius:9px;background:white;box-shadow:0 5px 14px #1a40501a;z-index:3}
-.search-results[hidden]{display:none}
-.search-results button{display:block;width:100%;text-align:left;background:white;border:0;border-bottom:1px solid #e4edef;padding:11px;cursor:pointer;color:var(--text)}
-.search-results button:hover,.search-results button:focus{background:#eaf5f3}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
-.full{grid-column:1/-1}
-.form-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.team-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px;max-height:205px;overflow-y:auto}
-.team-checkbox{display:flex;align-items:center;gap:8px;padding:8px 9px;background:#f5f9fa;border:1px solid #d8e5e8;border-radius:9px;cursor:pointer;min-width:0}
-.team-checkbox input{width:18px;height:18px;accent-color:var(--teal);flex:none}
-.team-checkbox span{min-width:0;font-size:12px}.team-checkbox small{display:block;color:var(--muted)}
-.notice{padding:12px;border-radius:9px;border:1px solid #b3d9cd;background:#ebf9f3;color:#176d59;margin-top:13px;white-space:pre-wrap}
-.notice.error{background:#fff0f0;border-color:#e9b2b9;color:#a3293c}
-.notice:empty{display:none}
-.person-card{border:1px solid var(--border);border-radius:11px;padding:14px;background:white;margin-bottom:10px}
-.person-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
-.person-card h3{margin:0}.person-card p{margin:4px 0}.person-jobs{display:grid;gap:6px;margin-top:9px}
-.person-job{padding:8px 10px;border-radius:8px;background:#edf6f4;color:#23564d;font-size:12px}
-.team-summary{font-weight:700;color:var(--muted);font-size:13px;margin-bottom:12px}
-.team-job{border-left:4px solid var(--teal);margin-bottom:13px}
-.team-job h3{font-size:21px}.team-job .team-place{font-weight:700;margin:10px 0}.team-activity{font-size:13px}
-.team-members{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
-.team-member{background:#edf6f4;border:1px solid #c9e4db;color:#23564d;padding:8px 10px;border-radius:9px;font-size:13px}
-.hint{color:var(--muted);font-size:12px;margin:9px 0}
-@media(max-width:850px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.calendar-day{min-height:85px;padding:5px}.dayitem{font-size:10px;padding:3px}.panel{padding:16px}}
-@media(max-width:570px){main{padding:17px 10px 45px}.intro{display:block}.intro>.btn{margin-top:12px}.top{padding:12px}.top-links a{font-size:11px;padding:8px}.panel{padding:13px}.stat{padding:10px}.stat strong{font-size:23px}.bar{display:block}.tabs{width:100%;margin-bottom:11px}.tab{flex:1}.filters{align-items:stretch}.filters select{flex:1;max-width:none}.month-title{font-size:19px}.weekday{font-size:10px;padding:7px 2px}.calendar-day{min-height:61px;padding:3px}.daynum{font-size:12px;width:21px;height:21px}.dayitems{gap:2px;margin-top:3px}.dayitem{height:6px;border:0;font-size:0;padding:0;border-radius:20px}.more{font-size:9px}.form-grid,.team-list{grid-template-columns:1fr}.full{grid-column:auto}}
-</style>
+<link rel="stylesheet" href="./assets/css/legacy/planificador.css">
+<link rel="stylesheet" href="./assets/css/app.css">
 </head>
 <body>
 <header class="top"><span hidden aria-hidden="true"><a id="usersLink" href="./usuarios.html">Usuarios</a><a id="catalogLink" href="./empresas.html">Empresas</a><a id="worksLink" href="./obras.html">Obras</a><a id="servicesLink" href="./servicios.html">Servicios</a><a id="staffLink" href="./personal.html">Personal</a></span><div class="brand">CONTROL DE CALIDAD<small>Planificador de órdenes de trabajo</small></div>
@@ -99,7 +17,7 @@ p{margin:6px 0;color:var(--muted)}
 <main>
  <div class="intro">
   <div><span class="eyebrow">Operaciones · Forestal 3M</span><h1>Planificador de órdenes de trabajo</h1><p>Organiza las visitas, asigna el equipo y consulta dónde debe estar cada persona.</p></div>
-  <button class="btn primary" id="newBtn" type="button" hidden>+ Nueva orden de trabajo</button>
+  <button class="btn btn-primary primary" id="newBtn" type="button" hidden>+ Nueva orden de trabajo</button>
  </div>
  <section class="panel" id="authError" hidden role="alert"><h2>No se pudo abrir la planificación</h2><p id="authErrorText"></p><a href="./formulario.html" class="btn">Volver a iniciar sesión</a></section>
  <div id="content" hidden>
@@ -127,7 +45,7 @@ p{margin:6px 0;color:var(--muted)}
    </div>
   </div>
   <section class="panel" id="routePanel" hidden>
-   <div class="bar"><div><h2>Ruta por patente</h2><p>Selecciona una camioneta y una fecha para ver sus órdenes y recorrido por carretera.</p></div><button class="btn primary" id="routeCalculate" type="button">Calcular ruta y kilómetros</button></div>
+   <div class="bar"><div><h2>Ruta por patente</h2><p>Selecciona una camioneta y una fecha para ver sus órdenes y recorrido por carretera.</p></div><button class="btn btn-primary primary" id="routeCalculate" type="button">Calcular ruta y kilómetros</button></div>
    <div class="filters"><label for="routeVehicle">Patente</label><select id="routeVehicle" aria-label="Seleccionar patente"><option value="">Selecciona una camioneta</option></select><label for="routeDay">Día</label><input type="date" id="routeDay"><label><input type="checkbox" id="routeUseLocation"> Iniciar desde mi ubicación actual</label></div>
    <p id="routeStatus" role="status" aria-live="polite">Selecciona un día y calcula el recorrido.</p>
    <div id="routeMap" hidden style="height:340px;border:1px solid #d7e3ea;border-radius:10px;margin-top:12px"></div>
@@ -163,36 +81,36 @@ p{margin:6px 0;color:var(--muted)}
    <div class="section-head"><div><span class="eyebrow">Planificación</span><h2 id="formTitle">Nueva orden de trabajo</h2></div><button class="btn" id="closeForm" type="button">Cerrar</button></div>
    <form id="otForm" autocomplete="off">
     <div class="form-grid">
-     <div class="field"><label for="numero_ot">Número de OT (opcional)</label><input id="numero_ot" name="numero_ot" maxlength="40" placeholder="Automático si queda vacío"></div>
-     <div class="field"><label for="empresaSearch">Buscar empresa constructora</label>
+     <div class="field mb-2"><label for="numero_ot">Número de OT (opcional)</label><input id="numero_ot" name="numero_ot" maxlength="40" placeholder="Automático si queda vacío"></div>
+     <div class="field mb-2"><label for="empresaSearch">Buscar empresa constructora</label>
  <input id="empresaSearch" type="search" autocomplete="off" placeholder="Nombre, razón social o RUT" aria-controls="empresaMatches" aria-expanded="false">
  <div id="empresaMatches" class="search-results" role="listbox" hidden></div>
  <select id="empresaCatalogo" hidden aria-label="Empresa seleccionada"><option value="">Seleccionar empresa</option></select></div>
-     <div class="field"><label for="obraSearch">Buscar obra de esa empresa</label>
+     <div class="field mb-2"><label for="obraSearch">Buscar obra de esa empresa</label>
  <input id="obraSearch" type="search" autocomplete="off" placeholder="Escribe parte del nombre de la obra" aria-controls="obraMatches" aria-expanded="false">
  <div id="obraMatches" class="search-results" role="listbox" hidden></div>
  <select id="obraCatalogo" hidden aria-label="Obra seleccionada"><option value="">Seleccionar obra</option></select></div>
      <div class="field full"><span class="hint">Selecciona una obra para completar cliente, dirección y comuna. <a href="./obras.html">Gestionar empresas y obras</a></span></div>
-     <div class="field"><label for="cliente">Cliente / contratista *</label><input id="cliente" name="cliente" maxlength="160" required placeholder="Nombre de empresa"></div>
-     <div class="field"><label for="obra">Obra o proyecto *</label><input id="obra" name="obra" maxlength="180" required placeholder="Ej.: Camino forestal, sector 3"></div>
+     <div class="field mb-2"><label for="cliente">Cliente / contratista *</label><input id="cliente" name="cliente" maxlength="160" required placeholder="Nombre de empresa"></div>
+     <div class="field mb-2"><label for="obra">Obra o proyecto *</label><input id="obra" name="obra" maxlength="180" required placeholder="Ej.: Camino forestal, sector 3"></div>
      <div class="field full">
       <label>Servicios a realizar *</label>
       <div class="hint">Selecciona los servicios registrados en el catálogo. Los precios y cobros se agregarán después. <a href="./servicios.html">Administrar servicios</a>.</div>
       <div id="otServicios" class="service-lines"></div>
       <button type="button" class="btn" id="addOtServicio" style="margin-top:8px">+ Agregar servicio</button>
      </div>
-     <div class="field"><label for="destino">Destino / dirección / predio *</label><input id="destino" name="destino" maxlength="240" required placeholder="Ubicación donde debe presentarse el equipo"></div>
-     <div class="field"><label for="comuna">Comuna</label><input id="comuna" name="comuna" maxlength="120" placeholder="Comuna del trabajo"></div>
-     <div class="field"><label for="inicio">Inicio programado *</label><input id="inicio" name="inicio" type="datetime-local" required></div>
-     <div class="field"><label for="fin">Fin programado *</label><input id="fin" name="fin" type="datetime-local" required></div>
-     <div class="field"><label for="estado">Estado</label><select id="estado" name="estado"><option value="planificada">Planificada</option><option value="en_curso">En curso</option><option value="finalizada">Finalizada</option><option value="cancelada">Cancelada</option></select></div>
-     <div class="field"><label for="vehiculo_id">Camioneta (patente)</label><select id="vehiculo_id"><option value="">Sin asignar</option></select><button type="button" class="btn" id="newVehicleBtn" style="margin-top:6px">+ Registrar patente</button><small id="vehicleHint" class="hint">Asigna una camioneta para visualizar su ruta.</small></div>
-     <div class="field"><label for="prioridad">Prioridad</label><select id="prioridad" name="prioridad"><option value="normal">Normal</option><option value="urgente">Urgente</option></select></div>
+     <div class="field mb-2"><label for="destino">Destino / dirección / predio *</label><input id="destino" name="destino" maxlength="240" required placeholder="Ubicación donde debe presentarse el equipo"></div>
+     <div class="field mb-2"><label for="comuna">Comuna</label><input id="comuna" name="comuna" maxlength="120" placeholder="Comuna del trabajo"></div>
+     <div class="field mb-2"><label for="inicio">Inicio programado *</label><input id="inicio" name="inicio" type="datetime-local" required></div>
+     <div class="field mb-2"><label for="fin">Fin programado *</label><input id="fin" name="fin" type="datetime-local" required></div>
+     <div class="field mb-2"><label for="estado">Estado</label><select id="estado" name="estado"><option value="planificada">Planificada</option><option value="en_curso">En curso</option><option value="finalizada">Finalizada</option><option value="cancelada">Cancelada</option></select></div>
+     <div class="field mb-2"><label for="vehiculo_id">Camioneta (patente)</label><select id="vehiculo_id"><option value="">Sin asignar</option></select><button type="button" class="btn" id="newVehicleBtn" style="margin-top:6px">+ Registrar patente</button><small id="vehicleHint" class="hint">Asigna una camioneta para visualizar su ruta.</small></div>
+     <div class="field mb-2"><label for="prioridad">Prioridad</label><select id="prioridad" name="prioridad"><option value="normal">Normal</option><option value="urgente">Urgente</option></select></div>
      <div class="field full"><label>Personal de terreno (sin cuenta de usuario)</label><div class="hint">Muestreadores, conductores y ayudantes. <a href="./personal.html">Registrar trabajador</a>. Los horarios se verificarán automáticamente.</div><div class="team-list" id="fieldChoices"></div></div>
      <div class="field full"><label>Usuarios del sistema que también participarán</label><div class="hint">Opcional: laboratoristas o digitadores que ingresan a Controlab.</div><div class="team-list" id="teamChoices"></div></div>
      <div class="field full"><label for="observaciones">Instrucciones y observaciones</label><textarea id="observaciones" name="observaciones" maxlength="5000" placeholder="Punto de encuentro, contacto, equipamiento necesario, instrucciones…"></textarea></div>
     </div>
-    <div class="form-actions"><button class="btn primary" id="saveBtn" type="submit">Guardar OT</button><button class="btn" id="cancelForm" type="button">Cancelar</button></div>
+    <div class="form-actions"><button class="btn btn-primary primary" id="saveBtn" type="submit">Guardar OT</button><button class="btn" id="cancelForm" type="button">Cancelar</button></div>
     <div class="notice" id="saveNotice" role="status" aria-live="polite"></div>
    </form>
   </section>
@@ -727,25 +645,7 @@ for(const tab of document.querySelectorAll('[data-view]'))tab.addEventListener('
 })();
 </script>
 
-<style>
-/* Vista administrativa compacta: filas en móvil y columnas alineadas en escritorio. */
-#agendaList,#dayList,#routeTable{display:grid;gap:0;border:1px solid #d7e3ea;border-radius:10px;overflow:hidden;background:#fff}
-#agendaList .cl-ot-row,#dayList .cl-ot-row,#routeTable .cl-ot-row{margin:0;border:0;border-bottom:1px solid #e3ebef;border-radius:0;box-shadow:none;padding:9px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
-#agendaList .cl-ot-row:last-child,#dayList .cl-ot-row:last-child,#routeTable .cl-ot-row:last-child{border-bottom:0}
-.cl-ot-row .assignment-details{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;min-width:0;flex:1}.cl-ot-row .assignment-details>strong{flex-basis:100%;font-size:14px}.cl-ot-row .assignment-details>small{display:block;flex:1 1 190px}
-.cl-ot-row .assignment-details>*{margin:0;min-width:0;overflow-wrap:anywhere}
-.cl-ot-row .assignment-details small{font-size:12px;line-height:1.3}
-.cl-ot-row .assignment-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
-.cl-ot-row .assignment-actions .btn{padding:5px 10px;min-height:32px}
-@media(max-width:750px){
-#agendaList .cl-ot-row,#dayList .cl-ot-row,#routeTable .cl-ot-row{padding:8px 10px;gap:7px}
-.cl-ot-row .assignment-details{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}.cl-ot-row .assignment-details>strong,.cl-ot-row .assignment-details>small{flex:auto;display:block;width:100%;white-space:normal}
-
-.cl-ot-row .assignment-details small{font-size:11px}
-.cl-ot-row .assignment-actions{flex-direction:column;align-items:flex-end;gap:5px;min-width:92px}
-.cl-ot-row .assignment-actions .pill{font-size:10px}
-}
-</style>
-<script src="./tabler-shell.js?v=3" defer></script>
+<link rel="stylesheet" href="./assets/css/legacy/planificador-2.css">
+<script src="./tabler-shell.js?v=4" defer></script>
 </body>
 </html>
