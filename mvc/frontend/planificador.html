@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#10283d">
 <title>Planificador de OT | Controlab</title>
-<link rel="stylesheet" href="./assets/css/legacy/planificador.css">
+<link rel="stylesheet" href="./assets/css/legacy/planificador.css?v=3">
 <link rel="stylesheet" href="./assets/css/app.css">
 </head>
 <body>
@@ -30,7 +30,7 @@
   <div class="bar">
    <div class="tabs" role="group" aria-label="Vistas del planificador">
     <button class="tab active" type="button" data-view="calendar" aria-pressed="true">Calendario</button>
-    <button class="tab" type="button" data-view="routes" aria-pressed="false">Rutas por patente</button>
+    <button class="tab" type="button" data-view="routes" aria-pressed="false">Rutas</button>
     <button class="tab" type="button" data-view="agenda" aria-pressed="false">Agenda</button>
     <button class="tab" type="button" data-view="team" id="teamTab" hidden aria-pressed="false">Equipo</button>
    </div>
@@ -45,14 +45,14 @@
    </div>
   </div>
   <section class="panel" id="routePanel" hidden>
-   <div class="bar"><div><h2>Ruta por patente</h2><p>Selecciona una camioneta y una fecha para ver sus órdenes y recorrido por carretera.</p></div><button class="btn btn-primary primary" id="routeCalculate" type="button">Calcular ruta y kilómetros</button></div>
-   <div class="filters"><label for="routeVehicle">Patente</label><select id="routeVehicle" aria-label="Seleccionar patente"><option value="">Selecciona una camioneta</option></select><label for="routeDay">Día</label><input type="date" id="routeDay"><label><input type="checkbox" id="routeUseLocation"> Iniciar desde mi ubicación actual</label></div>
+   <h2>Ruta por patente</h2><p class="hint">Selecciona una camioneta y una fecha.</p>
+   <div class="row g-2 mb-3"><div class="col-12 col-sm-6"><label class="form-label" for="routeVehicle">Patente</label><select class="form-select" id="routeVehicle"><option value="">Selecciona una camioneta</option></select></div><div class="col-12 col-sm-6"><label class="form-label" for="routeDay">Día</label><input class="form-control" type="date" id="routeDay"></div><div class="col-12"><label class="form-check"><input class="form-check-input" type="checkbox" id="routeUseLocation"><span class="form-check-label">Iniciar desde mi ubicación actual</span></label></div><div class="col-12"><button class="btn btn-primary primary" id="routeCalculate" type="button">Calcular ruta y kilómetros</button></div></div>
    <p id="routeStatus" role="status" aria-live="polite">Selecciona un día y calcula el recorrido.</p>
    <div id="routeMap" hidden style="height:340px;border:1px solid #d7e3ea;border-radius:10px;margin-top:12px"></div>
    <div id="routeStops"></div>
    <div class="assignment-list" id="routeTable" aria-label="Órdenes asignadas a la camioneta"></div>
   </section>
-  <section class="panel">
+  <section class="panel" id="schedulePanel">
    <div class="month-head">
     <div class="month-title" id="monthTitle">Calendario</div>
     <div class="month-buttons">
@@ -176,7 +176,7 @@ function teamLabel(job){
 function setView(next){
  view=next;
  for(const button of document.querySelectorAll('[data-view]')){const active=button.dataset.view===view;button.classList.toggle('active',active);button.setAttribute('aria-pressed',active?'true':'false');}
- $('calendarView').hidden=view!=='calendar';$('agendaView').hidden=view!=='agenda';$('teamView').hidden=view!=='team';$('routePanel').hidden=view!=='routes';
+ $('calendarView').hidden=view!=='calendar';$('agendaView').hidden=view!=='agenda';$('teamView').hidden=view!=='team';$('routePanel').hidden=view!=='routes';$('schedulePanel').hidden=view==='routes';
  if(view==='routes')void calculateDayRoute();
  render();
 }
@@ -208,11 +208,11 @@ function renderCalendar(){
 function actionCard(job){
  const item=el('article','assignment cl-ot-row');
  const data=el('div','assignment-details');
- data.append(el('strong','OT '+job.numero_ot));
- data.append(el('small',job.cliente+' · '+job.obra));
- data.append(el('small','📍 '+fullLocation(job)));
- data.append(el('small','🕒 '+dateTimeLabel(job.inicio)));
- if(job.patente)data.append(el('small','🚙 '+job.patente));
+ data.append(el('strong','','OT '+job.numero_ot));
+ data.append(el('small','',[job.cliente,job.obra].filter(Boolean).join(' · ')));
+ data.append(el('small','',fullLocation(job)));
+ data.append(el('small','',dateTimeLabel(job.inicio)));
+ if(job.patente)data.append(el('small','',job.patente));
  const actions=el('div','assignment-actions');
  actions.append(el('span','pill '+job.estado,statusLabels[job.estado]||job.estado));
  const open=el('button','btn','Ver');open.type='button';open.setAttribute('aria-label','Ver detalles de OT '+job.numero_ot);open.addEventListener('click',()=>void openDetail(job.id));actions.append(open);
