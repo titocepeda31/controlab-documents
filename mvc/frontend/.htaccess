@@ -9,7 +9,7 @@ RewriteRule ^api(?:/.*)?$ index.php [QSA,L]
 # Controlab: evitar HTML y JavaScript obsoletos tras cada despliegue.
 # No afecta a los datos locales de IndexedDB ni al modo sin conexión del SW.
 <IfModule mod_headers.c>
- <FilesMatch "\\.(?:html|js|json)$">
+ <FilesMatch "\\.(?:html|js|json|css)$">
   Header always set Cache-Control "no-cache, no-store, must-revalidate"
   Header always set Pragma "no-cache"
   Header always set Expires "0"
