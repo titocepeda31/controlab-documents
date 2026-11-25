@@ -73,3 +73,5 @@ $app->get('/api/laboratorio/tipos-material',[$laboratorioController,'tiposMateri
 $app->post('/api/laboratorio/tipos-material',[$laboratorioController,'crearTipoMaterial']);
 $app->put('/api/laboratorio/tipos-material/{id:[0-9]+}',[$laboratorioController,'editarTipoMaterial']);
 $app->post('/api/laboratorio/materiales/clasificar',[$laboratorioController,'clasificarMaterial']);
+
+$app->get('/api/laboratorio/resultados-ot',[$laboratorioController,'resultadosOT']);

@@ -21,6 +21,7 @@ final class LaboratorioController {
     public function catalogo(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->catalogo());}
     public function materiales(Request $r,Response $s): Response {$this->auth();return Http::json($s,['materiales'=>$this->lab->materiales($this->queryId($r,'obra_id'))]);}
     public function sujetos(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->sujetos($this->queryId($r,'material_id')));}
+    public function resultadosOT(Request $r,Response $s): Response {$this->auth();return Http::json($s,['resultados'=>$this->lab->resultadosOT($this->queryId($r,'ot_id'))]);}
     public function resultados(Request $r,Response $s): Response {$this->auth();return Http::json($s,['resultados'=>$this->lab->resultados($this->queryId($r,'material_id'))]);}
     private function write(Request $r,Response $s,string $method): Response {
         $u=$this->auth();Security::csrf($r);

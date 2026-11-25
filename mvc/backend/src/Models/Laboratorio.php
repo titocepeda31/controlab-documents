@@ -49,8 +49,9 @@ final class Laboratorio {
     private function insert(string $sql,array $args): int {
         $p=$this->db->connection();$q=$p->prepare($sql);$q->execute($args);return (int)$p->lastInsertId();
     }
+    private const SERVICIO_ENSAYOS=['gran'=>['S01'],'ll'=>['S03'],'lp'=>['S04'],'att'=>['S03','S04'],'hum'=>['S02'],'sol'=>['S05'],'proctor'=>['S09','S10'],'maxmin'=>['S11','S12'],'cbr'=>['S13'],'dens'=>['S14','S15'],'cal'=>['S16'],'por'=>['S17'],'cubic'=>['S20'],'la'=>['S21'],'fines'=>['S23'],'sand'=>['S22']];
     public function catalogo(): array {
-        return ['ensayos'=>$this->list('SELECT * FROM lab_ensayos_catalogo ORDER BY codigo'),'campos'=>self::CAMPOS,'requisitos'=>$this->list('SELECT * FROM lab_informe_requisitos ORDER BY codigo')];
+        return ['ensayos'=>$this->list('SELECT * FROM lab_ensayos_catalogo ORDER BY codigo'),'campos'=>self::CAMPOS,'servicio_ensayos'=>self::SERVICIO_ENSAYOS,'requisitos'=>$this->list('SELECT * FROM lab_informe_requisitos ORDER BY codigo')];
     }
     public function tiposMaterial(): array {
         return $this->list('SELECT id,nombre,activo FROM lab_tipos_material ORDER BY activo DESC,nombre,id');
@@ -146,11 +147,29 @@ final class Laboratorio {
         if($field)$this->one('SELECT id FROM lab_puntos_control WHERE id=?',[$pid]);else $this->one('SELECT id FROM lab_muestras WHERE id=?',[$sid]);
         $pdo=$this->db->connection();$pdo->beginTransaction();
         try {
+            $ot=self::id($a,'ot_id');$servicio=self::id($a,'servicio_id');
+            $orden=$this->one("SELECT o.id,v.obra_id FROM ot_ordenes o JOIN ot_obra_vinculos v ON v.ot_id=o.id WHERE o.id=? AND o.estado<>'cancelada' FOR UPDATE",[$ot]);
+            $line=$this->one('SELECT servicio_nombre FROM ot_servicios WHERE ot_id=? AND servicio_id=?',[$ot,$servicio]);
+            $maps=$this->list('SELECT ensayo_codigo FROM servicio_ensayos WHERE servicio_id=?',[$servicio]);
+            $allowed=[];
+            foreach($maps as $m)$allowed=array_merge($allowed,self::SERVICIO_ENSAYOS[$m['ensayo_codigo']]??[]);
+            if(!in_array($code,$allowed,true))throw new InvalidArgumentException('El ensayo no está asociado a este servicio de la OT');
+            $subject=$field
+                ?$this->one('SELECT m.obra_id,p.ot_id FROM lab_puntos_control p JOIN lab_materiales m ON m.id=p.material_id WHERE p.id=?',[$pid])
+                :$this->one('SELECT m.obra_id FROM lab_muestras s JOIN lab_materiales m ON m.id=s.material_id WHERE s.id=?',[$sid]);
+            if((int)$subject['obra_id']!==(int)$orden['obra_id']||($field&&(int)$subject['ot_id']!==$ot))throw new InvalidArgumentException('La muestra o punto no corresponde a la OT');
             $ej=$this->insert('INSERT INTO lab_ejecuciones(muestra_id,punto_id,ensayo_codigo,fecha,creado_por) VALUES(?,?,?,?,?)',[$sid,$pid,$code,$date,$actor]);
+            $this->insert('INSERT INTO lab_ejecucion_ot(ejecucion_id,ot_id,servicio_id,servicio_nombre) VALUES(?,?,?,?)',[$ej,$ot,$servicio,$line['servicio_nombre']]);
             $id=$this->insert('INSERT INTO lab_resultados(ejecucion_id,version,creado_por) VALUES(?,1,?)',[$ej,$actor]);
             $enc=$this->db->reportCrypto()->encryptBytes($id,json_encode($payload,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'lab_resultado');
             $q=$pdo->prepare('UPDATE lab_resultados SET datos=? WHERE id=?');$q->execute([$enc,$id]);$pdo->commit();return $id;
         }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+    }
+    public function resultadosOT(int $ot): array {
+        $this->one('SELECT id FROM ot_ordenes WHERE id=?',[$ot]);
+        $rows=$this->list('SELECT r.id,r.version,r.estado,r.datos,e.ensayo_codigo,e.fecha,c.nombre,COALESCE(m.codigo,p.codigo) AS identificacion,x.servicio_id,x.servicio_nombre FROM lab_ejecucion_ot x JOIN lab_ejecuciones e ON e.id=x.ejecucion_id JOIN lab_resultados r ON r.ejecucion_id=e.id JOIN lab_ensayos_catalogo c ON c.codigo=e.ensayo_codigo LEFT JOIN lab_muestras m ON m.id=e.muestra_id LEFT JOIN lab_puntos_control p ON p.id=e.punto_id WHERE x.ot_id=? ORDER BY r.id DESC LIMIT 100',[$ot]);
+        foreach($rows as &$row)$row['datos']=json_decode($this->db->reportCrypto()->decryptBytes((int)$row['id'],(string)$row['datos'],'lab_resultado'),true,512,JSON_THROW_ON_ERROR);
+        unset($row);return $rows;
     }
     public function resultados(int $material): array {
         $this->one('SELECT id FROM lab_materiales WHERE id=?',[$material]);
