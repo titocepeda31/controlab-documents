@@ -1,7 +1,7 @@
 /* Controlab / Tabler shared application shell. Keeps existing module DOM and event bindings intact. */
 (()=>{'use strict';
 const page=location.pathname.split('/').pop()||'dashboard.html';
-const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard'],['cotizaciones.html','Cotizaciones','manager','file-text'],['planificador.html','Órdenes de trabajo','all','calendar-days'],['empresas.html','Empresas y obras','manager','building-2'],['servicios.html','Servicios','manager','clipboard-list'],['personal.html','Personal de terreno','manager','users'],['formulario.html','Informes (prototipo)','all','file-text'],['usuarios.html','Usuarios','admin','settings']];
+const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard'],['cotizaciones.html','Cotizaciones','manager','file-text'],['planificador.html','Órdenes de trabajo','all','calendar-days'],['empresas.html','Empresas y obras','manager','building-2'],['servicios.html','Servicios','manager','clipboard-list'],['personal.html','Personal de terreno','manager','users'],['informes.html','Informes','all','file-text'],['formulario.html','Registro anterior','all','file-text'],['usuarios.html','Usuarios','admin','settings']];
 
 const isForm=page==='formulario.html';
 if(!isForm)document.documentElement.classList.add('cl-session-pending');
