@@ -28,6 +28,15 @@ final class LaboratorioController {
         catch(PDOException $e){if($e->getCode()==='23000')throw new RuntimeException('Registro duplicado o vínculo inválido',409);throw $e;}
         return Http::json($s,['id'=>$id],201);
     }
+    public function tiposMaterial(Request $r,Response $s): Response {$this->auth();return Http::json($s,['tipos'=>$this->lab->tiposMaterial()]);}
+    public function crearTipoMaterial(Request $r,Response $s): Response {return $this->write($r,$s,'crearTipoMaterial');}
+    public function editarTipoMaterial(Request $r,Response $s,array $args): Response {
+        $u=$this->auth();Security::csrf($r);
+        try{$this->lab->editarTipoMaterial((int)$args['id'],Http::jsonBody($r),(int)$u['id']);}
+        catch(PDOException $e){if($e->getCode()==='23000')throw new RuntimeException('Ya existe un tipo con ese nombre',409);throw $e;}
+        return Http::json($s,['ok'=>true]);
+    }
+    public function clasificarMaterial(Request $r,Response $s): Response {return $this->write($r,$s,'clasificarMaterial');}
     public function crearMaterial(Request $r,Response $s): Response {return $this->write($r,$s,'crearMaterial');}
     public function crearMuestra(Request $r,Response $s): Response {return $this->write($r,$s,'crearMuestra');}
     public function crearPunto(Request $r,Response $s): Response {return $this->write($r,$s,'crearPunto');}

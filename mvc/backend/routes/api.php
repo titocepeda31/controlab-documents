@@ -68,3 +68,8 @@ $app->post('/api/laboratorio/muestras',[$laboratorioController,'crearMuestra']);
 $app->post('/api/laboratorio/puntos',[$laboratorioController,'crearPunto']);
 $app->get('/api/laboratorio/resultados',[$laboratorioController,'resultados']);
 $app->post('/api/laboratorio/resultados',[$laboratorioController,'registrar']);
+
+$app->get('/api/laboratorio/tipos-material',[$laboratorioController,'tiposMaterial']);
+$app->post('/api/laboratorio/tipos-material',[$laboratorioController,'crearTipoMaterial']);
+$app->put('/api/laboratorio/tipos-material/{id:[0-9]+}',[$laboratorioController,'editarTipoMaterial']);
+$app->post('/api/laboratorio/materiales/clasificar',[$laboratorioController,'clasificarMaterial']);

@@ -52,13 +52,55 @@ final class Laboratorio {
     public function catalogo(): array {
         return ['ensayos'=>$this->list('SELECT * FROM lab_ensayos_catalogo ORDER BY codigo'),'campos'=>self::CAMPOS,'requisitos'=>$this->list('SELECT * FROM lab_informe_requisitos ORDER BY codigo')];
     }
+    public function tiposMaterial(): array {
+        return $this->list('SELECT id,nombre,activo FROM lab_tipos_material ORDER BY activo DESC,nombre,id');
+    }
+    public function crearTipoMaterial(array $a,int $actor): int {
+        return $this->insert('INSERT INTO lab_tipos_material(nombre,creado_por,actualizado_por) VALUES(?,?,?)',[self::texto($a,'nombre',100),$actor,$actor]);
+    }
+    public function editarTipoMaterial(int $id,array $a,int $actor): void {
+        if(!is_bool($a['activo']??null))throw new InvalidArgumentException('Estado inválido');
+        $this->one('SELECT id FROM lab_tipos_material WHERE id=?',[$id]);
+        $q=$this->db->connection()->prepare('UPDATE lab_tipos_material SET nombre=?,activo=?,actualizado_por=? WHERE id=?');
+        $q->execute([self::texto($a,'nombre',100),(int)$a['activo'],$actor,$id]);
+    }
+    private static function opcional(array $a,string $key,int $max): string {
+        $v=$a[$key]??'';
+        if(!is_string($v)||mb_strlen(trim($v))>$max)throw new InvalidArgumentException('Campo inválido: '.$key);
+        return trim($v);
+    }
+    private static function detalleMaterial(array $a): array {
+        return [self::id($a,'tipo_id'),self::opcional($a,'identificacion',75),self::opcional($a,'procedencia',180),self::opcional($a,'proveedor',180),self::opcional($a,'observaciones',500)];
+    }
+    private function guardarDetalle(int $material,array $data,int $actor): void {
+        $q=$this->db->connection()->prepare('INSERT INTO lab_material_detalle(material_id,tipo_id,identificacion,procedencia,proveedor,observaciones,creado_por) VALUES(?,?,?,?,?,?,?)');
+        $q->execute([$material,...$data,$actor]);
+    }
     public function materiales(int $obra): array {
         $this->one('SELECT id FROM obras WHERE id=?',[$obra]);
-        return $this->list('SELECT id,nombre,obra_id FROM lab_materiales WHERE obra_id=? ORDER BY nombre LIMIT 500',[$obra]);
+        return $this->list('SELECT m.id,m.nombre,m.obra_id,d.tipo_id,t.nombre AS tipo,d.identificacion,d.procedencia,d.proveedor,d.observaciones FROM lab_materiales m LEFT JOIN lab_material_detalle d ON d.material_id=m.id LEFT JOIN lab_tipos_material t ON t.id=d.tipo_id WHERE m.obra_id=? ORDER BY m.nombre LIMIT 500',[$obra]);
     }
     public function crearMaterial(array $a,int $actor): int {
-        $obra=self::id($a,'obra_id');$this->one('SELECT id FROM obras WHERE id=? AND activo=1',[$obra]);
-        return $this->insert('INSERT INTO lab_materiales(obra_id,nombre,creado_por) VALUES(?,?,?)',[$obra,self::texto($a,'nombre',180),$actor]);
+        $obra=self::id($a,'obra_id');$data=self::detalleMaterial($a);
+        $pdo=$this->db->connection();$pdo->beginTransaction();
+        try{
+            $this->one('SELECT id FROM obras WHERE id=? AND activo=1',[$obra]);
+            $tipo=$this->one('SELECT nombre FROM lab_tipos_material WHERE id=? AND activo=1 FOR UPDATE',[$data[0]]);
+            $nombre=$tipo['nombre'].($data[1]!==''?' · '.$data[1]:'');
+            if(mb_strlen($nombre)>180)throw new InvalidArgumentException('Identificación demasiado larga');
+            $id=$this->insert('INSERT INTO lab_materiales(obra_id,nombre,creado_por) VALUES(?,?,?)',[$obra,$nombre,$actor]);
+            $this->guardarDetalle($id,$data,$actor);$pdo->commit();return $id;
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+    }
+    public function clasificarMaterial(array $a,int $actor): int {
+        $material=self::id($a,'material_id');$data=self::detalleMaterial($a);
+        $pdo=$this->db->connection();$pdo->beginTransaction();
+        try{
+            $this->one('SELECT id FROM lab_materiales WHERE id=? FOR UPDATE',[$material]);
+            $this->one('SELECT id FROM lab_tipos_material WHERE id=? AND activo=1 FOR UPDATE',[$data[0]]);
+            if($this->list('SELECT material_id FROM lab_material_detalle WHERE material_id=?',[$material]))throw new RuntimeException('Material ya clasificado; no se modifica su identidad técnica',409);
+            $this->guardarDetalle($material,$data,$actor);$pdo->commit();return $material;
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
     }
     public function sujetos(int $material): array {
         $this->one('SELECT id FROM lab_materiales WHERE id=?',[$material]);
