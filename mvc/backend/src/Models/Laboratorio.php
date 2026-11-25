@@ -292,6 +292,9 @@ final class Laboratorio {
             $this->estudioEvento($id,$actor,'referencia_preparada');$pdo->commit();return $id;
         }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
     }
+    public function obraEstudios(int $id): array {
+        return $this->one('SELECT o.id,o.nombre,o.activo,e.razon_social AS empresa FROM obras o JOIN empresas e ON e.id=o.empresa_id WHERE o.id=?',[$id]);
+    }
     public function estudiosMaterial(int $material): array {
         $this->one('SELECT id FROM lab_materiales WHERE id=?',[$material]);
         return $this->list("SELECT e.id,e.codigo,e.origen,e.estado,r.id AS referencia_id,r.metodo,r.version,r.estado AS referencia_estado FROM lab_estudios e LEFT JOIN lab_referencias r ON r.estudio_id=e.id AND r.estado IN ('borrador','aprobado') WHERE e.material_id=? AND e.estado IN ('borrador','aprobado') ORDER BY e.id DESC,r.version DESC LIMIT 100",[$material]);

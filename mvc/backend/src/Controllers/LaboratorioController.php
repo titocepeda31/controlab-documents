@@ -24,6 +24,7 @@ final class LaboratorioController {
     public function prepararEstudio(Request $r,Response $s): Response {return $this->write($r,$s,'prepararEstudio');}
     public function estudioDetalle(Request $r,Response $s): Response {$this->auth();return Http::json($s,['estudio'=>$this->lab->estudioDetalle($this->queryId($r,'estudio_id'))]);}
     public function resultadosEstudio(Request $r,Response $s): Response {$this->auth();return Http::json($s,['resultados'=>$this->lab->resultadosEstudio($this->queryId($r,'estudio_id'))]);}
+    public function obraEstudios(Request $r,Response $s): Response {$this->auth();return Http::json($s,['obra'=>$this->lab->obraEstudios($this->queryId($r,'obra_id'))]);}
     public function estudiosMaterial(Request $r,Response $s): Response {$this->auth();return Http::json($s,['estudios'=>$this->lab->estudiosMaterial($this->queryId($r,'material_id'))]);}
     public function sujetos(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->sujetos($this->queryId($r,'material_id')));}
     public function tareasOT(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->tareasOT($this->queryId($r,'ot_id')));}

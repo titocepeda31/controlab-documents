@@ -86,3 +86,5 @@ $app->post('/api/laboratorio/estudios',[$laboratorioController,'crearEstudio']);
 $app->post('/api/laboratorio/estudios/preparar',[$laboratorioController,'prepararEstudio']);
 $app->get('/api/laboratorio/estudio',[$laboratorioController,'estudioDetalle']);
 $app->get('/api/laboratorio/resultados-estudio',[$laboratorioController,'resultadosEstudio']);
+
+$app->get('/api/laboratorio/obra',[$laboratorioController,'obraEstudios']);
