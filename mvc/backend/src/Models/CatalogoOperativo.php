@@ -183,14 +183,22 @@ final class CatalogoOperativo {
         if($s['moneda_base']!==$moneda){if(!$uf)return null;$base=$moneda==='CLP'?$base*(float)$uf['valor']:$base/(float)$uf['valor'];}
         return number_format($base,$moneda==='CLP'?0:4,'.','');
     }
+    private const ENSAYOS_PILOTO = ['gran','ll','lp','att','hum','sol','uscs','proctor','maxmin','cbr','dens','cal','por','cubic','la','fines','sand'];
+    public static function validarEnsayos(mixed $input): array {
+        if(!is_array($input)||count($input)>count(self::ENSAYOS_PILOTO))throw new InvalidArgumentException('Lista de ensayos inválida');
+        foreach($input as $code)if(!is_string($code)||!in_array($code,self::ENSAYOS_PILOTO,true))throw new InvalidArgumentException('Ensayo no reconocido');
+        return array_values(array_unique($input));
+    }
     public function servicios(): array {
         $uf=$this->ufDiaria();$rows=$this->db->connection()->query('SELECT id,nombre,unidad,descripcion,activo,moneda_base,precio_base FROM catalogo_servicios ORDER BY nombre,id LIMIT 1000')->fetchAll(PDO::FETCH_ASSOC);
-        foreach($rows as &$s){$s['precio_clp']=self::tarifa($s,'CLP',$uf);$s['precio_uf']=self::tarifa($s,'UF',$uf);$s['uf_referencia']=$uf;}unset($s);return $rows;
+        $map=[];foreach($this->db->connection()->query('SELECT servicio_id,ensayo_codigo FROM servicio_ensayos ORDER BY ensayo_codigo')->fetchAll(PDO::FETCH_ASSOC) as $m)$map[(int)$m['servicio_id']][]=$m['ensayo_codigo'];
+        foreach($rows as &$s){$s['ensayos']=$map[(int)$s['id']]??[];$s['precio_clp']=self::tarifa($s,'CLP',$uf);$s['precio_uf']=self::tarifa($s,'UF',$uf);$s['uf_referencia']=$uf;}unset($s);return $rows;
     }
     public function historialServicio(int $id,array $query): array {
         return Paginator::run($this->db->connection(),'SELECT h.*','FROM servicios_precios_historial h WHERE h.servicio_id=?','h.id DESC',[$id],$query);
     }
     public function saveServicio(array $data,?int $id=null,?int $actor=null): int {
+        $ensayos=array_key_exists('ensayos',$data)?self::validarEnsayos($data['ensayos']):null;
         $nombre=self::text($data,'nombre',180);$unidad=self::text($data,'unidad',60);$descripcion=self::text($data,'descripcion',500,false);
         if($id!==null&&!is_bool($data['activo']??null))throw new InvalidArgumentException('Indica si el servicio está activo');
         $pdo=$this->db->connection();$pdo->beginTransaction();
@@ -207,6 +215,11 @@ final class CatalogoOperativo {
                     $q=$pdo->prepare('INSERT INTO servicios_precios_historial(servicio_id,moneda_anterior,precio_anterior,moneda_nueva,precio_nuevo,usuario_id,motivo) VALUES(?,?,?,?,?,?,?)');$q->execute([$id,$old['moneda_base'],$old['precio_base'],$currency,$price,$actor,$reason?:'Tarifa inicial']);
                     $q=$pdo->prepare('UPDATE catalogo_servicios SET moneda_base=?,precio_base=?,precio_actualizado_el=NOW(),precio_clp=?,precio_uf=? WHERE id=?');$q->execute([$currency,$price,$currency==='CLP'?$price:null,$currency==='UF'?$price:null,$id]);
                 }
+            }
+            if($ensayos!==null){
+                $q=$pdo->prepare('DELETE FROM servicio_ensayos WHERE servicio_id=?');$q->execute([$id]);
+                $q=$pdo->prepare('INSERT INTO servicio_ensayos(servicio_id,ensayo_codigo) VALUES(?,?)');
+                foreach($ensayos as $code)$q->execute([$id,$code]);
             }
             $pdo->commit();return $id;
         }catch(\Throwable $e){if($pdo->inTransaction())$pdo->rollBack();if($e instanceof PDOException&&$e->getCode()==='23000')throw new RuntimeException('Ya existe un servicio con ese nombre',409);throw $e;}

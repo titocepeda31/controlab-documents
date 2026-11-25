@@ -241,10 +241,11 @@ final class OrdenTrabajo {
         if(!$items)return;
         $ids=array_map(static fn($item)=>(int)$item['id'],$items);
         $marks=implode(',',array_fill(0,count($ids),'?'));
-        $q=$this->db->connection()->prepare("SELECT ot_id,servicio_id,servicio_nombre AS nombre,unidad,cantidad FROM ot_servicios WHERE ot_id IN ($marks) ORDER BY servicio_nombre");
+        $q=$this->db->connection()->prepare("SELECT s.ot_id,s.servicio_id,s.servicio_nombre AS nombre,s.unidad,s.cantidad,(SELECT GROUP_CONCAT(m.ensayo_codigo ORDER BY m.ensayo_codigo) FROM servicio_ensayos m WHERE m.servicio_id=s.servicio_id) AS ensayo_codigos FROM ot_servicios s WHERE s.ot_id IN ($marks) ORDER BY s.servicio_nombre");
         $q->execute($ids);$group=[];
         foreach($q->fetchAll(PDO::FETCH_ASSOC) as $line){
             $line['servicio_id']=(int)$line['servicio_id'];$line['cantidad']=(int)$line['cantidad'];
+            $line['ensayos']=empty($line['ensayo_codigos'])?[]:explode(',',$line['ensayo_codigos']);unset($line['ensayo_codigos']);
             $group[(int)$line['ot_id']][]=$line;
         }
         foreach($items as &$item)$item['servicios']=$group[(int)$item['id']]??[];

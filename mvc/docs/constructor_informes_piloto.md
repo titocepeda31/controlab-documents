@@ -9,3 +9,6 @@ Ruta pública: `/demo/informes.html`. Usa el shell y sesión existentes; no sust
 Entrar con sesión, abrir Informes y pulsar Cargar ejemplo ficticio. Deben aparecer cinco secciones; IP 14,8 %, fracción fina 42 %, DCS 2,146 g/cm³ y compactación 98,4 % (aprox.). Cambiar DMCS a 1,82: aviso de compactación superior a 100 %. Agregar otra densidad, eliminar una sección, verificar vista previa e impresión. Consultar OT de un rango y comprobar servicios. Recargar: los resultados de prueba desaparecen.
 
 El registro anterior queda fuera de la navegación del constructor y del menú principal. Se conserva su URL y código, incluido el login compartido, para una futura integración independiente.
+
+## Relación comercial y técnica
+Migración previa: `mvc/database/vincular_servicios_ensayos.sql`. En Servicios, editar un servicio y seleccionar uno o más ensayos. Se conservan tarifas y su historial. No se insertan nuevos servicios o precios automáticamente para evitar duplicados. En Informes, consultar OT, elegirla y pulsar Agregar ensayos de este servicio. Las sugerencias reflejan la configuración vigente; el histórico de composición de servicios y el número de ejecuciones por unidad comercial aún deben definirse antes de producción. El informe piloto no persiste resultados ni factura.

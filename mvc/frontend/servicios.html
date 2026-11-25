@@ -74,7 +74,7 @@
 <div class="field mb-2"><label for="precioBase">Tarifa base</label><input class="form-control" id="precioBase" type="number" min="0" step="1"></div>
 <div class="field mb-2"><label>Equivalencia automática</label><output id="equivalencia" class="form-control-plaintext"></output><small id="ufFecha" class="text-secondary"></small></div>
 <div class="field mb-2"><label for="motivoPrecio">Motivo del cambio de tarifa</label><input class="form-control" id="motivoPrecio" maxlength="500"></div>
-<div class="field full"><label for="servicioDescripcion">Descripción (opcional)</label><textarea id="servicioDescripcion" maxlength="500"></textarea></div><div class="mb-3" id="servicioActiveWrap" hidden><label class="form-check form-switch"><input class="form-check-input" id="servicioActivo" type="checkbox" role="switch" checked><span class="form-check-label">Servicio activo</span></label></div>
+<div class="field full"><label>Ensayos incluidos en el servicio</label><p class="text-secondary small mb-2">Selecciona uno o varios. El precio corresponde al servicio completo, no a cada sección del informe.</p><div id="servicioEnsayos" class="row g-2"></div><small class="text-secondary">Deja sin selección para servicios sin ensayo asociado (por ejemplo, traslado).</small></div><div class="field full"><label for="servicioDescripcion">Descripción (opcional)</label><textarea id="servicioDescripcion" maxlength="500"></textarea></div><div class="mb-3" id="servicioActiveWrap" hidden><label class="form-check form-switch"><input class="form-check-input" id="servicioActivo" type="checkbox" role="switch" checked><span class="form-check-label">Servicio activo</span></label></div>
    </div><div class="actions"><button class="btn btn-primary primary" id="guardarServicio" type="submit">Agregar servicio</button><button class="btn" id="cancelServicio" type="button" hidden>Cancelar edición</button></div><div id="servicioNotice" class="notice" role="status" aria-live="polite"></div></form>
    <div class="section-title" style="margin-top:25px"><h2>Servicios registrados</h2><span id="servicioCount" class="help"></span></div>
    <div class="card-list" id="serviciosList"></div>
@@ -170,6 +170,13 @@ function renderWorks(){
  }
 }
 
+const ensayoCatalogo=[["gran","Granulometría"],["ll","Límite líquido"],["lp","Límite plástico"],["att","Límites de Atterberg e IP"],["hum","Humedad natural"],["sol","Densidad de partículas sólidas"],["uscs","Clasificación USCS / AASHTO"],["proctor","Proctor normal / modificado"],["maxmin","Densidad máxima y mínima"],["cbr","CBR"],["dens","Densidad en terreno"],["cal","Calicata / estratigrafía"],["por","Infiltración Porchet"],["cubic","Cubicidad de partículas"],["la","Desgaste Los Ángeles"],["fines","Material fino menor a 0,080 mm"],["sand","Equivalente de arena"]];
+function renderEnsayoOpciones(){
+ const root=$('servicioEnsayos');
+ for(const [code,name] of ensayoCatalogo){const col=elem('div','col-12 col-md-6');const label=elem('label','form-check');const check=elem('input','form-check-input');check.type='checkbox';check.value=code;check.name='ensayoServicio';const span=elem('span','form-check-label',name);label.append(check,span);col.append(label);root.append(col);}
+}
+function setEnsayos(codes){for(const box of $('servicioEnsayos').querySelectorAll('input'))box.checked=codes.includes(box.value);}
+renderEnsayoOpciones();
 let ufActual=null;
 function conversion(){const currency=$('monedaBase').value;const input=$('precioBase');input.step=currency==='CLP'?'1':'0.0001';const uf=ufActual||services.find(s=>s.uf_referencia)?.uf_referencia;
 $('ufFecha').textContent=uf?'UF '+uf.fecha+' · CLP '+Number(uf.valor).toLocaleString('es-CL'):'UF del día no disponible';
@@ -184,6 +191,7 @@ function renderServices(){
   const card=elem('article','record'),meta=elem('div');
   meta.append(elem('strong','',s.nombre),elem('small','','Unidad: '+s.unidad));
   meta.append(elem('small','','CLP: '+(s.precio_clp??'Sin tarifa')+' · UF: '+(s.precio_uf??'Sin tarifa')));
+  meta.append(elem('small','', (s.ensayos||[]).length?'Ensayos: '+ensayoCatalogo.filter(([code])=>s.ensayos.includes(code)).map(x=>x[1]).join(' · '):'Sin ensayos vinculados'));
   if(s.descripcion)meta.append(elem('small','',s.descripcion));
   meta.append(elem('span','status'+(Number(s.activo)?'':' off'),Number(s.activo)?'Activo':'Inactivo'));
   const btn=elem('button','btn','Editar');btn.type='button';btn.addEventListener('click',()=>editService(s.id));
@@ -193,7 +201,7 @@ function renderServices(){
 function editService(id){
  const s=services.find(x=>Number(x.id)===Number(id));if(!s)return;
  tab('servicios');editServicio=Number(id);
- $('servicioNombre').value=s.nombre;$('servicioUnidad').value=s.unidad;
+ $('servicioNombre').value=s.nombre;$('servicioUnidad').value=s.unidad;setEnsayos(s.ensayos||[]);
  $('monedaBase').value=s.moneda_base||'CLP';$('precioBase').value=s.precio_base===null?'':Number(s.precio_base);$('motivoPrecio').value='';conversion();$('servicioDescripcion').value=s.descripcion||'';$('servicioActivo').checked=Number(s.activo)===1;
  $('servicioActiveWrap').hidden=false;$('guardarServicio').textContent='Guardar cambios';$('cancelServicio').hidden=false;
  $('servicioForm').scrollIntoView({behavior:'smooth',block:'start'});
@@ -207,6 +215,7 @@ $('servicioForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('guardarServicio');btn.disabled=true;
  try{
   const data={nombre:$('servicioNombre').value.trim(),unidad:$('servicioUnidad').value.trim(),descripcion:$('servicioDescripcion').value.trim()};
+  data.ensayos=Array.from($('servicioEnsayos').querySelectorAll('input:checked'),x=>x.value);
   data.moneda_base=$('monedaBase').value;data.precio_base=$('precioBase').value;data.motivo=$('motivoPrecio').value;
   if(editServicio!==null)data.activo=$('servicioActivo').checked;
   await write(editServicio===null?'/catalogo/servicios':'/catalogo/servicios/'+editServicio,editServicio===null?'POST':'PUT',data);
