@@ -20,6 +20,7 @@ final class LaboratorioController {
     }
     public function catalogo(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->catalogo());}
     public function materiales(Request $r,Response $s): Response {$this->auth();return Http::json($s,['materiales'=>$this->lab->materiales($this->queryId($r,'obra_id'))]);}
+    public function estudiosMaterial(Request $r,Response $s): Response {$this->auth();return Http::json($s,['estudios'=>$this->lab->estudiosMaterial($this->queryId($r,'material_id'))]);}
     public function sujetos(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->sujetos($this->queryId($r,'material_id')));}
     public function tareasOT(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->tareasOT($this->queryId($r,'ot_id')));}
     public function prepararTareas(Request $r,Response $s): Response {

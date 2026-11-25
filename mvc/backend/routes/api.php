@@ -79,3 +79,5 @@ $app->get('/api/laboratorio/resultados-ot',[$laboratorioController,'resultadosOT
 $app->get('/api/laboratorio/tareas',[$laboratorioController,'tareasOT']);
 $app->post('/api/laboratorio/tareas/preparar',[$laboratorioController,'prepararTareas']);
 $app->get('/api/laboratorio/tareas/resumen',[$laboratorioController,'resumenTareas']);
+
+$app->get('/api/laboratorio/estudios-material',[$laboratorioController,'estudiosMaterial']);

@@ -175,6 +175,10 @@ final class Laboratorio {
             $this->guardarDetalle($material,$data,$actor);$pdo->commit();return $material;
         }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
     }
+    public function estudiosMaterial(int $material): array {
+        $this->one('SELECT id FROM lab_materiales WHERE id=?',[$material]);
+        return $this->list("SELECT e.id,e.codigo,e.origen,e.estado,r.metodo,r.version,r.estado AS referencia_estado FROM lab_estudios e LEFT JOIN lab_referencias r ON r.estudio_id=e.id AND r.estado IN ('borrador','aprobado') WHERE e.material_id=? AND e.estado IN ('borrador','aprobado') ORDER BY e.id DESC,r.version DESC LIMIT 100",[$material]);
+    }
     public function sujetos(int $material): array {
         $this->one('SELECT id FROM lab_materiales WHERE id=?',[$material]);
         return ['muestras'=>$this->list('SELECT id,codigo,fecha FROM lab_muestras WHERE material_id=? ORDER BY id DESC LIMIT 500',[$material]),'puntos'=>$this->list('SELECT p.id,p.codigo,p.ot_id,o.numero_ot FROM lab_puntos_control p JOIN ot_ordenes o ON o.id=p.ot_id WHERE p.material_id=? ORDER BY p.id DESC LIMIT 500',[$material])];
