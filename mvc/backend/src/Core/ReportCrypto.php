@@ -54,7 +54,7 @@ final class ReportCrypto {
     }
 
     public function encryptBytes(int $reportId, string $bytes, string $purpose): string {
-        if ($reportId < 1 || !in_array($purpose,['datos','firma','firma_laboratorista','lab_resultado','lab_referencia'],true)) {
+        if ($reportId < 1 || !in_array($purpose,['datos','firma','firma_laboratorista','lab_resultado','lab_referencia','lab_estudio'],true)) {
             throw new RuntimeException('Contexto de cifrado inválido');
         }
         $nonce = random_bytes(12);
@@ -70,7 +70,7 @@ final class ReportCrypto {
     }
 
     public function decryptBytes(int $reportId, string $stored, string $purpose, bool $allowLegacy=false): string {
-        if ($reportId < 1 || !in_array($purpose,['datos','firma','firma_laboratorista','lab_resultado','lab_referencia'],true)) {
+        if ($reportId < 1 || !in_array($purpose,['datos','firma','firma_laboratorista','lab_resultado','lab_referencia','lab_estudio'],true)) {
             throw new RuntimeException('Contexto de descifrado inválido');
         }
         if (!self::isEncrypted($stored)) {

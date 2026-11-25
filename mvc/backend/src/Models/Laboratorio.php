@@ -175,9 +175,126 @@ final class Laboratorio {
             $this->guardarDetalle($material,$data,$actor);$pdo->commit();return $material;
         }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
     }
+    private function estudioEvento(int $id,int $actor,string $accion): void {
+        $q=$this->db->connection()->prepare('INSERT INTO lab_estudio_eventos(estudio_id,actor_id,accion) VALUES(?,?,?)');
+        $q->execute([$id,$actor,$accion]);
+    }
+    public function crearEstudio(array $a,int $actor): int {
+        $material=self::id($a,'material_id');$fecha=self::fecha($a);
+        $origen=$a['origen']??'';
+        if(!in_array($origen,['propio','cliente','proveedor'],true))throw new InvalidArgumentException('Origen inválido');
+        $codigo=self::texto($a,'codigo',80);
+        $ot=empty($a['ot_id'])?null:self::id($a,'ot_id');
+        $ficha=['documento'=>self::opcional($a,'documento',180),'emisor'=>self::opcional($a,'emisor',180),'observaciones'=>self::opcional($a,'observaciones',500)];
+        if($origen!=='propio'&&($ficha['documento']===''||$ficha['emisor']===''))throw new InvalidArgumentException('Indica el documento externo y su emisor');
+        $pdo=$this->db->connection();$pdo->beginTransaction();
+        try{
+            $m=$this->one('SELECT obra_id FROM lab_materiales WHERE id=?',[$material]);
+            if($ot!==null)$this->one("SELECT o.id FROM ot_ordenes o JOIN ot_obra_vinculos v ON v.ot_id=o.id WHERE o.id=? AND v.obra_id=? AND o.estado<>'cancelada'",[$ot,(int)$m['obra_id']]);
+            $id=$this->insert('INSERT INTO lab_estudios(material_id,codigo,origen,creado_por) VALUES(?,?,?,?)',[$material,$codigo,$origen,$actor]);
+            // Contexto exclusivo para la ficha, distinto de las referencias y resultados.
+            $enc=$this->db->reportCrypto()->encryptBytes($id,json_encode($ficha,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'lab_estudio');
+            $q=$pdo->prepare('INSERT INTO lab_estudio_ficha(estudio_id,ot_id,fecha,datos,actualizado_por) VALUES(?,?,?,?,?)');$q->execute([$id,$ot,$fecha,$enc,$actor]);
+            $this->estudioEvento($id,$actor,'creado');
+            $pdo->commit();return $id;
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+    }
+    private function abrirDatos(int $id,string $datos,string $purpose): array {
+        return json_decode($this->db->reportCrypto()->decryptBytes($id,$datos,$purpose),true,512,JSON_THROW_ON_ERROR);
+    }
+    public function estudioDetalle(int $id): array {
+        $e=$this->one('SELECT e.*,f.fecha,f.ot_id,f.datos AS ficha FROM lab_estudios e LEFT JOIN lab_estudio_ficha f ON f.estudio_id=e.id WHERE e.id=?',[$id]);
+        $e['ficha']=$e['ficha']===null?null:$this->abrirDatos($id,$e['ficha'],'lab_estudio');
+        $e['resultados']=array_map('intval',array_column($this->list('SELECT resultado_id FROM lab_estudio_resultados WHERE estudio_id=?',[$id]),'resultado_id'));
+        $refs=$this->list('SELECT id,metodo,version,estado,datos FROM lab_referencias WHERE estudio_id=? ORDER BY id DESC',[$id]);
+        foreach($refs as &$r)$r['datos']=$r['datos']===null?null:$this->abrirDatos((int)$r['id'],$r['datos'],'lab_referencia');
+        unset($r);$e['referencias']=$refs;
+        $e['eventos']=$this->list('SELECT actor_id,accion,fecha FROM lab_estudio_eventos WHERE estudio_id=? ORDER BY id DESC LIMIT 100',[$id]);
+        return $e;
+    }
+    public function resultadosEstudio(int $id): array {
+        $e=$this->one('SELECT material_id,origen FROM lab_estudios WHERE id=?',[$id]);
+        if($e['origen']!=='propio')return [];
+        $rows=$this->list("SELECT r.id,r.version,r.estado,r.datos,x.ensayo_codigo,x.fecha,c.nombre,m.codigo AS muestra,m.id AS muestra_id FROM lab_resultados r JOIN lab_ejecuciones x ON x.id=r.ejecucion_id JOIN lab_muestras m ON m.id=x.muestra_id JOIN lab_ensayos_catalogo c ON c.codigo=x.ensayo_codigo WHERE m.material_id=? AND r.estado IN ('borrador','aprobado') ORDER BY r.id DESC LIMIT 500",[(int)$e['material_id']]);
+        foreach($rows as &$r)$r['datos']=$this->abrirDatos((int)$r['id'],$r['datos'],'lab_resultado');
+        unset($r);return $rows;
+    }
+    private static function densValor(mixed $v,string $campo): float {
+        if(!is_int($v)&&!is_float($v)&&!(is_string($v)&&preg_match('/^\d+(?:[.,]\d+)?$/D',$v)))throw new InvalidArgumentException('Valor inválido: '.$campo);
+        $n=(float)str_replace(',','.',(string)$v);
+        if(!is_finite($n)||$n<=0||$n>10)throw new InvalidArgumentException('Densidad inválida: '.$campo);
+        return $n;
+    }
+    public static function referenciaPropia(array $rows): array {
+        $p=[];$mins=[];$maxs=[];
+        foreach($rows as $r){
+            $code=$r['ensayo_codigo'];$v=$r['datos']['resultados']??[];
+            if(in_array($code,['S09','S10'],true))$p[]=[$r,$v];
+            if($code==='S11')$mins[]=[$r,$v];
+            if($code==='S12')$maxs[]=[$r,$v];
+        }
+        if(!$p&&!$mins&&!$maxs)return [];
+        if(count($p)>1||count($mins)>1||count($maxs)>1||($p&&($mins||$maxs)))throw new InvalidArgumentException('Selecciona un único Proctor o un par máxima/mínima; no mezcles referencias');
+        if($p){
+            [$r,$v]=$p[0];
+            return ['metodo'=>'proctor','valores'=>['dmcs'=>self::densValor($v['dmcs']??null,'DMCS'),'ho'=>$v['ho']??null,'tipo'=>$r['ensayo_codigo']==='S09'?'normal':'modificado'],'ids'=>[(int)$r['id']]];
+        }
+        if(!$mins||!$maxs)return []; // Estudio en preparación: falta la otra densidad.
+        [$a,$av]=$mins[0];[$b,$bv]=$maxs[0];
+        if((int)$a['muestra_id']!==(int)$b['muestra_id'])throw new InvalidArgumentException('Máxima y mínima deben corresponder a la misma muestra en este piloto');
+        $min=self::densValor($av['dmin']??null,'mínima');$max=self::densValor($bv['dmax']??null,'máxima');
+        if($max<=$min)throw new InvalidArgumentException('La máxima debe ser superior a la mínima');
+        return ['metodo'=>'relativa','valores'=>['dmin'=>$min,'dmax'=>$max],'ids'=>[(int)$a['id'],(int)$b['id']]];
+    }
+    private function guardarReferencia(int $estudio,array $ref,int $actor): int {
+        $r=$this->list('SELECT MAX(version) AS ultima FROM lab_referencias WHERE estudio_id=? AND metodo=?',[$estudio,$ref['metodo']]);
+        $version=1+(int)($r[0]['ultima']??0);
+        $id=$this->insert('INSERT INTO lab_referencias(estudio_id,metodo,version,creado_por) VALUES(?,?,?,?)',[$estudio,$ref['metodo'],$version,$actor]);
+        $enc=$this->db->reportCrypto()->encryptBytes($id,json_encode($ref['valores'],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'lab_referencia');
+        $pdo=$this->db->connection();$q=$pdo->prepare('UPDATE lab_referencias SET datos=? WHERE id=?');$q->execute([$enc,$id]);
+        $q=$pdo->prepare('INSERT INTO lab_referencia_resultados(referencia_id,resultado_id) VALUES(?,?)');
+        foreach($ref['ids']??[] as $rid)$q->execute([$id,$rid]);
+        return $id;
+    }
+    public function prepararEstudio(array $a,int $actor): int {
+        $id=self::id($a,'estudio_id');$pdo=$this->db->connection();$pdo->beginTransaction();
+        try{
+            $e=$this->one('SELECT * FROM lab_estudios WHERE id=? FOR UPDATE',[$id]);
+            if($e['estado']!=='borrador')throw new RuntimeException('El estudio no está en borrador',409);
+            $this->one('SELECT estudio_id FROM lab_estudio_ficha WHERE estudio_id=?',[$id]);
+            $ref=[];$ids=[];
+            if($e['origen']==='propio'){
+                $raw=$a['resultado_ids']??null;
+                if(!is_array($raw)||count($raw)>100)throw new InvalidArgumentException('Selecciona hasta 100 resultados');
+                $rows=[];
+                foreach($raw as $rid){
+                    $rid=self::id(['id'=>$rid],'id');if(in_array($rid,$ids,true))continue;
+                    $r=$this->one("SELECT r.id,r.datos,x.ensayo_codigo,m.id AS muestra_id FROM lab_resultados r JOIN lab_ejecuciones x ON x.id=r.ejecucion_id JOIN lab_muestras m ON m.id=x.muestra_id WHERE r.id=? AND m.material_id=? AND r.estado IN ('borrador','aprobado')",[$rid,(int)$e['material_id']]);
+                    $r['datos']=$this->abrirDatos($rid,$r['datos'],'lab_resultado');$rows[]=$r;$ids[]=$rid;
+                }
+                $ref=self::referenciaPropia($rows);
+            }else{
+                $metodo=$a['metodo']??'';
+                if($metodo==='proctor'){
+                    $tipo=$a['tipo']??'';if(!in_array($tipo,['normal','modificado'],true))throw new InvalidArgumentException('Indica energía Proctor documentada');
+                    $ref=['metodo'=>$metodo,'valores'=>['dmcs'=>self::densValor($a['dmcs']??null,'DMCS'),'tipo'=>$tipo],'ids'=>[]];
+                }elseif($metodo==='relativa'){
+                    $min=self::densValor($a['dmin']??null,'mínima');$max=self::densValor($a['dmax']??null,'máxima');
+                    if($max<=$min)throw new InvalidArgumentException('La máxima debe ser superior a la mínima');
+                    $ref=['metodo'=>$metodo,'valores'=>['dmin'=>$min,'dmax'=>$max],'ids'=>[]];
+                }else throw new InvalidArgumentException('Selecciona referencia externa');
+            }
+            $q=$pdo->prepare('DELETE FROM lab_estudio_resultados WHERE estudio_id=?');$q->execute([$id]);
+            $q=$pdo->prepare('INSERT INTO lab_estudio_resultados(estudio_id,resultado_id) VALUES(?,?)');foreach($ids as $rid)$q->execute([$id,$rid]);
+            // Mantiene el histórico de referencias borrador en vez de sobrescribirlo.
+            $q=$pdo->prepare("UPDATE lab_referencias SET estado='reemplazado' WHERE estudio_id=? AND estado='borrador'");$q->execute([$id]);
+            if($ref)$this->guardarReferencia($id,$ref,$actor);
+            $this->estudioEvento($id,$actor,'referencia_preparada');$pdo->commit();return $id;
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+    }
     public function estudiosMaterial(int $material): array {
         $this->one('SELECT id FROM lab_materiales WHERE id=?',[$material]);
-        return $this->list("SELECT e.id,e.codigo,e.origen,e.estado,r.metodo,r.version,r.estado AS referencia_estado FROM lab_estudios e LEFT JOIN lab_referencias r ON r.estudio_id=e.id AND r.estado IN ('borrador','aprobado') WHERE e.material_id=? AND e.estado IN ('borrador','aprobado') ORDER BY e.id DESC,r.version DESC LIMIT 100",[$material]);
+        return $this->list("SELECT e.id,e.codigo,e.origen,e.estado,r.id AS referencia_id,r.metodo,r.version,r.estado AS referencia_estado FROM lab_estudios e LEFT JOIN lab_referencias r ON r.estudio_id=e.id AND r.estado IN ('borrador','aprobado') WHERE e.material_id=? AND e.estado IN ('borrador','aprobado') ORDER BY e.id DESC,r.version DESC LIMIT 100",[$material]);
     }
     public function sujetos(int $material): array {
         $this->one('SELECT id FROM lab_materiales WHERE id=?',[$material]);

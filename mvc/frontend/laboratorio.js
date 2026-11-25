@@ -34,7 +34,8 @@ async function loadReference(){
  if(!isField||standalone||!$('material').value)return;
  root.textContent='Consultando antecedentes…';const m=chosen('material');
  try{const r=await api('/laboratorio/estudios-material?material_id='+m);if(n!==referenceRequest)return;root.replaceChildren();
- if(!r.estudios.length){root.append(el('div','fw-semibold text-warning','Sin estudios registrados para este material'));return;}
+ if(!r.estudios.length)root.append(el('div','fw-semibold text-warning','Sin estudios registrados para este material'));
+ const link=el('a','btn btn-sm btn-outline-primary mt-2','Gestionar estudios de este material');link.href='./estudios.html?'+new URLSearchParams({obra:String(currentOT.obra_id),material:String(m),ot:String(currentOT.id)});root.append(link);
  for(const s of r.estudios){const origin={propio:'Controlab',cliente:'Cliente',proveedor:'Proveedor externo'}[s.origen]||s.origen;
  const item=el('div','border rounded p-2 mb-2');item.append(el('strong','',s.codigo+' · '+origin),el('div','small text-secondary','Estado del estudio: '+s.estado));
  if(s.metodo)item.append(el('div','small','Referencia '+(s.metodo==='proctor'?'Proctor':'densidad relativa')+' · v'+s.version+' · '+s.referencia_estado));root.append(item);}

@@ -225,7 +225,7 @@ $('loginForm').addEventListener('submit',async e=>{
  try{
   const s=await session();const email=$('loginEmail').value.trim();const password=$('loginPassword').value;
   await apiRequest('/login',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':s.csrf},body:JSON.stringify({csrf:s.csrf,email,password})});
-  $('loginPassword').value='';await syncAuth();$('offlineEntry').hidden=true;showNotice($('loginError'),'');const next=new URLSearchParams(location.search).get('next')||'';const allowed=/^(dashboard|planificador|empresas|obras|servicios|personal|usuarios|catalogos|modulos|informes|cotizaciones|laboratorio)\.html(?:\?[^#]*)?$/;location.href=allowed.test(next)?'./'+next:'./dashboard.html';
+  $('loginPassword').value='';await syncAuth();$('offlineEntry').hidden=true;showNotice($('loginError'),'');const next=new URLSearchParams(location.search).get('next')||'';const allowed=/^(dashboard|planificador|empresas|obras|servicios|personal|usuarios|catalogos|modulos|informes|cotizaciones|laboratorio|estudios)\.html(?:\?[^#]*)?$/;location.href=allowed.test(next)?'./'+next:'./dashboard.html';
  }catch(err){showNotice($('loginError'),'No fue posible ingresar: '+err.message,true);}
  finally{btn.disabled=false;}
 });

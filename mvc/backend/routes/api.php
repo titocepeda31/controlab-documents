@@ -81,3 +81,8 @@ $app->post('/api/laboratorio/tareas/preparar',[$laboratorioController,'prepararT
 $app->get('/api/laboratorio/tareas/resumen',[$laboratorioController,'resumenTareas']);
 
 $app->get('/api/laboratorio/estudios-material',[$laboratorioController,'estudiosMaterial']);
+
+$app->post('/api/laboratorio/estudios',[$laboratorioController,'crearEstudio']);
+$app->post('/api/laboratorio/estudios/preparar',[$laboratorioController,'prepararEstudio']);
+$app->get('/api/laboratorio/estudio',[$laboratorioController,'estudioDetalle']);
+$app->get('/api/laboratorio/resultados-estudio',[$laboratorioController,'resultadosEstudio']);

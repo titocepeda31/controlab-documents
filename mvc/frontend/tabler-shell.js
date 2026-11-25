@@ -1,7 +1,7 @@
 /* Controlab / Tabler shared application shell. Keeps existing module DOM and event bindings intact. */
 (()=>{'use strict';
 const page=location.pathname.split('/').pop()||'dashboard.html';
-const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard'],['cotizaciones.html','Cotizaciones','manager','file-text'],['planificador.html','Órdenes de trabajo','all','calendar-days'],['empresas.html','Empresas y obras','manager','building-2'],['servicios.html','Servicios','manager','clipboard-list'],['personal.html','Personal de terreno','manager','users'],['laboratorio.html','Laboratorio','manager','flask-conical'],['laboratorio.html?area=terreno','Controles en terreno','manager','map-pin'],['informes.html','Informes','all','file-text'],['usuarios.html','Usuarios','admin','settings']];
+const modules=[['dashboard.html','Dashboard gerencial','all','layout-dashboard'],['cotizaciones.html','Cotizaciones','manager','file-text'],['planificador.html','Órdenes de trabajo','all','calendar-days'],['empresas.html','Empresas y obras','manager','building-2'],['servicios.html','Servicios','manager','clipboard-list'],['personal.html','Personal de terreno','manager','users'],['estudios.html','Estudios de suelo','manager','database'],['laboratorio.html','Laboratorio','manager','flask-conical'],['laboratorio.html?area=terreno','Controles en terreno','manager','map-pin'],['informes.html','Informes','all','file-text'],['usuarios.html','Usuarios','admin','settings']];
 
 const isForm=page==='formulario.html';
 if(!isForm)document.documentElement.classList.add('cl-session-pending');
