@@ -59,3 +59,12 @@ $app->put('/api/cotizaciones/{id:[0-9]+}/estado',[$catalogoOperativoController,'
 
 $app->get('/api/catalogo/servicios/{id:[0-9]+}/historial',[$catalogoOperativoController,'historialServicio']);
 $app->get('/api/catalogo/uf',[$catalogoOperativoController,'ufDiaria']);
+
+$app->get('/api/laboratorio/catalogo',[$laboratorioController,'catalogo']);
+$app->get('/api/laboratorio/materiales',[$laboratorioController,'materiales']);
+$app->post('/api/laboratorio/materiales',[$laboratorioController,'crearMaterial']);
+$app->get('/api/laboratorio/sujetos',[$laboratorioController,'sujetos']);
+$app->post('/api/laboratorio/muestras',[$laboratorioController,'crearMuestra']);
+$app->post('/api/laboratorio/puntos',[$laboratorioController,'crearPunto']);
+$app->get('/api/laboratorio/resultados',[$laboratorioController,'resultados']);
+$app->post('/api/laboratorio/resultados',[$laboratorioController,'registrar']);

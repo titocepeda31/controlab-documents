@@ -35,6 +35,8 @@ for path in \
   mvc/backend/src/Core/Paginator.php \
   mvc/backend/src/Models/Empresa.php \
   mvc/backend/src/Models/Informe.php \
+  mvc/backend/src/Models/Laboratorio.php \
+  mvc/backend/src/Controllers/LaboratorioController.php \
   mvc/backend/src/Models/LaboratoristaFirma.php \
   mvc/backend/src/Models/Revision.php \
   mvc/backend/src/Models/Usuario.php \
@@ -55,6 +57,8 @@ for path in \
   mvc/frontend/.htaccess \
   mvc/frontend/formulario.html \
   mvc/frontend/informes.html \
+  mvc/frontend/laboratorio.html \
+  mvc/frontend/laboratorio.js \
   mvc/frontend/informes-demo.js \
   mvc/frontend/usuarios.html \
   mvc/frontend/planificador.html \
@@ -90,7 +94,7 @@ done < <(find "$REPO/mvc/backend" "$REPO/mvc/frontend" -type f -name '*.php' -pr
   $cfg = require $argv[1];
   $pdo = new PDO("mysql:host=".$cfg["db_host"].";dbname=".$cfg["db_name"].";charset=utf8mb4", $cfg["db_user"], $cfg["db_pass"], [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
   $q=$pdo->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?");
-  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos","laboratorista_firmas","usuario_perfiles","ot_ordenes","ot_asignaciones","ot_eventos","obras","personal_terreno","ot_obra_vinculos","ot_personal_terreno","obra_ubicaciones","geo_busquedas_cache","geo_nominatim_limite","catalogo_servicios","ot_servicios","servicio_ensayos"] as $table) {
+  foreach (["informe_envios","informe_revisores","informe_revisiones","informe_revision_eventos","laboratorista_firmas","usuario_perfiles","ot_ordenes","ot_asignaciones","ot_eventos","obras","personal_terreno","ot_obra_vinculos","ot_personal_terreno","obra_ubicaciones","geo_busquedas_cache","geo_nominatim_limite","catalogo_servicios","ot_servicios","servicio_ensayos","lab_ensayos_catalogo","lab_materiales","lab_muestras","lab_puntos_control","lab_ejecuciones","lab_resultados","lab_estudios","lab_estudio_resultados","lab_referencias","lab_referencia_resultados","lab_control_referencia","lab_informe_requisitos"] as $table) {
     $q->execute([$table]);
     if (!(int)$q->fetchColumn()) {fwrite(STDERR,"Falta la tabla $table. Ejecutar migraciones SQL antes de desplegar.\n");exit(2);}
   }
@@ -118,11 +122,11 @@ chmod 0700 "$BASE/controlab-mvc-backups" "$BACKUP" "$BACKUP/private" "$BACKUP/pu
 BACKEND_FILES=(
   bootstrap.php routes/api.php
   src/Core/Database.php src/Core/Http.php src/Core/ReportCrypto.php src/Core/Paginator.php
-  src/Models/Empresa.php src/Models/Informe.php src/Models/LaboratoristaFirma.php src/Models/Revision.php src/Models/Usuario.php src/Models/OrdenTrabajo.php src/Models/CatalogoOperativo.php src/Models/MapaObras.php
-  src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/OrdenTrabajoController.php src/Controllers/CatalogoOperativoController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php src/Controllers/CorreoController.php
+  src/Models/Laboratorio.php src/Models/Empresa.php src/Models/Informe.php src/Models/LaboratoristaFirma.php src/Models/Revision.php src/Models/Usuario.php src/Models/OrdenTrabajo.php src/Models/CatalogoOperativo.php src/Models/MapaObras.php
+  src/Controllers/LaboratorioController.php src/Controllers/AuthController.php src/Controllers/EmpresaController.php src/Controllers/InformeController.php src/Controllers/UsuariosController.php src/Controllers/OrdenTrabajoController.php src/Controllers/CatalogoOperativoController.php src/Controllers/LaboratoristaFirmaController.php src/Controllers/RevisionController.php src/Controllers/CorreoController.php
   src/Middleware/Security.php
 )
-FRONTEND_FILES=(index.php .htaccess formulario.html informes.html informes-demo.js usuarios.html planificador.html catalogos.html empresas.html obras.html servicios.html cotizaciones.html personal.html modulos.html dashboard.html tabler-preview.html tabler-shell.js pagination.js sw.js manifest.json icon.svg)
+FRONTEND_FILES=(index.php .htaccess formulario.html laboratorio.html laboratorio.js informes.html informes-demo.js usuarios.html planificador.html catalogos.html empresas.html obras.html servicios.html cotizaciones.html personal.html modulos.html dashboard.html tabler-preview.html tabler-shell.js pagination.js sw.js manifest.json icon.svg)
 while IFS= read -r -d '' file; do
   FRONTEND_FILES+=("${file#"$REPO/mvc/frontend/"}")
 done < <(find "$REPO/mvc/frontend/assets" -type f -name '*.css' -print0)
