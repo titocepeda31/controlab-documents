@@ -50,6 +50,74 @@ final class Laboratorio {
         $p=$this->db->connection();$q=$p->prepare($sql);$q->execute($args);return (int)$p->lastInsertId();
     }
     private const SERVICIO_ENSAYOS=['gran'=>['S01'],'ll'=>['S03'],'lp'=>['S04'],'att'=>['S03','S04'],'hum'=>['S02'],'sol'=>['S05'],'proctor'=>['S09','S10'],'maxmin'=>['S11','S12'],'cbr'=>['S13'],'dens'=>['S14','S15'],'cal'=>['S16'],'por'=>['S17'],'cubic'=>['S20'],'la'=>['S21'],'fines'=>['S23'],'sand'=>['S22']];
+    // Paquetes: Atterberg y max/min tienen dos tareas; Proctor y densidad tienen una con variantes.
+    private const GRUPOS_TAREA=[
+        'gran'=>['gran'=>['S01']], 'll'=>['ll'=>['S03']], 'lp'=>['lp'=>['S04']],
+        'att'=>['ll'=>['S03'],'lp'=>['S04']], 'hum'=>['hum'=>['S02']], 'sol'=>['sol'=>['S05']],
+        'uscs'=>['uscs'=>['C03']], 'proctor'=>['proctor'=>['S09','S10']],
+        'maxmin'=>['dmin'=>['S11'],'dmax'=>['S12']], 'cbr'=>['cbr'=>['S13']],
+        'dens'=>['dens'=>['S14','S15']], 'cal'=>['cal'=>['S16']], 'por'=>['por'=>['S17']],
+        'cubic'=>['cubic'=>['S20']], 'la'=>['la'=>['S21']], 'fines'=>['fines'=>['S23']], 'sand'=>['sand'=>['S22']]
+    ];
+    private const TERRENO=['dens','cal','por'];
+    private const UNIDADES=['unidad','unidades','punto','puntos','ensayo','ensayos','muestra','muestras','calicata','calicatas','control','controles','densidad','densidades'];
+    public static function planTareas(array $servicios): array {
+        $plan=[];$avisos=[];
+        foreach($servicios as $s){
+            $sid=(int)$s['servicio_id'];$qty=(int)$s['cantidad'];$nombre=$s['servicio_nombre'];
+            $groups=[];
+            foreach($s['ensayos'] as $g)foreach(self::GRUPOS_TAREA[$g]??[] as $key=>$options)$groups[$key]=$options;
+            if(!$groups){$avisos[]=$nombre.': sin ensayos asociados (o servicio no técnico).';continue;}
+            $unidad=mb_strtolower(trim($s['unidad']));
+            if(!in_array($unidad,self::UNIDADES,true)||$qty<1||$qty>500||count($plan)+$qty*count($groups)>2000){
+                $avisos[]=$nombre.': revisar cantidad/unidad comercial antes de generar tareas.';continue;
+            }
+            foreach($groups as $group=>$options)for($i=1;$i<=$qty;$i++){
+                $key=$sid.':'.$group.':'.$i;
+                $plan[$key]=['servicio_id'=>$sid,'servicio_nombre'=>$nombre,'grupo'=>$group,'ordinal'=>$i,'area'=>in_array($group,self::TERRENO,true)?'terreno':'laboratorio','alternativas'=>implode(',',$options)];
+            }
+        }
+        return ['plan'=>$plan,'avisos'=>$avisos];
+    }
+    private function planOT(int $ot): array {
+        $rows=$this->list('SELECT servicio_id,servicio_nombre,unidad,cantidad FROM ot_servicios WHERE ot_id=? ORDER BY servicio_id',[$ot]);
+        foreach($rows as &$s)$s['ensayos']=array_column($this->list('SELECT ensayo_codigo FROM servicio_ensayos WHERE servicio_id=? ORDER BY ensayo_codigo',[(int)$s['servicio_id']]),'ensayo_codigo');
+        unset($s);return self::planTareas($rows);
+    }
+    public function tareasOT(int $ot): array {
+        $this->one('SELECT id FROM ot_ordenes WHERE id=?',[$ot]);
+        $plan=$this->planOT($ot);$rows=$this->list('SELECT t.*,e.ensayo_codigo FROM lab_tareas t LEFT JOIN lab_ejecuciones e ON e.id=t.ejecucion_id WHERE t.ot_id=? ORDER BY t.servicio_id,t.grupo,t.ordinal',[$ot]);
+        $actual=[];
+        foreach($rows as $r)$actual[$r['servicio_id'].':'.$r['grupo'].':'.$r['ordinal']]=$r['alternativas'];
+        $desired=array_map(static fn($r)=>$r['alternativas'],$plan['plan']);
+        ksort($actual);ksort($desired);
+        $legacy=$this->list('SELECT x.servicio_id,COUNT(*) AS cantidad FROM lab_ejecucion_ot x LEFT JOIN lab_tareas t ON t.ejecucion_id=x.ejecucion_id WHERE x.ot_id=? AND t.id IS NULL GROUP BY x.servicio_id',[$ot]);
+        $blocked=array_map('intval',array_column($legacy,'servicio_id'));
+        if($legacy)$plan['avisos'][]='Hay resultados anteriores sin tarea asignada. Esos servicios se bloquean para evitar duplicados; requieren conciliación.';
+        $changed=(bool)$rows&&$actual!==$desired;
+        if($changed)$plan['avisos'][]='Los servicios o cantidades cambiaron después de preparar tareas. Se conservan las tareas originales y se bloquea el registro hasta conciliar.';
+        return ['tareas'=>$rows,'avisos'=>$plan['avisos'],'cambio'=>$changed,'bloqueados'=>$blocked,'por_preparar'=>!$rows&&count($desired)>0];
+    }
+    public function prepararTareas(int $ot,int $actor): array {
+        $pdo=$this->db->connection();$pdo->beginTransaction();
+        try{
+            $this->one("SELECT o.id FROM ot_ordenes o JOIN ot_obra_vinculos v ON v.ot_id=o.id WHERE o.id=? AND o.estado<>'cancelada' FOR UPDATE",[$ot]);
+            $existing=$this->list('SELECT id FROM lab_tareas WHERE ot_id=? LIMIT 1',[$ot]);
+            if(!$existing){
+                $p=$this->planOT($ot);
+                $q=$pdo->prepare('INSERT INTO lab_tareas(ot_id,servicio_id,servicio_nombre,grupo,ordinal,area,alternativas,creado_por) VALUES(?,?,?,?,?,?,?,?)');
+                foreach($p['plan'] as $r)$q->execute([$ot,$r['servicio_id'],$r['servicio_nombre'],$r['grupo'],$r['ordinal'],$r['area'],$r['alternativas'],$actor]);
+            }
+            $pdo->commit();
+        }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
+        return $this->tareasOT($ot);
+    }
+    public function resumenTareas(array $ids): array {
+        if(!$ids)return [];
+        $marks=implode(',',array_fill(0,count($ids),'?'));
+        $rows=$this->list("SELECT ot_id,area,COUNT(*) AS total,SUM(ejecucion_id IS NOT NULL) AS registrados FROM lab_tareas WHERE ot_id IN ($marks) GROUP BY ot_id,area",$ids);
+        $out=[];foreach($rows as $r)$out[$r['ot_id']][$r['area']]=['total'=>(int)$r['total'],'registrados'=>(int)$r['registrados']];return $out;
+    }
     public function catalogo(): array {
         return ['ensayos'=>$this->list('SELECT * FROM lab_ensayos_catalogo ORDER BY codigo'),'campos'=>self::CAMPOS,'servicio_ensayos'=>self::SERVICIO_ENSAYOS,'requisitos'=>$this->list('SELECT * FROM lab_informe_requisitos ORDER BY codigo')];
     }
@@ -143,26 +211,35 @@ final class Laboratorio {
         $values=$a['valores']??null;if(!is_array($values))throw new InvalidArgumentException('Valores inválidos');
         $payload=self::calcular($code,$values);
         $field=in_array($code,['S14','S15'],true);
-        $sid=$field?null:self::id($a,'muestra_id');$pid=$field?self::id($a,'punto_id'):null;
-        if($field)$this->one('SELECT id FROM lab_puntos_control WHERE id=?',[$pid]);else $this->one('SELECT id FROM lab_muestras WHERE id=?',[$sid]);
+        $taskId=self::id($a,'tarea_id');$ot=self::id($a,'ot_id');$material=self::id($a,'material_id');
         $pdo=$this->db->connection();$pdo->beginTransaction();
         try {
-            $ot=self::id($a,'ot_id');$servicio=self::id($a,'servicio_id');
             $orden=$this->one("SELECT o.id,v.obra_id FROM ot_ordenes o JOIN ot_obra_vinculos v ON v.ot_id=o.id WHERE o.id=? AND o.estado<>'cancelada' FOR UPDATE",[$ot]);
-            $line=$this->one('SELECT servicio_nombre FROM ot_servicios WHERE ot_id=? AND servicio_id=?',[$ot,$servicio]);
-            $maps=$this->list('SELECT ensayo_codigo FROM servicio_ensayos WHERE servicio_id=?',[$servicio]);
-            $allowed=[];
-            foreach($maps as $m)$allowed=array_merge($allowed,self::SERVICIO_ENSAYOS[$m['ensayo_codigo']]??[]);
-            if(!in_array($code,$allowed,true))throw new InvalidArgumentException('El ensayo no está asociado a este servicio de la OT');
-            $subject=$field
-                ?$this->one('SELECT m.obra_id,p.ot_id FROM lab_puntos_control p JOIN lab_materiales m ON m.id=p.material_id WHERE p.id=?',[$pid])
-                :$this->one('SELECT m.obra_id FROM lab_muestras s JOIN lab_materiales m ON m.id=s.material_id WHERE s.id=?',[$sid]);
-            if((int)$subject['obra_id']!==(int)$orden['obra_id']||($field&&(int)$subject['ot_id']!==$ot))throw new InvalidArgumentException('La muestra o punto no corresponde a la OT');
+            $task=$this->one('SELECT * FROM lab_tareas WHERE id=? AND ot_id=? FOR UPDATE',[$taskId,$ot]);
+            if($task['ejecucion_id']!==null)throw new RuntimeException('La tarea ya tiene resultado',409);
+            $status=$this->tareasOT($ot);
+            if($status['cambio']||in_array((int)$task['servicio_id'],$status['bloqueados'],true))throw new RuntimeException('La OT requiere conciliación técnica antes de registrar',409);
+            if(!in_array($code,explode(',',$task['alternativas']),true)||($field!==($task['area']==='terreno')))throw new InvalidArgumentException('Método no corresponde a la tarea');
+            $m=$this->one('SELECT obra_id FROM lab_materiales WHERE id=?',[$material]);
+            if((int)$m['obra_id']!==(int)$orden['obra_id'])throw new InvalidArgumentException('El material no corresponde a la obra de la OT');
+            $sid=null;$pid=null;
+            if($field){
+                // El punto físico se crea al guardar el control, nunca al abrir la OT.
+                $point=self::texto($a,'punto_codigo',80);
+                $pid=$this->insert('INSERT INTO lab_puntos_control(material_id,ot_id,codigo,creado_por) VALUES(?,?,?,?)',[$material,$ot,$point,$actor]);
+            }else{
+                $sid=self::id($a,'muestra_id');
+                $sample=$this->one('SELECT material_id FROM lab_muestras WHERE id=?',[$sid]);
+                if((int)$sample['material_id']!==$material)throw new InvalidArgumentException('La muestra no corresponde al material seleccionado');
+            }
             $ej=$this->insert('INSERT INTO lab_ejecuciones(muestra_id,punto_id,ensayo_codigo,fecha,creado_por) VALUES(?,?,?,?,?)',[$sid,$pid,$code,$date,$actor]);
-            $this->insert('INSERT INTO lab_ejecucion_ot(ejecucion_id,ot_id,servicio_id,servicio_nombre) VALUES(?,?,?,?)',[$ej,$ot,$servicio,$line['servicio_nombre']]);
+            $this->insert('INSERT INTO lab_ejecucion_ot(ejecucion_id,ot_id,servicio_id,servicio_nombre) VALUES(?,?,?,?)',[$ej,$ot,(int)$task['servicio_id'],$task['servicio_nombre']]);
             $id=$this->insert('INSERT INTO lab_resultados(ejecucion_id,version,creado_por) VALUES(?,1,?)',[$ej,$actor]);
             $enc=$this->db->reportCrypto()->encryptBytes($id,json_encode($payload,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'lab_resultado');
-            $q=$pdo->prepare('UPDATE lab_resultados SET datos=? WHERE id=?');$q->execute([$enc,$id]);$pdo->commit();return $id;
+            $q=$pdo->prepare('UPDATE lab_resultados SET datos=? WHERE id=?');$q->execute([$enc,$id]);
+            $q=$pdo->prepare('UPDATE lab_tareas SET ejecucion_id=? WHERE id=? AND ejecucion_id IS NULL');$q->execute([$ej,$taskId]);
+            if($q->rowCount()!==1)throw new RuntimeException('La tarea ya fue registrada',409);
+            $pdo->commit();return $id;
         }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
     }
     public function resultadosOT(int $ot): array {

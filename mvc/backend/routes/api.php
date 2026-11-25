@@ -75,3 +75,7 @@ $app->put('/api/laboratorio/tipos-material/{id:[0-9]+}',[$laboratorioController,
 $app->post('/api/laboratorio/materiales/clasificar',[$laboratorioController,'clasificarMaterial']);
 
 $app->get('/api/laboratorio/resultados-ot',[$laboratorioController,'resultadosOT']);
+
+$app->get('/api/laboratorio/tareas',[$laboratorioController,'tareasOT']);
+$app->post('/api/laboratorio/tareas/preparar',[$laboratorioController,'prepararTareas']);
+$app->get('/api/laboratorio/tareas/resumen',[$laboratorioController,'resumenTareas']);

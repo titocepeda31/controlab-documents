@@ -21,6 +21,21 @@ final class LaboratorioController {
     public function catalogo(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->catalogo());}
     public function materiales(Request $r,Response $s): Response {$this->auth();return Http::json($s,['materiales'=>$this->lab->materiales($this->queryId($r,'obra_id'))]);}
     public function sujetos(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->sujetos($this->queryId($r,'material_id')));}
+    public function tareasOT(Request $r,Response $s): Response {$this->auth();return Http::json($s,$this->lab->tareasOT($this->queryId($r,'ot_id')));}
+    public function prepararTareas(Request $r,Response $s): Response {
+        $u=$this->auth();Security::csrf($r);$body=Http::jsonBody($r);
+        $id=filter_var($body['ot_id']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
+        if($id===false)throw new InvalidArgumentException('OT inválida');
+        return Http::json($s,$this->lab->prepararTareas($id,(int)$u['id']));
+    }
+    public function resumenTareas(Request $r,Response $s): Response {
+        $this->auth();$raw=$r->getQueryParams()['ids']??'';
+        if(!is_string($raw)||strlen($raw)>10000)throw new InvalidArgumentException('OT inválidas');
+        $ids=$raw===''?[]:explode(',',$raw);
+        if(count($ids)>500)throw new InvalidArgumentException('Demasiadas OT');
+        foreach($ids as $id)if(!ctype_digit($id)||!filter_var($id,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]))throw new InvalidArgumentException('OT inválida');
+        return Http::json($s,['resumen'=>$this->lab->resumenTareas(array_map('intval',$ids))]);
+    }
     public function resultadosOT(Request $r,Response $s): Response {$this->auth();return Http::json($s,['resultados'=>$this->lab->resultadosOT($this->queryId($r,'ot_id'))]);}
     public function resultados(Request $r,Response $s): Response {$this->auth();return Http::json($s,['resultados'=>$this->lab->resultados($this->queryId($r,'material_id'))]);}
     private function write(Request $r,Response $s,string $method): Response {
