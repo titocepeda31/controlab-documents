@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id),el=(tag,cls='',txt='')=>{const n=documen
 let csrf='',config={},subjects={muestras:[],puntos:[]},revision=0,types=[],materials=[],editingType=null,classifying=null,orders=[],currentOT=null,task=null,orderRequest=0,opening=0,taskState={tareas:[],avisos:[],bloqueados:[]},summary={};
 const AREA=new URLSearchParams(location.search).get('area')==='terreno'?'terreno':'laboratorio';
 const isField=AREA==='terreno';
-const areaGroups=new Set(['dens','cal','por']);
+const areaGroups=new Set(['dens','dens_nuclear','dens_cono','cal','por']);
 function areaServices(o){return (o.servicios||[]).filter(s=>(s.ensayos||[]).some(g=>isField?areaGroups.has(g):!areaGroups.has(g)));}
 function notice(t,ok=false){$('notice').className=t?'alert '+(ok?'alert-success':'alert-danger'):'mb-3';$('notice').textContent=t;}
 async function api(path,body,method='POST'){const opt={credentials:'same-origin',cache:'no-store'};if(body!==undefined){opt.method=method;opt.headers={'Content-Type':'application/json','X-CSRF-Token':csrf};opt.body=JSON.stringify({...body,csrf});}const r=await fetch('./api'+path,opt);const v=await r.json();if(!r.ok)throw Error(v.error||'Error de servidor');return v;}
@@ -58,7 +58,7 @@ async function openOrder(id){
  const ctx=$('selectedOrder');ctx.replaceChildren(el('div','fw-bold','OT '+o.numero_ot),el('div','small',o.cliente+' · '+o.obra));const back=el('button','btn btn-sm btn-outline-secondary mt-2','Volver a bandeja');back.onclick=()=>pane('inbox');ctx.append(back);
  const state=await api('/laboratorio/tareas/preparar',{ot_id:Number(o.id)});if(token!==opening)return;taskState=state;updateSummary();await loadMaterials();if(token!==opening)return;pane('results');
 }
-const groupNames={dens:'Densidad',proctor:'Proctor',ll:'Límite líquido',lp:'Límite plástico',gran:'Granulometría',dmin:'Densidad mínima',dmax:'Densidad máxima',uscs:'Clasificación USCS',cal:'Calicata',por:'Infiltración'};
+const groupNames={dens:'Densidad',dens_nuclear:'Densidad nuclear',dens_cono:'Cono de arena',proctor:'Proctor',proctor_normal:'Proctor normal',proctor_modificado:'Proctor modificado',ll:'Límite líquido',lp:'Límite plástico',gran:'Granulometría',dmin:'Densidad mínima',dmax:'Densidad máxima',uscs:'Clasificación USCS',cal:'Calicata',por:'Infiltración'};
 function updateSummary(){if(!currentOT)return;const row={};for(const a of ['laboratorio','terreno']){const tasks=taskState.tareas.filter(t=>t.area===a);if(tasks.length)row[a]={total:tasks.length,registrados:tasks.filter(t=>t.ejecucion_id!==null).length};}summary[currentOT.id]=row;renderOrders();}
 function renderTasks(){
  const root=$('tasks'),sum=$('taskSummary');root.replaceChildren();sum.replaceChildren();if(!currentOT)return;
@@ -80,7 +80,7 @@ function startTask(t){
  if(!$('material').value){notice('Selecciona o registra el material de esta OT y vuelve a la tarea.');pane('materials');return;}
  if(!isField&&!subjects.muestras.length){notice('Registra primero una muestra de este material.');pane('samples');return;}
  task=t;const codes=t.alternativas.split(',').filter(c=>config.campos?.[c]);const names=Object.fromEntries(config.ensayos.map(c=>[c.codigo,c.nombre]));
- options('test',codes.map(c=>({codigo:c,nombre:names[c]})),x=>x.nombre,'Seleccionar método');if(codes.length===1)$('test').value=codes[0];renderFields();
+ options('test',codes.map(c=>({codigo:c,nombre:names[c]})),x=>x.nombre,'Seleccionar método');if(codes.length===1)$('test').value=codes[0];$('test').disabled=codes.length===1;renderFields();
  const m=materials.find(x=>String(x.id)===$('material').value);$('captureMaterial').textContent='Material: '+(m?.nombre||'');
  $('pointCapture').value='';$('taskContext').replaceChildren(el('h3','h4',t.servicio_nombre+' · '+(isField?'Control ':'Ensayo ')+t.ordinal),el('div','small text-secondary',currentOT.numero_ot));
  $('captureWrap').hidden=false;$('captureWrap').scrollIntoView({block:'start',behavior:'smooth'});notice('');

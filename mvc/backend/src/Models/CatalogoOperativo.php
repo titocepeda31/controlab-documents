@@ -183,10 +183,11 @@ final class CatalogoOperativo {
         if($s['moneda_base']!==$moneda){if(!$uf)return null;$base=$moneda==='CLP'?$base*(float)$uf['valor']:$base/(float)$uf['valor'];}
         return number_format($base,$moneda==='CLP'?0:4,'.','');
     }
-    private const ENSAYOS_PILOTO = ['gran','ll','lp','att','hum','sol','uscs','proctor','maxmin','cbr','dens','cal','por','cubic','la','fines','sand'];
+    private const ENSAYOS_PILOTO = ['gran','ll','lp','att','hum','sol','uscs','proctor','proctor_normal','proctor_modificado','maxmin','cbr','dens','dens_nuclear','dens_cono','cal','por','cubic','la','fines','sand'];
     public static function validarEnsayos(mixed $input): array {
         if(!is_array($input)||count($input)>count(self::ENSAYOS_PILOTO))throw new InvalidArgumentException('Lista de ensayos inválida');
         foreach($input as $code)if(!is_string($code)||!in_array($code,self::ENSAYOS_PILOTO,true))throw new InvalidArgumentException('Ensayo no reconocido');
+        if((in_array('proctor',$input,true)&&(in_array('proctor_normal',$input,true)||in_array('proctor_modificado',$input,true)))||(in_array('dens',$input,true)&&(in_array('dens_nuclear',$input,true)||in_array('dens_cono',$input,true))))throw new InvalidArgumentException('No combines método genérico y específico en el mismo servicio');
         return array_values(array_unique($input));
     }
     public function servicios(): array {

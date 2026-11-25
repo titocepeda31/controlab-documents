@@ -49,17 +49,18 @@ final class Laboratorio {
     private function insert(string $sql,array $args): int {
         $p=$this->db->connection();$q=$p->prepare($sql);$q->execute($args);return (int)$p->lastInsertId();
     }
-    private const SERVICIO_ENSAYOS=['gran'=>['S01'],'ll'=>['S03'],'lp'=>['S04'],'att'=>['S03','S04'],'hum'=>['S02'],'sol'=>['S05'],'proctor'=>['S09','S10'],'maxmin'=>['S11','S12'],'cbr'=>['S13'],'dens'=>['S14','S15'],'cal'=>['S16'],'por'=>['S17'],'cubic'=>['S20'],'la'=>['S21'],'fines'=>['S23'],'sand'=>['S22']];
+    private const SERVICIO_ENSAYOS=['gran'=>['S01'],'ll'=>['S03'],'lp'=>['S04'],'att'=>['S03','S04'],'hum'=>['S02'],'sol'=>['S05'],'proctor'=>['S09','S10'],'proctor_normal'=>['S09'],'proctor_modificado'=>['S10'],'maxmin'=>['S11','S12'],'cbr'=>['S13'],'dens'=>['S14','S15'],'dens_nuclear'=>['S14'],'dens_cono'=>['S15'],'cal'=>['S16'],'por'=>['S17'],'cubic'=>['S20'],'la'=>['S21'],'fines'=>['S23'],'sand'=>['S22']];
     // Paquetes: Atterberg y max/min tienen dos tareas; Proctor y densidad tienen una con variantes.
     private const GRUPOS_TAREA=[
         'gran'=>['gran'=>['S01']], 'll'=>['ll'=>['S03']], 'lp'=>['lp'=>['S04']],
         'att'=>['ll'=>['S03'],'lp'=>['S04']], 'hum'=>['hum'=>['S02']], 'sol'=>['sol'=>['S05']],
         'uscs'=>['uscs'=>['C03']], 'proctor'=>['proctor'=>['S09','S10']],
+        'proctor_normal'=>['proctor_normal'=>['S09']], 'proctor_modificado'=>['proctor_modificado'=>['S10']],
         'maxmin'=>['dmin'=>['S11'],'dmax'=>['S12']], 'cbr'=>['cbr'=>['S13']],
-        'dens'=>['dens'=>['S14','S15']], 'cal'=>['cal'=>['S16']], 'por'=>['por'=>['S17']],
+        'dens'=>['dens'=>['S14','S15']], 'dens_nuclear'=>['dens_nuclear'=>['S14']], 'dens_cono'=>['dens_cono'=>['S15']], 'cal'=>['cal'=>['S16']], 'por'=>['por'=>['S17']],
         'cubic'=>['cubic'=>['S20']], 'la'=>['la'=>['S21']], 'fines'=>['fines'=>['S23']], 'sand'=>['sand'=>['S22']]
     ];
-    private const TERRENO=['dens','cal','por'];
+    private const TERRENO=['dens','dens_nuclear','dens_cono','cal','por'];
     private const UNIDADES=['unidad','unidades','punto','puntos','ensayo','ensayos','muestra','muestras','calicata','calicatas','control','controles','densidad','densidades'];
     public static function planTareas(array $servicios): array {
         $plan=[];$avisos=[];
@@ -67,6 +68,9 @@ final class Laboratorio {
             $sid=(int)$s['servicio_id'];$qty=(int)$s['cantidad'];$nombre=$s['servicio_nombre'];
             $groups=[];
             foreach($s['ensayos'] as $g)foreach(self::GRUPOS_TAREA[$g]??[] as $key=>$options)$groups[$key]=$options;
+            if((isset($groups['proctor'])&&(isset($groups['proctor_normal'])||isset($groups['proctor_modificado'])))||(isset($groups['dens'])&&(isset($groups['dens_nuclear'])||isset($groups['dens_cono'])))){
+                $avisos[]=$nombre.': combinación de método genérico y específico; revisar configuración.';continue;
+            }
             if(!$groups){$avisos[]=$nombre.': sin ensayos asociados (o servicio no técnico).';continue;}
             $unidad=mb_strtolower(trim($s['unidad']));
             if(!in_array($unidad,self::UNIDADES,true)||$qty<1||$qty>500||count($plan)+$qty*count($groups)>2000){

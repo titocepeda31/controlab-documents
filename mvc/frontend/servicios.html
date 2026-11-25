@@ -170,7 +170,7 @@ function renderWorks(){
  }
 }
 
-const ensayoCatalogo=[["gran","Granulometría"],["ll","Límite líquido"],["lp","Límite plástico"],["att","Límites de Atterberg e IP"],["hum","Humedad natural"],["sol","Densidad de partículas sólidas"],["uscs","Clasificación USCS / AASHTO"],["proctor","Proctor normal / modificado"],["maxmin","Densidad máxima y mínima"],["cbr","CBR"],["dens","Densidad en terreno"],["cal","Calicata / estratigrafía"],["por","Infiltración Porchet"],["cubic","Cubicidad de partículas"],["la","Desgaste Los Ángeles"],["fines","Material fino menor a 0,080 mm"],["sand","Equivalente de arena"]];
+const ensayoCatalogo=[["gran","Granulometría"],["ll","Límite líquido"],["lp","Límite plástico"],["att","Límites de Atterberg e IP"],["hum","Humedad natural"],["sol","Densidad de partículas sólidas"],["uscs","Clasificación USCS / AASHTO"],["proctor","Proctor (método por definir)"],["proctor_normal","Proctor normal"],["proctor_modificado","Proctor modificado"],["maxmin","Densidad máxima y mínima"],["cbr","CBR"],["dens","Densidad (método por definir)"],["dens_nuclear","Densidad nuclear"],["dens_cono","Densidad por cono de arena"],["cal","Calicata / estratigrafía"],["por","Infiltración Porchet"],["cubic","Cubicidad de partículas"],["la","Desgaste Los Ángeles"],["fines","Material fino menor a 0,080 mm"],["sand","Equivalente de arena"]];
 function renderEnsayoOpciones(){
  const root=$('servicioEnsayos');
  for(const [code,name] of ensayoCatalogo){const col=elem('div','col-12 col-md-6');const label=elem('label','form-check');const check=elem('input','form-check-input');check.type='checkbox';check.value=code;check.name='ensayoServicio';const span=elem('span','form-check-label',name);label.append(check,span);col.append(label);root.append(col);}
